@@ -1,13 +1,15 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Button} from 'react-native';
 import { useFonts} from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen';
-import { ClerkProvider, SignedIn, SignedOut  } from "@clerk/clerk-expo";
+import { ClerkProvider, SignedIn, SignedOut, useAuth  } from "@clerk/clerk-expo";
 import LoginPage from './src/LoginPage';
 import { useCallback } from 'react';
 import * as SecureStore from "expo-secure-store";
 import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
+
+
 
 
 SplashScreen.preventAutoHideAsync();
@@ -27,7 +29,23 @@ const tokenCache = {
     }
   },
 };
- 
+const SignOut = () => {
+  const { isLoaded,signOut } = useAuth();
+  if (!isLoaded) {
+    return null;
+  }
+  return (
+    <View style={styles.signOutContainer}>
+      <Button
+        title="Sign Out"
+        onPress={() => {
+          signOut();
+        }}
+      />
+    </View>
+  );
+};
+
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -57,8 +75,10 @@ export default function App() {
           <NavigationContainer>
             <TabNavigation/>
           </NavigationContainer>
+          <SignOut/>
         </SignedIn>
         <SignedOut>
+
       <LoginPage/>
         
         </SignedOut>
@@ -72,9 +92,12 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+   flex: 1
+  },
+  signOutContainer: {
+    position: 'absolute',
+    top: 42,
+    right: 20,
+    zIndex: 1000, // Ensure it's above other components
   },
 });
