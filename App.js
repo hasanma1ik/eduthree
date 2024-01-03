@@ -8,9 +8,14 @@ import { useCallback } from 'react';
 import * as SecureStore from "expo-secure-store";
 import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
+import RegisterScreen from './src/screen/RegisterScreen';
+import { createStackNavigator } from '@react-navigation/stack';
+import Login from './src/screen/Login';
+import { AuthProvider } from './src/screen/context/authContext';
+import Home from './src/screen/Home';
 
 
-
+const Stack = createStackNavigator();
 
 SplashScreen.preventAutoHideAsync();
 const tokenCache = {
@@ -70,22 +75,30 @@ export default function App() {
     tokenCache={tokenCache}
     publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}>
        
-    <View style={styles.container} onLayout={onLayoutRootView}>
-    <SignedIn>
+       <View style={styles.container} onLayout={onLayoutRootView}>
+        <SignedIn>
           <NavigationContainer>
-            <TabNavigation/>
+            
+            <TabNavigation />
           </NavigationContainer>
-          <SignOut/>
+          <SignOut />
         </SignedIn>
         <SignedOut>
+          {/* Use a stack navigator for authentication flows */}
+          <NavigationContainer>
+          <AuthProvider>
+            <Stack.Navigator initialRouteName="Login" headerShown="false">
+            <Stack.Screen name="Home" component={Home} />
+              <Stack.Screen name="Login" component={LoginPage} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen name="Login1" component={Login} />
 
-      <LoginPage/>
-        
+            </Stack.Navigator>
+            </AuthProvider>
+          </NavigationContainer>
         </SignedOut>
-     
-
-      <StatusBar style="auto" />
-    </View>
+        <StatusBar style="auto" />
+      </View>
     </ClerkProvider>
   );
 }

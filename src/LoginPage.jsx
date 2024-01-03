@@ -5,10 +5,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import Colors from './Colors';
 import { useOAuth } from '@clerk/clerk-expo'
 import { useWarmUpBrowser } from '../hooks/warmUpBrowser';
+import { useNavigation } from '@react-navigation/native';
 
 WebBrowser.maybeCompleteAuthSession();
 export default function LoginPage(){
     useWarmUpBrowser();
+    const navigation = useNavigation();
  
     const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
     
@@ -26,6 +28,14 @@ export default function LoginPage(){
             console.error("OAuth error", err);
           }
     }
+    const onSignUp = () => {
+      // Navigate to the RegisterScreen
+      navigation.navigate('Register');
+    };
+    const onLogin = () =>{
+      navigation.navigate('Login1')
+    }
+
     return (
         <View style={styles.container}>
                <Image source={require('./../assets/loginpic.png')} style={{width: 400, height: 400}} />
@@ -35,6 +45,13 @@ export default function LoginPage(){
             <FontAwesome name="google" size={24} color="white" style={{marginRight:10}} />
                 <Text style={{color:Colors.BLACK}}>Sign In with Google</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={onSignUp}>
+        <Text style={{ color: Colors.BLACK }}>Sign Up</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={onLogin}>
+      <Text style={styles.linkText}>Alread Registered Please {" "} <Text style ={styles.link}>LOGIN</Text></Text>
+      </TouchableOpacity>
+      
         </View>
     )
 }
@@ -58,5 +75,11 @@ const styles = StyleSheet.create({
     justifyContent:'center',
     alignItems:'center',
     borderRadius: 10
+},
+linkText:{
+  textAlign: "center",
+},
+link: {
+  color:'red',
 }
   });
