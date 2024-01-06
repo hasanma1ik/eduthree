@@ -38,11 +38,11 @@ const Login = ({navigation}) => {
   };
 
    //temporary function to check local storage data
-   const getLcoalStorageData = async () => {
+   const getLocalStorageData = async () => {
     let data = await AsyncStorage.getItem("@auth");
     console.log("Local Storage ==> ", data);
   };
-  getLcoalStorageData();
+  getLocalStorageData();
 
     return (
      

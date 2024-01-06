@@ -3,19 +3,15 @@ import { StyleSheet, Text, View, Button} from 'react-native';
 import { useFonts} from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider, SignedIn, SignedOut, useAuth  } from "@clerk/clerk-expo";
-import LoginPage from './src/LoginPage';
+
 import { useCallback } from 'react';
 import * as SecureStore from "expo-secure-store";
 import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
-import RegisterScreen from './src/screen/RegisterScreen';
-import { createStackNavigator } from '@react-navigation/stack';
-import Login from './src/screen/Login';
-import { AuthProvider } from './src/screen/context/authContext';
-import Home from './src/screen/Home';
+import RootNavigation from './Navigation';
 
 
-const Stack = createStackNavigator();
+
 
 SplashScreen.preventAutoHideAsync();
 const tokenCache = {
@@ -86,15 +82,7 @@ export default function App() {
         <SignedOut>
           {/* Use a stack navigator for authentication flows */}
           <NavigationContainer>
-          <AuthProvider>
-            <Stack.Navigator initialRouteName="Login" headerShown="false">
-            <Stack.Screen name="Home" component={Home} />
-              <Stack.Screen name="Login" component={LoginPage} />
-              <Stack.Screen name="Register" component={RegisterScreen} />
-              <Stack.Screen name="Login1" component={Login} />
-
-            </Stack.Navigator>
-            </AuthProvider>
+       <RootNavigation />
           </NavigationContainer>
         </SignedOut>
         <StatusBar style="auto" />
