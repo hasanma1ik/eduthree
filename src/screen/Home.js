@@ -1,18 +1,27 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import React, {useContext} from 'react'
 import { AuthContext } from './context/authContext'
 import BottomTab from '../tabs/bottomTab'
+import { PostContext } from './context/postContext'
+import PostCard from '../PostCard'
 
 const Home = () => {
 
     //Global State
-    const [state] = useContext(AuthContext)
 
+    const [posts] = useContext(PostContext)
   return (
     <View style={styles.container}> 
-      
-      <Text>{JSON.stringify(state, null, 4)}</Text>
+      <ScrollView>
+        <PostCard posts={posts}/>
+
+      {/* <Text>{JSON.stringify(posts, null, 4)}</Text> */}
+      </ScrollView>
+      <View style={{backgroundColor: '#ffffff'}}>
       <BottomTab/>
+
+      </View>
+     
     </View>
   )
 }

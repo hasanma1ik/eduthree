@@ -33,23 +33,46 @@ const createPostController = async (req, res) =>{
     }
 }
 //get all posts
-const getAllPostsController = async (req, res) =>{
+const getAllPostsController = async (req, res) => {
     try {
-    const posts = await postModel.find().populate('postedBy', " _id name")
-    .sort({createdAt: -1})
-    res.status(200).send({
-        success: 'true',
-        message: 'All posts data',
+      const posts = await postModel
+        .find()
+        .populate("postedBy", "_id name")
+        .sort({ createdAt: -1 });
+      res.status(200).send({
+        success: true,
+        message: "All Posts Data",
         posts,
-    })
-     } catch (error) {
-    console.log(error)
-    res.status(500).send({
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
         success: false,
-        message: 'Error in GET ALL POSTS API',
-        error
-    })
+        message: "Error In GETALLPOSTS API",
+        error,
+      });
     }
-}
+  };
+  //get user posts
+  const getUserPostsController = async (req, res)=>{
+    try {
+      const userPosts = await postModel.find({ postedBy: req.auth._id})
+      res.status(200).send({
+        success: true,
+        message: "user posts",
+        userPosts,
+      })
+      
+    } catch (error) {
+      console.log(error)
+      return res.status(500).send({
+        success: false,
+        message: "Error in User POST API",
+        error,
+      })
+    }
 
-module.exports = { createPostController, getAllPostsController}
+  }
+
+
+module.exports = { createPostController, getAllPostsController, getUserPostsController}

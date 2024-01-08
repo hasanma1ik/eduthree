@@ -10,6 +10,7 @@ import TopTab from './TopTab';
 import Post from '../screen/Post';
 import About from '../screen/About';
 import Account from '../screen/Account';
+import MyPosts from '../screen/MyPosts';
 
 
 
@@ -30,6 +31,8 @@ const Stack = createStackNavigator();
     <Stack.Screen name="Post" component={Post} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="About" component={About} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="MyPosts" component={MyPosts} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+
 
     
 

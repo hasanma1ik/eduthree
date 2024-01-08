@@ -21,9 +21,9 @@ const BottomTab = () => {
       <Text>Post</Text>
     </TouchableOpacity>
     
-    <TouchableOpacity onPress={()=> navigation.navigate('About')}>
-    <FontAwesome5 name="info-circle" style={styles.iconStyle} color={route.name === "About" && 'orange'}/>
-      <Text>About</Text>
+    <TouchableOpacity onPress={()=> navigation.navigate('MyPosts')}>
+    <FontAwesome5 name="list" style={styles.iconStyle} color={route.name === "MyPosts" && 'orange'}/>
+      <Text>My Posts</Text>
     </TouchableOpacity>
 
        <TouchableOpacity onPress={()=> navigation.navigate('Account')} color={route.name === "Account" && 'orange'}>

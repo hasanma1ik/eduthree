@@ -1,11 +1,15 @@
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity} from 'react-native'
 import React, {useState, useContext} from 'react'
 import BottomTab from '../tabs/bottomTab'
+import { PostContext } from './context/postContext'
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
 import axios from 'axios'
 
 
 const Post = ({navigation}) => {
+
+ 
+  const [posts, setPosts] = useContext(PostContext)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -23,6 +27,7 @@ const Post = ({navigation}) => {
       }
       const {data} = await axios.post('/post/create-post',{title, description,})
       setLoading(false)
+      setPosts([...posts, data?.post]);
       alert(data?.message)
       navigation.navigate("Home")
     } catch (error) {
