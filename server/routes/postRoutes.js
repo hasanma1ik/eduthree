@@ -19,7 +19,7 @@ router.get('/get-user-post', requireSignIn, getUserPostsController)
 router.delete('/delete-post/:id', requireSignIn, deletePostController)
 
 //Update Post
-router.put('/update-post/:id', requireSignIn, updatePostController)
+router.put("/update-post/:id", requireSignIn, updatePostController)
 
 
 //export

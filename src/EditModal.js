@@ -20,10 +20,13 @@ const EditModal = ({ modalVisible, setModalVisible, post }) => {
     const updatePostHandler = async (id) =>{
         try {
             setLoading(true)
-            const {data} = await axios.put(`/post/update-post/${id}`,{title},{title, description})
+            const { data } = await axios.put(`/post/update-post/${id}`, {
+              title,
+              description,
+            });
             setLoading(false)
             alert(data?.message)
-            navigation.navigate('Home')
+            navigation.push('MyPosts')
         } catch (error) {
             setLoading(false)
             console.log(error)
@@ -32,10 +35,9 @@ const EditModal = ({ modalVisible, setModalVisible, post }) => {
         }
     }
 
-
 //initial post data
 useEffect(()=>{
-    setTitle([post?.title])
+    setTitle(post?.title)
     setDescription(post?.description)
 }, [post])
     
@@ -55,16 +57,17 @@ useEffect(()=>{
           <Text>Title</Text>
           <TextInput
               style={styles.inputBox}
-              value={title} onChangeText={(text)=>{setTitle(text)}} />
+              value={title}
+              onChangeText={(text)=>{setTitle(text)}}
+               />
           <Text>Description</Text>
           <TextInput
               style={styles.inputBox}
               multiline={true}
               numberOfLines={4}
               value={description}
-              onChangeText={(text)=>{
-                setDescription(text)
-              }}
+              onChangeText={(text)=> setDescription(text)}
+             
               />
           
           <View style={styles.btnContainer}>
@@ -74,7 +77,7 @@ useEffect(()=>{
                 updatePostHandler(post && post._id),
                   setModalVisible(!modalVisible);
               }}>
-            <Text style={styles.textStyle}>{loading ? "Please Wait" : "Update"}</Text>
+            <Text style={styles.textStyle}>{loading ? "Please Wait" : "UPDATE"}</Text>
           </Pressable>
 
           <Pressable

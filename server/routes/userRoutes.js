@@ -3,7 +3,7 @@ const {
     registerController,
      loginController,
      updateUserController,
-     requireSignIn
+     requireSignIn,
      } = require('../controllers/userController');
 
 //router object
