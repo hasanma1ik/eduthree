@@ -3,13 +3,11 @@ import { StyleSheet, Text, View, Button} from 'react-native';
 import { useFonts} from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider, SignedIn, SignedOut, useAuth  } from "@clerk/clerk-expo";
-
 import { useCallback } from 'react';
 import * as SecureStore from "expo-secure-store";
 import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
 import RootNavigation from './Navigation';
-
 
 
 
@@ -73,15 +71,16 @@ export default function App() {
        
        <View style={styles.container} onLayout={onLayoutRootView}>
         <SignedIn>
-          <NavigationContainer>
+          <stackContainer>
             
             <TabNavigation />
-          </NavigationContainer>
+          </stackContainer>
           <SignOut />
         </SignedIn>
         <SignedOut>
           {/* Use a stack navigator for authentication flows */}
           <NavigationContainer>
+            
        <RootNavigation />
           </NavigationContainer>
         </SignedOut>

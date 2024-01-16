@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
+import { AntDesign } from '@expo/vector-icons';
 
 
 const BottomTab = () => {
@@ -16,15 +17,20 @@ const BottomTab = () => {
       <Text>Home</Text>
     </TouchableOpacity>
 
+    <TouchableOpacity onPress={()=> navigation.navigate('Messages')}>
+    <AntDesign name="message1" style={styles.iconStyle} color={route.name === "Messages" && 'orange'}  />
+      <Text>Messages</Text>
+    </TouchableOpacity>
+
     <TouchableOpacity onPress={()=> navigation.navigate('Post')}>
     <FontAwesome5 name="plus-square" style={styles.iconStyle} color={route.name === "Post" && 'orange'}/>
       <Text>Post</Text>
     </TouchableOpacity>
     
-    <TouchableOpacity onPress={()=> navigation.navigate('MyPosts')}>
+    {/* <TouchableOpacity onPress={()=> navigation.navigate('MyPosts')}>
     <FontAwesome5 name="list" style={styles.iconStyle} color={route.name === "MyPosts" && 'orange'}/>
       <Text>My Posts</Text>
-    </TouchableOpacity>
+    </TouchableOpacity> */}
 
        <TouchableOpacity onPress={()=> navigation.navigate('Account')} color={route.name === "Account" && 'orange'}>
     <FontAwesome5 name="user" style={styles.iconStyle}/>

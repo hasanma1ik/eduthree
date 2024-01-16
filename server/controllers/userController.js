@@ -65,6 +65,22 @@ const registerController = async (req, res) => {
   }
 };
 
+const searchController = async (req, res) => {
+  try {
+    const { query } = req.params;
+    const users = await userModel.find({
+      $or: [
+        { name: { $regex: new RegExp(query, 'i') } },
+        { email: { $regex: new RegExp(query, 'i') } }
+      ]
+    });
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error searching users', error });
+  }
+};
+
 
 //Login
 
@@ -96,7 +112,7 @@ const loginController = async (req, res) => {
    }
 //TOKEN JWT
 const token = await JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
-  expiresIn: "7d",
+  expiresIn: "27d",
 });
 
 // undeinfed password
@@ -159,4 +175,4 @@ const updateUserController = async (req, res) =>{
 }
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController }
