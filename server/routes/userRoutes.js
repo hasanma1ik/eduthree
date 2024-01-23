@@ -6,12 +6,16 @@ const {
      requireSignIn,
      searchController,
      allUsersController,
-     createThread,
-     getAllThreads
+     userPress,
+     getAllThreads,
+     postMessageToThread,
+     getMessagesInThread,
+     
      } = require('../controllers/userController');
 
     //  const User = require('../models/userModel')
     const User = require('../models/userModel')
+    const message = require('../models/messageModel')
 
 //router object
 const router = express.Router();
@@ -33,7 +37,10 @@ router.get("/search", searchController)
 router.get("/all-users", allUsersController)
   
 router.get('/threads', getAllThreads); // Add this route
-router.post('/threads', createThread);
+router.post('/threads', userPress);
+
+router.get('/threads/:threadId', getMessagesInThread);
+router.post('/threads/:threadId/messages', postMessageToThread);
 
 //export 
 module.exports = router;

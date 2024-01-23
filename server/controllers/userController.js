@@ -1,8 +1,10 @@
 const JWT = require("jsonwebtoken");
 const { hashPassword, comparePassword } = require("../helpers/authHelper");
 const userModel = require("../models/userModel");
+
 var {expressjwt:jwt} = require('express-jwt')
 const Thread = require('../models/threadModel')
+const Message = require('../models/messageModel')
 
 //middleware
 
@@ -106,7 +108,7 @@ const allUsersController = async (req, res) => {
   };
 
   // Controller to create a new message thread
-  const createThread = async(req, res) =>{
+  const userPress = async(req, res) =>{
     try {
       const {userId} = req.body;
       const newThread = await Thread.create({ users: [userId]})
@@ -117,6 +119,43 @@ const allUsersController = async (req, res) => {
     }
   }
 
+
+const getMessagesInThread = async (req, res) => {
+  try {
+    const { threadId } = req.params;
+    console.log("Fetching messages for thread:", threadId);
+    const thread = await Thread.findById(threadId).populate('messages');
+    if (!thread) {
+      console.log("Thread not found:", threadId);
+      return res.status(404).json({ success: false, message: 'Thread not found' });
+    }
+    console.log("Found messages:", thread.messages);
+    res.status(200).json({ success: true, messages: thread.messages });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ success: false, message: 'Error fetching messages', error });
+  }
+};
+
+  const postMessageToThread = async (req, res) => {
+    try {
+      const { threadId } = req.params;
+      const { text, senderId } = req.body; // Assuming you send text and sender's ID
+  
+      // Create a new message
+      const newMessage = new Message({ text, sender: senderId, thread: threadId });
+      await newMessage.save();
+  
+      // Add the message to the thread
+      await Thread.findByIdAndUpdate(threadId, { $push: { messages: newMessage._id } });
+  
+      res.status(201).json({ success: true, message: newMessage });
+    } catch (error) {
+      console.error('Error posting message:', error);
+      res.status(500).json({ success: false, message: 'Error posting message', error });
+    }
+  };
+  
 
 //Login
 
@@ -216,7 +255,7 @@ const updateUserController = async (req, res) =>{
 }
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, createThread }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread }
 
 
 

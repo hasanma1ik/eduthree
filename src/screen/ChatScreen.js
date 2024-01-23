@@ -1,36 +1,56 @@
-// ChatScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Alert, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import axios from 'axios';
 
 const ChatScreen = ({ route }) => {
-  const { user } = route.params;
+  const { threadId } = route.params;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
+  
+  // Fetch messages for a specific thread
+    const fetchMessages = async () => {
+    try {
+      const response = await axios.get(`/auth/threads/${threadId}`);
+      setMessages(response.data.messages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  }
+  useEffect(() => {
+      fetchMessages();
+    }, [threadId]);
+
+  
   // Function to send a new message
-  const sendMessage = () => {
-    if (newMessage.trim() !== '') {
-      // Here, you can implement the logic to send a message to the backend or handle it according to your setup
-      const updatedMessages = [...messages, { text: newMessage, sender: 'user' }];
-      setMessages(updatedMessages);
+  const sendMessage = async () => {
+    console.log("Thread ID:", threadId); // Log the threadId to the console
+  
+    if (!threadId) {
+      console.error('Thread ID is undefined');
+      // Optionally, show an alert or handle the undefined threadId case
+      Alert.alert("Error", "No conversation selected.");
+      return; // Exit the function if threadId is undefined
+    }
+  
+    try {
+      if (newMessage.trim() === '') {
+        return; // Don't send empty messages
+      }
+  
+      await axios.post(`/auth/threads/${threadId}/messages`, { text: newMessage });
       setNewMessage('');
+      fetchMessages(threadId); // Fetch updated messages after sending
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
   };
+  
 
-  // Use useEffect to simulate fetching messages when the component mounts
-  useEffect(() => {
-    // Here, you can implement the logic to fetch messages from the backend
-    const fetchedMessages = [
-      { text: 'Hello!', sender: 'user' },
-      { text: 'Hi there!', sender: 'otherUser' },
-      // Add more messages as needed
-    ];
-    setMessages(fetchedMessages);
-  }, []);
 
   // Render each message item
   const renderMessage = ({ item }) => (
-    <View style={item.sender === 'user' ? styles.userMessage : styles.otherUserMessage}>
+    <View style={styles.messageContainer}>
       <Text style={styles.messageText}>{item.text}</Text>
     </View>
   );
@@ -47,7 +67,7 @@ const ChatScreen = ({ route }) => {
           style={styles.inputBox}
           placeholder="Type your message..."
           value={newMessage}
-          onChangeText={(text) => setNewMessage(text)}
+          onChangeText={setNewMessage}
         />
         <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
           <Text style={styles.sendButtonText}>Send</Text>
@@ -56,6 +76,7 @@ const ChatScreen = ({ route }) => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

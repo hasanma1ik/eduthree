@@ -5,14 +5,15 @@ import { useNavigation} from '@react-navigation/native'
 import UserSuggestion from '../UserSuggestion';
 
 
+
 const MessagesScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [suggestions, setSuggestions] = useState([])
-  const [messageThreads, setMessageThreads] = useState([]);
-
+  const [threads, setThreads] = useState([]);
+  
   const navigation = useNavigation()
 
   useEffect(() => {
@@ -29,37 +30,46 @@ const MessagesScreen = () => {
   }, []);
 
   useEffect(() => {
-    const fetchMessageThreads = async () => {
+    const fetchThreads = async () => {
       try {
         const response = await axios.get('/auth/threads');
-        setMessageThreads(response.data.threads);
+        setThreads(response.data.threads);
       } catch (error) {
         console.error('Error fetching message threads:', error);
       }
     };
 
-    fetchMessageThreads();
+    fetchThreads();
   }, []);
 
-  const handleCreateThread = async (userId) => {
+
+
+  const handleUserPress = async (userId) => {
     try {
-      // Create a new message thread using the threadController
       const response = await axios.post('/auth/threads', { userId });
       const newThread = response.data.thread;
-      setMessageThreads([...messageThreads, newThread]);
-      // Navigate to the ChatScreen with the new thread
-      navigation.navigate('ChatScreen', { threadId: newThread.id });
+      if (newThread && newThread._id) {
+        setThreads([...threads, newThread]);
+        navigation.navigate('ChatScreen', { threadId: newThread._id }); // Use _id here
+      } else {
+        console.error('Thread data is missing or does not have an _id');
+      }
     } catch (error) {
-      console.error('Error creating thread:', error);
+      console.error('Error in handleUserPress:', error);
     }
   };
-
+  
 
 
 
   const handleThreadPress = (thread) => {
-    navigation.navigate('ChatScreen', { threadId: thread.id });
+    if (thread && thread._id) {
+      navigation.navigate('ChatScreen', { threadId: thread._id }); // Use _id here
+    } else {
+      console.error('Thread data is missing or does not have an _id');
+    }
   };
+  
 
   const handleSearch = async () => {
     try {
@@ -82,10 +92,7 @@ const MessagesScreen = () => {
 
   
 
-  const handleUserPress = (user) => {
-    // Navigate to the ChatScreen with the selected user
-    navigation.navigate('ChatScreen', { user });
-  };
+
   const filterUsers = (text) => {
     const filteredUsers = data.filter((user) =>
       user.name.toLowerCase().includes(text.toLowerCase())
@@ -139,8 +146,8 @@ const MessagesScreen = () => {
         )}
       />
        <FlatList
-        data={messageThreads}
-        keyExtractor={(thread) => thread.id?.toString()}
+        data={threads}
+        keyExtractor={(thread) => thread._id?.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handleThreadPress(item)}>
             <View style={styles.threadContainer}>
@@ -151,7 +158,7 @@ const MessagesScreen = () => {
         )}
       />
       {/* Add a button or UI element to trigger the creation of a new thread */}
-      <Button title="Create Thread" onPress={() => handleCreateThread(selectedUserId)} />
+      
     
   </View>
 );
@@ -192,3 +199,19 @@ export default MessagesScreen;
 
 
 // const response = await axios.get('/auth/search');
+
+
+  // const handleCreateThread = async (userId) => {
+  //   try {
+  //     // Create a new message thread using the threadController
+  //     const response = await axios.post('/auth/threads', { userId });
+  //     const newThread = response.data.thread;
+  //     setThreads([...threads, newThread]);
+  //     // Navigate to the ChatScreen with the new thread
+  //     navigation.navigate('ChatScreen', { threadId: newThread.id });
+  //   } catch (error) {
+  //     console.error('Error creating thread:', error);
+  //   }
+  // };
+
+  // <Button title="Create Thread" onPress={() => handleCreateThread()} />

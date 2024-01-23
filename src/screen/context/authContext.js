@@ -28,7 +28,7 @@ let token = state && state.token
        
  //default axios setting
  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
- axios.defaults.baseURL = 'http://192.168.247.115:8080/api/v1';
+ axios.defaults.baseURL = 'http://192.168.163.115:8080/api/v1/';
 
 
         return (
