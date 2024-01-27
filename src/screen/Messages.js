@@ -3,50 +3,62 @@ import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert, TouchableOp
 import axios from 'axios';
 import { useNavigation} from '@react-navigation/native'
 import UserSuggestion from '../UserSuggestion';
+import { useUser } from './context/userContext';
 
 
 
 const MessagesScreen = () => {
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [suggestions, setSuggestions] = useState([])
   const [threads, setThreads] = useState([]);
-  
   const navigation = useNavigation()
+  const { currentUser } = useUser();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('/auth/all-users'); // Modify the endpoint to fetch all users
-        setData(response.data.users);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
+    if (currentUser && currentUser._id) {
+      console.log("Current User:", currentUser);
+      fetchData();
+      fetchThreads();
+    } else {
+      console.log('Current user is not available for fetching data.');
+    }
+  }, [currentUser]);
 
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const fetchThreads = async () => {
-      try {
-        const response = await axios.get('/auth/threads');
-        setThreads(response.data.threads);
-      } catch (error) {
-        console.error('Error fetching message threads:', error);
-      }
-    };
-
-    fetchThreads();
-  }, []);
-
-
-
-  const handleUserPress = async (userId) => {
+  const fetchData = async () => {
     try {
-      const response = await axios.post('/auth/threads', { userId });
+      const response = await axios.get('/auth/all-users');
+      setData(response.data.users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchThreads = async () => {
+    try {
+      const response = await axios.get('/auth/threads');
+      setThreads(response.data.threads);
+    } catch (error) {
+      console.error('Error fetching message threads:', error);
+    }
+  };
+
+
+  const handleUserPress = async (otherUserId) => {
+    if (!currentUser || !currentUser._id) {
+      console.error('Current user data is not available');
+      return;
+    }
+  
+    try {
+      const response = await axios.post('/auth/threads', {
+        userId: currentUser._id, // Current user's ID
+        otherUserId             // ID of the user to start a thread with
+      });
+
       const newThread = response.data.thread;
       if (newThread && newThread._id) {
         setThreads([...threads, newThread]);
@@ -59,7 +71,6 @@ const MessagesScreen = () => {
     }
   };
   
-
 
 
   const handleThreadPress = (thread) => {
@@ -90,9 +101,6 @@ const MessagesScreen = () => {
     }
   };
 
-  
-
-
   const filterUsers = (text) => {
     const filteredUsers = data.filter((user) =>
       user.name.toLowerCase().includes(text.toLowerCase())
@@ -105,7 +113,34 @@ const MessagesScreen = () => {
       setSuggestions(filteredUsers);
     }
   };
- 
+  const renderThread = ({ item }) => {
+    console.log("Thread Data:", item); // Log the thread data for inspection
+  
+    if (!currentUser || !currentUser._id) {
+      console.error('Current user data is not available');
+      return null;
+    }
+    
+  
+    const otherUser = item.users.find(user => user._id !== currentUser._id) || {};
+    const lastMessageText = item.messages[0]?.text || 'No messages';
+  
+    // Debug logs
+    console.log("Other User in Thread:", otherUser.name);
+    console.log("Last Message Text:", lastMessageText);
+  
+    return (
+      <TouchableOpacity onPress={() => handleThreadPress(item)}>
+        <View style={styles.threadContainer}>
+          <Text style={styles.userName}>{otherUser.name || 'Unknown User'}</Text>
+          <Text style={styles.lastMessage}>{lastMessageText}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+  
+
+
   
 
   return (
@@ -129,6 +164,11 @@ const MessagesScreen = () => {
             <UserSuggestion user={item} onPress={() => handleUserPress(item)} />
           )}
         />
+          <FlatList
+        data={threads}
+        keyExtractor={(thread) => thread._id?.toString()}
+        renderItem={renderThread}
+      />
 
         {/* <Button title="Search" onPress={handleSearch} /> */}
       </View>
@@ -151,8 +191,9 @@ const MessagesScreen = () => {
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handleThreadPress(item)}>
             <View style={styles.threadContainer}>
-              <Text>{item.user?.name}</Text>
-              <Text>Last Message: {item.lastMessage?.text}</Text>
+            <Text style={styles.userName}>{item.user?.name}</Text>
+        <Text style={styles.lastMessage}>{item.lastMessage?.text}</Text>
+
             </View>
           </TouchableOpacity>
         )}
@@ -169,9 +210,27 @@ const MessagesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Changed from 'center' to 'flex-start'
     backgroundColor: 'white',
   },
+  
+  threadContainer: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    backgroundColor: 'white',
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  
+  lastMessage: {
+    fontSize: 14,
+    color: 'red',
+  },
+  
   pageTitle: {
     fontSize: 40,
     fontWeight: 'bold',

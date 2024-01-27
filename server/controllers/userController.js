@@ -98,8 +98,20 @@ const allUsersController = async (req, res) => {
   // Controller to get all message threads
   const getAllThreads = async (req, res) => {
     try {
-      // Fetch all threads from the database
-      const threads = await Thread.find();
+      const userId = req.user_id; // Assuming you have the user's ID from the request (e.g., from a JWT token)
+  
+      const threads = await Thread.find({ users: userId })
+        .populate({
+          path: 'messages',
+          options: { sort: { 'createdAt': -1 }, limit: 1 },
+          populate: { path: 'sender', model: 'User', select: 'name' }
+        })
+        .populate({
+          path: 'users',
+          match: { _id: { $ne: userId } },
+          select: 'name'
+        });
+  
       res.status(200).json({ success: true, threads });
     } catch (error) {
       console.error('Error fetching threads:', error);
@@ -110,8 +122,9 @@ const allUsersController = async (req, res) => {
   // Controller to create a new message thread
   const userPress = async(req, res) =>{
     try {
-      const {userId} = req.body;
-      const newThread = await Thread.create({ users: [userId]})
+      const { userId, otherUserId } = req.body; 
+      
+      const newThread = await Thread.create({ users: [userId, otherUserId] });
       res.status(201).json({ success: true, thread: newThread})
     } catch (error){
       console.error('Error creating thread:', error)
@@ -200,7 +213,7 @@ res.status(200).send({
   success: true,
   message: "login successfully",
   token,
-  user,
+  user: userData,
 });
 } catch (error) {
 console.log(error);

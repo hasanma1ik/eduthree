@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button} from 'react-native';
+import { StyleSheet, useEffect, Text, View, Button} from 'react-native';
 import { useFonts} from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider, SignedIn, SignedOut, useAuth  } from "@clerk/clerk-expo";
@@ -8,6 +8,7 @@ import * as SecureStore from "expo-secure-store";
 import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
 import RootNavigation from './Navigation';
+import { UserProvider } from './src/screen/context/userContext';
 
 
 
@@ -46,6 +47,8 @@ const SignOut = () => {
 };
 
 
+
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
@@ -65,6 +68,7 @@ export default function App() {
   }
   
   return (
+    <UserProvider>
     <ClerkProvider
     tokenCache={tokenCache}
     publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}>
@@ -87,6 +91,7 @@ export default function App() {
         <StatusBar style="auto" />
       </View>
     </ClerkProvider>
+    </UserProvider>
   );
 }
 

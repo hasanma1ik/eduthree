@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     maxWidth: '70%',
   },
   messageText: {
-    color: 'white', // Adjust text color based on the background
+    color: 'black', // Adjust text color based on the background
   },
   inputContainer: {
     flexDirection: 'row',

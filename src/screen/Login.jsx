@@ -5,39 +5,53 @@ import InputBox from '../InputBox'
 import SubmitButton from '../SubmitButton'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { useUser } from './context/userContext';
 
-const Login = ({navigation}) => {
+const Login = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  //global state
-  const [state, setState] = useContext(AuthContext)
-  
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
-  
-    const handleSubmit = async () => {
+  // Use UserContext to set the current user
+  const { setCurrentUser } = useUser();
+
+  // Global state from AuthContext
+  const [state, setState] = useContext(AuthContext);
+
+  const handleSubmit = async () => {
       try {
-        setLoading(true);
-        if (!email || !password) {
-          Alert.alert("Please Fill All Fields");
+          setLoading(true);
+          if (!email || !password) {
+              Alert.alert("Please Fill All Fields");
+              setLoading(false);
+              return;
+          }
+
+          const { data } = await axios.post('/auth/login', { email, password });
+
+          if (data && data.user) {
+              // Update context
+              setCurrentUser(data.user);
+              setState({ ...state, user: data.user, token: data.token });
+
+              // Save to AsyncStorage
+              await AsyncStorage.setItem('@auth', JSON.stringify(data));
+              
+
+              // Navigate to Home
+              navigation.navigate('Home');
+          } else {
+              Alert.alert("Login failed", "Invalid response from server");
+          }
+
           setLoading(false);
-          return;
-        }
-        setLoading(false)
-        const {data} = await axios.post('/auth/login',{email, password})
-      setState(data);
-      navigation.navigate('Home')
-        await AsyncStorage.setItem("@auth", JSON.stringify(data));
-        alert(data && data.message);
-        console.log("Login Data==> ", { email, password });
-    } catch (error) {
-      alert(error.response.data.message);
-      setLoading(false);
-      console.log(error);
-    }
+      } catch (error) {
+          Alert.alert("Login Error", error.response.data.message);
+          setLoading(false);
+      }
   };
 
-   //temporary function to check local storage data
+  //  temporary function to check local storage data
    const getLocalStorageData = async () => {
     let data = await AsyncStorage.getItem("@auth");
     console.log("Local Storage ==> ", data);
@@ -56,6 +70,7 @@ const Login = ({navigation}) => {
         {/* <Text>{JSON.stringify({ name, email, password }, null, 4)}</Text> */}
         <SubmitButton btnTitle="Login" loading={loading} handleSubmit={handleSubmit} />
         <Text style={styles.linkText}>Not a User Please {" "} <Text style ={styles.link} onPress={()=>navigation.navigate("Register")}>Register</Text></Text>
+        
       </View>
     )
 }
