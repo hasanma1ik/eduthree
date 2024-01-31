@@ -9,7 +9,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
 import RootNavigation from './Navigation';
 import { UserProvider } from './src/screen/context/userContext';
-
+import { ThreadsProvider } from './src/screen/context/ThreadsContext';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -68,6 +68,8 @@ export default function App() {
   }
   
   return (
+   
+    <ThreadsProvider>
     <UserProvider>
     <ClerkProvider
     tokenCache={tokenCache}
@@ -92,6 +94,8 @@ export default function App() {
       </View>
     </ClerkProvider>
     </UserProvider>
+    </ThreadsProvider>
+  
   );
 }
 

@@ -36,7 +36,7 @@ router.get("/search", searchController)
 // All Users
 router.get("/all-users", allUsersController)
   
-router.get('/threads', getAllThreads); // Add this route
+router.get('/threads', requireSignIn, getAllThreads); // Add this route
 router.post('/threads', userPress);
 
 router.get('/threads/:threadId', getMessagesInThread);

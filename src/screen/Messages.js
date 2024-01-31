@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigation} from '@react-navigation/native'
 import UserSuggestion from '../UserSuggestion';
 import { useUser } from './context/userContext';
+import { useThreads } from './context/ThreadsContext';
 
 
 
@@ -14,15 +15,19 @@ const MessagesScreen = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [suggestions, setSuggestions] = useState([])
-  const [threads, setThreads] = useState([]);
+  // const [threads, setThreads] = useState([]);
   const navigation = useNavigation()
   const { currentUser } = useUser();
+  const { threads, refreshThreads } = useThreads(); 
+ 
+
 
   useEffect(() => {
     if (currentUser && currentUser._id) {
       console.log("Current User:", currentUser);
       fetchData();
       fetchThreads();
+      refreshThreads();
     } else {
       console.log('Current user is not available for fetching data.');
     }
@@ -47,6 +52,8 @@ const MessagesScreen = () => {
   };
 
 
+
+
   const handleUserPress = async (otherUserId) => {
     if (!currentUser || !currentUser._id) {
       console.error('Current user data is not available');
@@ -58,6 +65,7 @@ const MessagesScreen = () => {
         userId: currentUser._id, // Current user's ID
         otherUserId             // ID of the user to start a thread with
       });
+      
 
       const newThread = response.data.thread;
       if (newThread && newThread._id) {
@@ -75,7 +83,8 @@ const MessagesScreen = () => {
 
   const handleThreadPress = (thread) => {
     if (thread && thread._id) {
-      navigation.navigate('ChatScreen', { threadId: thread._id }); // Use _id here
+      // Pass refreshThreads function along with threadId
+      navigation.navigate('ChatScreen', { threadId: thread._id, refreshThreads });
     } else {
       console.error('Thread data is missing or does not have an _id');
     }
@@ -113,35 +122,29 @@ const MessagesScreen = () => {
       setSuggestions(filteredUsers);
     }
   };
-  const renderThread = ({ item }) => {
-    console.log("Thread Data:", item); // Log the thread data for inspection
-  
+const renderThread = ({ item }) => {
+  console.log("Thread item:", item);
     if (!currentUser || !currentUser._id) {
-      console.error('Current user data is not available');
-      return null;
+        console.error('Current user data is not available');
+        return null;
     }
-    
-  
+
     const otherUser = item.users.find(user => user._id !== currentUser._id) || {};
     const lastMessageText = item.messages[0]?.text || 'No messages';
-  
-    // Debug logs
+
     console.log("Other User in Thread:", otherUser.name);
     console.log("Last Message Text:", lastMessageText);
-  
+
     return (
-      <TouchableOpacity onPress={() => handleThreadPress(item)}>
-        <View style={styles.threadContainer}>
-          <Text style={styles.userName}>{otherUser.name || 'Unknown User'}</Text>
-          <Text style={styles.lastMessage}>{lastMessageText}</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleThreadPress(item)}>
+            <View style={styles.threadContainer}>
+                <Text style={styles.userName}>{otherUser.name || 'Unknown User'}</Text>
+                <Text style={styles.lastMessage}>{lastMessageText}</Text>
+            </View>
+        </TouchableOpacity>
     );
-  };
-  
+};
 
-
-  
 
   return (
     <View style={styles.container}>
@@ -181,19 +184,6 @@ const MessagesScreen = () => {
             <View>
               <Text>{item.name}</Text>
               <Text>{item.email}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-       <FlatList
-        data={threads}
-        keyExtractor={(thread) => thread._id?.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleThreadPress(item)}>
-            <View style={styles.threadContainer}>
-            <Text style={styles.userName}>{item.user?.name}</Text>
-        <Text style={styles.lastMessage}>{item.lastMessage?.text}</Text>
-
             </View>
           </TouchableOpacity>
         )}

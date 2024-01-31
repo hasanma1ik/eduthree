@@ -1,3 +1,4 @@
+```js
 const JWT = require("jsonwebtoken");
 const { hashPassword, comparePassword } = require("../helpers/authHelper");
 const userModel = require("../models/userModel");
@@ -9,17 +10,9 @@ const Message = require('../models/messageModel')
 //middleware
 
 const requireSignIn = jwt({
-  secret: process.env.JWT_SECRET,
-  algorithms: ["HS256"],
-  userProperty: 'user'
-}).unless({
-  path: [
-    // paths that don't require authentication
-  ]
-});
-
-// Middleware to log the user object after JWT middleware
-
+  secret: process.env.JWT_SECRET, algorithms: ["HS256"],  
+  
+})
 
 const registerController = async (req, res) => {
   try {
@@ -36,7 +29,7 @@ const registerController = async (req, res) => {
         success: false,
         message: "email is required",
       });
-    }x
+    }
     if (!password || password.length < 6) {
       return res.status(400).send({
         success: false,
@@ -107,8 +100,7 @@ const allUsersController = async (req, res) => {
   // Controller to get all message threads
   const getAllThreads = async (req, res) => {
     try {
-      const userId = req.auth._id;
-
+      const userId = req.user._id;
  // Assuming you have the user's ID from the request (e.g., from a JWT token)
   
       const threads = await Thread.find({ users: userId })
@@ -196,6 +188,8 @@ const getMessagesInThread = async (req, res) => {
 const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+
     //validation
     if (!email || !password) {
       return res.status(500).send({
@@ -222,7 +216,7 @@ const loginController = async (req, res) => {
 
 
 //TOKEN JWT
-const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+const token = await JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
   expiresIn: "27d",
 });
 
@@ -234,7 +228,7 @@ res.status(200).send({
   success: true,
   message: "login successfully",
   token,
-  user,
+  user: userData,
 });
 } catch (error) {
 console.log(error);
@@ -295,4 +289,4 @@ module.exports = { requireSignIn, registerController, loginController, updateUse
 
 
 
-
+```

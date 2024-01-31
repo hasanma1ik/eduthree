@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import axios from 'axios';
+import { useThreads } from './context/ThreadsContext';
 
 const ChatScreen = ({ route }) => {
   const { threadId } = route.params;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-
+  const { refreshThreads } = useThreads();
   
   // Fetch messages for a specific thread
     const fetchMessages = async () => {
@@ -22,29 +23,29 @@ const ChatScreen = ({ route }) => {
     }, [threadId]);
 
   
-  // Function to send a new message
-  const sendMessage = async () => {
-    console.log("Thread ID:", threadId); // Log the threadId to the console
-  
-    if (!threadId) {
-      console.error('Thread ID is undefined');
-      // Optionally, show an alert or handle the undefined threadId case
-      Alert.alert("Error", "No conversation selected.");
-      return; // Exit the function if threadId is undefined
-    }
-  
-    try {
-      if (newMessage.trim() === '') {
-        return; // Don't send empty messages
+    const sendMessage = async () => {
+      if (!threadId) {
+        console.error('Thread ID is undefined');
+        Alert.alert("Error", "No conversation selected.");
+        return;
       }
   
-      await axios.post(`/auth/threads/${threadId}/messages`, { text: newMessage });
-      setNewMessage('');
-      fetchMessages(threadId); // Fetch updated messages after sending
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
+      try {
+        if (newMessage.trim() === '') {
+          return; // Don't send empty messages
+        }
+  
+        await axios.post(`/auth/threads/${threadId}/messages`, { text: newMessage });
+        setNewMessage('');
+        fetchMessages(threadId); // Fetch updated messages after sending
+
+  
+        // Call refreshThreads to update the threads list in MessagesScreen
+       refreshThreads();
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    };
   
 
 
