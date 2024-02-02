@@ -4,8 +4,9 @@ import axios from 'axios';
 import { useNavigation} from '@react-navigation/native'
 import UserSuggestion from '../UserSuggestion';
 import { useUser } from './context/userContext';
-import { useThreads } from './context/ThreadsContext';
-
+import { useIsFocused } from '@react-navigation/native';
+import { Menu, IconButton, Provider as PaperProvider } from 'react-native-paper';
+import { Entypo } from '@expo/vector-icons';
 
 
 const MessagesScreen = () => {
@@ -17,21 +18,30 @@ const MessagesScreen = () => {
   const [suggestions, setSuggestions] = useState([])
   // const [threads, setThreads] = useState([]);
   const navigation = useNavigation()
+  const [threads, setThreads] = useState([]);
   const { currentUser } = useUser();
-  const { threads, refreshThreads } = useThreads(); 
- 
-
+  const isFocused = useIsFocused();
 
   useEffect(() => {
-    if (currentUser && currentUser._id) {
-      console.log("Current User:", currentUser);
-      fetchData();
-      fetchThreads();
-      refreshThreads();
-    } else {
-      console.log('Current user is not available for fetching data.');
+    if (currentUser && currentUser._id && isFocused) {
+      fetchData(); // Fetch other required data
+      refreshThreads(); // Fetch or refresh threads
     }
-  }, [currentUser]);
+  }, [currentUser, isFocused]); 
+
+  
+  const refreshThreads = async () => {
+    try {
+      // Ensure you have the correct endpoint and authentication (if required)
+      const response = await axios.get('/auth/threads');
+      console.log("Fetched threads:", response.data.threads);
+      setThreads(response.data.threads);
+    } catch (error) {
+      console.error('Error refreshing threads:', error);
+    }
+  };
+  
+
 
   const fetchData = async () => {
     try {
@@ -42,15 +52,33 @@ const MessagesScreen = () => {
     }
   };
 
-  const fetchThreads = async () => {
+  const handleDeleteConversation = async (threadId) => {
     try {
-      const response = await axios.get('/auth/threads');
-      setThreads(response.data.threads);
+      await axios.delete(`/api/conversations/${threadId}`);
+      setThreads(threads.filter(thread => thread._id !== threadId));
+      Alert.alert("Conversation deleted");
     } catch (error) {
-      console.error('Error fetching message threads:', error);
+      console.error('Error deleting conversation:', error);
+      Alert.alert("Failed to delete conversation");
     }
   };
 
+  const handleMuteConversation = async (threadId) => {
+    try {
+      await axios.patch(`/api/conversations/${threadId}/mute`);
+      const updatedThreads = threads.map(thread => {
+        if (thread._id === threadId) {
+          return { ...thread, muted: true };
+        }
+        return thread;
+      });
+      setThreads(updatedThreads);
+      Alert.alert("Conversation muted");
+    } catch (error) {
+      console.error('Error muting conversation:', error);
+      Alert.alert("Failed to mute conversation");
+    }
+  };
 
 
 
@@ -59,32 +87,24 @@ const MessagesScreen = () => {
       console.error('Current user data is not available');
       return;
     }
-  
     try {
-      const response = await axios.post('/auth/threads', {
-        userId: currentUser._id, // Current user's ID
-        otherUserId             // ID of the user to start a thread with
+      await axios.post('/auth/threads', {
+        userId: currentUser._id,
+        otherUserId
       });
-      
-
-      const newThread = response.data.thread;
-      if (newThread && newThread._id) {
-        setThreads([...threads, newThread]);
-        navigation.navigate('ChatScreen', { threadId: newThread._id }); // Use _id here
-      } else {
-        console.error('Thread data is missing or does not have an _id');
-      }
+      refreshThreads();
     } catch (error) {
       console.error('Error in handleUserPress:', error);
     }
   };
-  
+
+
 
 
   const handleThreadPress = (thread) => {
     if (thread && thread._id) {
       // Pass refreshThreads function along with threadId
-      navigation.navigate('ChatScreen', { threadId: thread._id, refreshThreads });
+      navigation.navigate('ChatScreen', { threadId: thread._id });
     } else {
       console.error('Thread data is missing or does not have an _id');
     }
@@ -123,6 +143,7 @@ const MessagesScreen = () => {
     }
   };
 const renderThread = ({ item }) => {
+  
   console.log("Thread item:", item);
     if (!currentUser || !currentUser._id) {
         console.error('Current user data is not available');
@@ -138,6 +159,23 @@ const renderThread = ({ item }) => {
     return (
         <TouchableOpacity onPress={() => handleThreadPress(item)}>
             <View style={styles.threadContainer}>
+            <Text>{item.name}</Text>
+            <Entypo name="dots-three-horizontal" size={20} color="black" marginLeft={280} marginTop={-10}
+        
+        
+          onPress={() => {
+            Alert.alert(
+              "Manage Conversation",
+              "",
+              [
+                { text: "Delete Conversation", onPress: () => handleDeleteConversation(item._id) },
+                { text: "Mute Conversation", onPress: () => handleMuteConversation(item._id) },
+                { text: "Cancel", style: "cancel" }
+              ],
+              { cancelable: true }
+            );
+          }}
+        />
                 <Text style={styles.userName}>{otherUser.name || 'Unknown User'}</Text>
                 <Text style={styles.lastMessage}>{lastMessageText}</Text>
             </View>
@@ -158,6 +196,16 @@ const renderThread = ({ item }) => {
           filterUsers(text) 
         }}
       />
+        <PaperProvider>
+      <View style={styles.container}>
+        {/* Your UI elements */}
+        <FlatList
+          data={threads}
+          keyExtractor={(thread) => thread._id.toString()}
+          renderItem={renderThread}
+        />
+      </View>
+    </PaperProvider>
 
          <FlatList
           data={suggestions}
@@ -210,6 +258,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc',
     backgroundColor: 'white',
   },
+  
   userName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -238,6 +287,9 @@ const styles = StyleSheet.create({
     borderColor: 'blue',  // Set the border color to blue
     borderWidth: 1, 
   },
+  
+
+  
 });
 
 export default MessagesScreen;

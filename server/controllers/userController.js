@@ -36,7 +36,7 @@ const registerController = async (req, res) => {
         success: false,
         message: "email is required",
       });
-    }x
+    }
     if (!password || password.length < 6) {
       return res.status(400).send({
         success: false,
@@ -114,7 +114,7 @@ const allUsersController = async (req, res) => {
       const threads = await Thread.find({ users: userId })
         .populate({
           path: 'messages',
-          options: { sort: { 'createdAt': -1 }, limit: 1 },
+          options: { sort: { 'createdAt': -1 }},
           populate: { path: 'sender', model: 'User', select: 'name' }
         })
         .populate({
@@ -158,6 +158,7 @@ const getMessagesInThread = async (req, res) => {
   try {
     const { threadId } = req.params;
     console.log("Fetching messages for thread:", threadId);
+    
     const thread = await Thread.findById(threadId).populate('messages');
     if (!thread) {
       console.log("Thread not found:", threadId);

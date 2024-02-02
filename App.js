@@ -69,7 +69,7 @@ export default function App() {
   
   return (
    
-    <ThreadsProvider>
+    // <ThreadsProvider>
     <UserProvider>
     <ClerkProvider
     tokenCache={tokenCache}
@@ -94,7 +94,7 @@ export default function App() {
       </View>
     </ClerkProvider>
     </UserProvider>
-    </ThreadsProvider>
+    // </ThreadsProvider>
   
   );
 }

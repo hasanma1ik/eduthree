@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import axios from 'axios';
-import { useThreads } from './context/ThreadsContext';
+
 
 const ChatScreen = ({ route }) => {
   const { threadId } = route.params;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const { refreshThreads } = useThreads();
-  
+
+
+ 
   // Fetch messages for a specific thread
     const fetchMessages = async () => {
     try {
@@ -18,35 +19,28 @@ const ChatScreen = ({ route }) => {
       console.error('Error fetching messages:', error);
     }
   }
-  useEffect(() => {
-      fetchMessages();
-    }, [threadId]);
 
   
-    const sendMessage = async () => {
-      if (!threadId) {
-        console.error('Thread ID is undefined');
-        Alert.alert("Error", "No conversation selected.");
-        return;
-      }
-  
-      try {
-        if (newMessage.trim() === '') {
-          return; // Don't send empty messages
-        }
-  
-        await axios.post(`/auth/threads/${threadId}/messages`, { text: newMessage });
-        setNewMessage('');
-        fetchMessages(threadId); // Fetch updated messages after sending
+  const sendMessage = async () => {
+    if (!threadId || newMessage.trim() === '') return;
 
-  
-        // Call refreshThreads to update the threads list in MessagesScreen
-       refreshThreads();
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
+    const newMessageObj = {
+      // Construct a temporary new message object
+      text: newMessage,
+      // Add any other required properties
     };
-  
+
+    setMessages([...messages, newMessageObj]); // Optimistically update the UI
+    setNewMessage('');
+
+    try {
+      await axios.post(`/auth/threads/${threadId}/messages`, { text: newMessage });
+      fetchMessages(); // Refresh messages to get the updated list from the server
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Optionally, handle failed message sending (e.g., remove the optimistic message)
+    }
+};
 
 
   // Render each message item
@@ -56,6 +50,11 @@ const ChatScreen = ({ route }) => {
     </View>
   );
 
+  useEffect(() => {
+    fetchMessages();
+  }, [threadId]);
+
+  
   return (
     <View style={styles.container}>
       <FlatList

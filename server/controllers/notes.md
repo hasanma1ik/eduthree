@@ -288,5 +288,117 @@ module.exports = { requireSignIn, registerController, loginController, updateUse
 
 
 
+//Token Check
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const UserContext = createContext();
+
+export const UserProvider = ({ children }) => {
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        const loadUserData = async () => {
+            const storedData = await AsyncStorage.getItem('@auth');
+            if (storedData) {
+                const { user, token } = JSON.parse(storedData);
+                if (token && isTokenExpired(token)) {
+                    console.log('Token has expired.');
+                    setCurrentUser(null);
+                    // Additional logic for expired token (e.g., navigate to login)
+                } else {
+                    setCurrentUser(user);
+                }
+            }
+        };
+        loadUserData();
+    }, []);
+
+    return (
+        <UserContext.Provider value={{ currentUser, setCurrentUser }}>
+            {children}
+        </UserContext.Provider>
+    );
+};
+
+export const useUser = () => useContext(UserContext);
+
+const isTokenExpired = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    const decodedPayload = atob(payload); // Base64 decode
+    const { exp } = JSON.parse(decodedPayload);
+
+    const currentTime = Date.now() / 1000; // Convert to seconds
+    return exp < currentTime;
+  } catch (error) {
+    console.error('Error checking token expiration:', error);
+    return true; // Assume expired if there's an error
+  }
+};
+
+// Example usage
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NTk1NmZjM2NjZjliOTJkYTA0OTNkODYiLCJpYXQiOjE3MDY3MTQ3MzUsImV4cCI6MTcwOTA0NzUzNX0.1VkhUsmrEkeCkYvDeJPfjeCbNvVPkTU_Cas600W1-JM';
+const expired = isTokenExpired(token);
+console.log(expired ? 'Token is expired' : 'Token is valid');
+
+
+
+// Last message functionality 
+
+const renderThread = ({ item }) => {
+  
+  console.log("Thread item:", item);
+    if (!currentUser || !currentUser._id) {
+        console.error('Current user data is not available');
+        return null;
+    }
+
+    const otherUser = item.users.find(user => user._id !== currentUser._id) || {};
+    const lastMessageText = item.messages[0]?.text || 'No messages';
+
+    console.log("Other User in Thread:", otherUser.name);
+    console.log("Last Message Text:", lastMessageText);
+
+    return (
+        <TouchableOpacity onPress={() => handleThreadPress(item)}>
+            <View style={styles.threadContainer}>
+                <Text style={styles.userName}>{otherUser.name || 'Unknown User'}</Text>
+                <Text style={styles.lastMessage}>{lastMessageText}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+};
+
+
+ // Controller to get all message threads
+  const getAllThreads = async (req, res) => {
+    try {
+      const userId = req.auth._id;
+
+ // Assuming you have the user's ID from the request (e.g., from a JWT token)
+  
+      const threads = await Thread.find({ users: userId })
+        .populate({
+          path: 'messages',
+          options: { sort: { 'createdAt': -1 }},
+          populate: { path: 'sender', model: 'User', select: 'name' }
+        })
+        .populate({
+          path: 'users',
+          match: { _id: { $ne: userId } },
+          select: 'name'
+        });
+  
+      res.status(200).json({ success: true, threads });
+    } catch (error) {
+      console.error('Error fetching threads:', error);
+      res.status(500).json({ success: false, message: 'Error fetching threads', error });
+    }
+  };
+
+  //added a timestamp in messageModel/schema
+
+
 
 ```
