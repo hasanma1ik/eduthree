@@ -36,6 +36,7 @@ const ChatScreen = ({ route }) => {
     try {
       await axios.post(`/auth/threads/${threadId}/messages`, { text: newMessage });
       fetchMessages(); // Refresh messages to get the updated list from the server
+      
     } catch (error) {
       console.error('Error sending message:', error);
       // Optionally, handle failed message sending (e.g., remove the optimistic message)

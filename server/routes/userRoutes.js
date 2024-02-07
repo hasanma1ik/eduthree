@@ -10,12 +10,15 @@ const {
      getAllThreads,
      postMessageToThread,
      getMessagesInThread,
+     deleteConversation,
+     muteConversation,
      
      } = require('../controllers/userController');
 
     //  const User = require('../models/userModel')
     const User = require('../models/userModel')
     const message = require('../models/messageModel')
+
 
 //router object
 const router = express.Router();
@@ -41,6 +44,9 @@ router.post('/threads', userPress);
 
 router.get('/threads/:threadId', getMessagesInThread);
 router.post('/threads/:threadId/messages', postMessageToThread);
+
+router.delete('/threads/:threadId', deleteConversation);
+router.patch('/threads/:threadId/mute', muteConversation);
 
 //export 
 module.exports = router;

@@ -30,7 +30,7 @@ const tokenCache = {
   },
 };
 const SignOut = () => {
-  const { isLoaded,signOut } = useAuth();
+  const { isLoaded, signOut } = useAuth();
   if (!isLoaded) {
     return null;
   }
@@ -38,8 +38,12 @@ const SignOut = () => {
     <View style={styles.signOutContainer}>
       <Button
         title="Sign Out"
-        onPress={() => {
-          signOut();
+        onPress={async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            console.error("Error signing out: ", error);
+          }
         }}
       />
     </View>
@@ -48,13 +52,11 @@ const SignOut = () => {
 
 
 
-
 export default function App() {
   const [fontsLoaded] = useFonts({
     'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
     'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
     'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
-
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -68,36 +70,31 @@ export default function App() {
   }
   
   return (
-   
-    // <ThreadsProvider>
     <UserProvider>
-    <ClerkProvider
-    tokenCache={tokenCache}
-    publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}>
-       
-       <View style={styles.container} onLayout={onLayoutRootView}>
-        <SignedIn>
-          <stackContainer>
-            
-            <TabNavigation />
-          </stackContainer>
-          <SignOut />
-        </SignedIn>
-        <SignedOut>
-          {/* Use a stack navigator for authentication flows */}
-          <NavigationContainer>
-            
-       <RootNavigation />
-          </NavigationContainer>
-        </SignedOut>
-        <StatusBar style="auto" />
-      </View>
-    </ClerkProvider>
+      <ClerkProvider
+        tokenCache={tokenCache}
+        publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}
+      >
+        <NavigationContainer>
+          <View style={styles.container} onLayout={onLayoutRootView}>
+            <SignedIn>
+              {/* It seems like you intended to use a navigation stack/container here,
+                  but you've used a non-existent <stackContainer> component.
+                  Ensure you correctly implement your navigation structure here. */}
+              <TabNavigation />
+              <SignOut />
+            </SignedIn>
+            <SignedOut>
+              <RootNavigation />
+            </SignedOut>
+            <StatusBar style="auto" />
+          </View>
+        </NavigationContainer>
+      </ClerkProvider>
     </UserProvider>
-    // </ThreadsProvider>
-  
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

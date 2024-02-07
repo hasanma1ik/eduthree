@@ -41,7 +41,8 @@ const MessagesScreen = () => {
     }
   };
   
-
+  
+  
 
   const fetchData = async () => {
     try {
@@ -54,32 +55,32 @@ const MessagesScreen = () => {
 
   const handleDeleteConversation = async (threadId) => {
     try {
-      await axios.delete(`/api/conversations/${threadId}`);
+      // Assuming your threads are managed at a backend server
+      await axios.delete(`/auth/threads/${threadId}`); // Make sure the endpoint matches your backend
+      // Filter out the deleted thread from the local state
       setThreads(threads.filter(thread => thread._id !== threadId));
-      Alert.alert("Conversation deleted");
+      Alert.alert("Success", "Conversation deleted");
     } catch (error) {
       console.error('Error deleting conversation:', error);
-      Alert.alert("Failed to delete conversation");
+      Alert.alert("Error", "Failed to delete conversation");
     }
   };
+  
 
   const handleMuteConversation = async (threadId) => {
     try {
-      await axios.patch(`/api/conversations/${threadId}/mute`);
-      const updatedThreads = threads.map(thread => {
-        if (thread._id === threadId) {
-          return { ...thread, muted: true };
-        }
-        return thread;
-      });
+      // Send a request to the backend to mute the conversation
+      await axios.patch(`/auth/threads/mute/${threadId}`, { muted: true }); // Adjust based on your backend API
+      // Update local state to reflect the mute status
+      const updatedThreads = threads.map(thread => thread._id === threadId ? { ...thread, isMuted: true } : thread);
       setThreads(updatedThreads);
-      Alert.alert("Conversation muted");
+      Alert.alert("Success", "Conversation muted");
     } catch (error) {
       console.error('Error muting conversation:', error);
-      Alert.alert("Failed to mute conversation");
+      Alert.alert("Error", "Failed to mute conversation");
     }
   };
-
+  
 
 
   const handleUserPress = async (otherUserId) => {
@@ -88,11 +89,13 @@ const MessagesScreen = () => {
       return;
     }
     try {
-      await axios.post('/auth/threads', {
+      const response = await axios.post('/auth/threads', {
         userId: currentUser._id,
         otherUserId
       });
-      refreshThreads();
+      const threadId = response.data.thread._id
+      await refreshThreads();
+      navigation.navigate('ChatScreen', { threadId:threadId})
     } catch (error) {
       console.error('Error in handleUserPress:', error);
     }
@@ -157,13 +160,17 @@ const renderThread = ({ item }) => {
     console.log("Last Message Text:", lastMessageText);
 
     return (
+      
         <TouchableOpacity onPress={() => handleThreadPress(item)}>
             <View style={styles.threadContainer}>
+           
             <Text>{item.name}</Text>
-            <Entypo name="dots-three-horizontal" size={20} color="black" marginLeft={280} marginTop={-10}
+            <View style={{ }}> 
+            <Entypo name="dots-three-horizontal" size={20} color="black" marginLeft={280} marginTop={-23}
         
         
           onPress={() => {
+            
             Alert.alert(
               "Manage Conversation",
               "",
@@ -176,9 +183,11 @@ const renderThread = ({ item }) => {
             );
           }}
         />
+        </View>
                 <Text style={styles.userName}>{otherUser.name || 'Unknown User'}</Text>
                 <Text style={styles.lastMessage}>{lastMessageText}</Text>
             </View>
+           
         </TouchableOpacity>
     );
 };
@@ -253,6 +262,7 @@ const styles = StyleSheet.create({
   },
   
   threadContainer: {
+
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',

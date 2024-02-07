@@ -6,6 +6,7 @@ var {expressjwt:jwt} = require('express-jwt')
 const Thread = require('../models/threadModel')
 const Message = require('../models/messageModel')
 
+
 //middleware
 
 const requireSignIn = jwt({
@@ -112,6 +113,7 @@ const allUsersController = async (req, res) => {
  // Assuming you have the user's ID from the request (e.g., from a JWT token)
   
       const threads = await Thread.find({ users: userId })
+      .sort('-updatedAt')
         .populate({
           path: 'messages',
           options: { sort: { 'createdAt': -1 }},
@@ -172,25 +174,30 @@ const getMessagesInThread = async (req, res) => {
   }
 };
 
-  const postMessageToThread = async (req, res) => {
-    try {
+const postMessageToThread = async (req, res) => {
+  try {
       const { threadId } = req.params;
       const { text, senderId } = req.body; // Assuming you send text and sender's ID
-  
+
       // Create a new message
       const newMessage = new Message({ text, sender: senderId, thread: threadId });
       await newMessage.save();
-  
-      // Add the message to the thread
-      await Thread.findByIdAndUpdate(threadId, { $push: { messages: newMessage._id } });
-  
+
+      // Add the message to the thread and update updatedAt
+      await Thread.findByIdAndUpdate(threadId, 
+          { 
+              $push: { messages: newMessage._id },
+              $set: { updatedAt: new Date() } // Update the updatedAt field to the current time
+          },
+          { new: true } // Return the updated document
+      );
+
       res.status(201).json({ success: true, message: newMessage });
-    } catch (error) {
+  } catch (error) {
       console.error('Error posting message:', error);
       res.status(500).json({ success: false, message: 'Error posting message', error });
-    }
-  };
-  
+  }
+};
 
 //Login
 
@@ -289,8 +296,39 @@ const updateUserController = async (req, res) =>{
             }
 }
 
+const deleteConversation = async (req, res) => {
+  try {
+    const { threadId } = req.params;
+    
+    // Delete the conversation
+    await Thread.findByIdAndDelete(threadId);
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread }
+    // Also delete all messages associated with this conversation
+    await Message.deleteMany({ thread: threadId });
+
+
+    res.status(200).json({ message: 'Conversation and all related messages deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    res.status(500).json({ message: 'Failed to delete conversation', error: error.message });
+  }
+};
+
+const muteConversation = async (req, res) => {
+  try {
+      const { threadId } = req.params;
+      // Update conversation to set it as muted
+      await Thread.findByIdAndUpdate(threadId, { isMuted: true });
+      res.status(200).json({ message: 'Conversation muted successfully' });
+  } catch (error) {
+      console.error('Error muting conversation:', error);
+      res.status(500).json({ message: 'Failed to mute conversation' });
+  }
+};
+
+
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation }
 
 
 
