@@ -1,10 +1,13 @@
 const JWT = require("jsonwebtoken");
 const { hashPassword, comparePassword } = require("../helpers/authHelper");
 const userModel = require("../models/userModel");
-
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 var {expressjwt:jwt} = require('express-jwt')
 const Thread = require('../models/threadModel')
 const Message = require('../models/messageModel')
+
+
 
 
 //middleware
@@ -12,12 +15,12 @@ const Message = require('../models/messageModel')
 const requireSignIn = jwt({
   secret: process.env.JWT_SECRET,
   algorithms: ["HS256"],
-  userProperty: 'user'
-}).unless({
-  path: [
-    // paths that don't require authentication
-  ]
+  userProperty: 'auth'  // Now attaches decoded token payload to req.auth
 });
+
+
+
+
 
 // Middleware to log the user object after JWT middleware
 
@@ -160,14 +163,37 @@ const getMessagesInThread = async (req, res) => {
   try {
     const { threadId } = req.params;
     console.log("Fetching messages for thread:", threadId);
-    
-    const thread = await Thread.findById(threadId).populate('messages');
+
+    // Assuming req.user is set by your authentication middleware and contains the current user's ID
+    const userId = req.auth._id; 
+
+    // Fetch the thread and populate both the messages and the sender of each message
+    const thread = await Thread.findById(threadId)
+      .populate({
+        path: 'messages',
+        populate: {
+          path: 'sender', // Ensure this path matches your Message schema's reference to the User
+          model: 'User' // Ensure this model name matches your User model
+        }
+      });
+
     if (!thread) {
       console.log("Thread not found:", threadId);
       return res.status(404).json({ success: false, message: 'Thread not found' });
     }
-    console.log("Found messages:", thread.messages);
-    res.status(200).json({ success: true, messages: thread.messages });
+
+    // Iterate over thread.messages to add the 'sentByMe' property based on the sender's ID
+    const messagesWithSenderInfo = thread.messages.map(message => {
+      const senderId = message.sender?._id.toString(); // Using optional chaining for safety
+      const isSentByMe = senderId === userId.toString();
+      return {
+        ...message.toObject(), // Convert the Mongoose document to a plain object
+        sentByMe: isSentByMe,
+      };
+    });
+
+    console.log("Processed messages with 'sentByMe':", messagesWithSenderInfo);
+    res.status(200).json({ success: true, messages: messagesWithSenderInfo });
   } catch (error) {
     console.error('Error fetching messages:', error);
     res.status(500).json({ success: false, message: 'Error fetching messages', error });
@@ -198,6 +224,65 @@ const postMessageToThread = async (req, res) => {
       res.status(500).json({ success: false, message: 'Error posting message', error });
   }
 };
+
+const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  const user = await userModel.findOne({ email });
+  
+  if (!user) {
+    return res.status(404).send({ message: 'User not found' });
+  }
+  
+  // Generate a reset token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  // Token expiry time (e.g., 1 hour)
+  const resetTokenExpire = Date.now() + 3600000; 
+
+  await userModel.updateOne({ _id: user._id }, {
+    resetPasswordToken: resetToken,
+    resetPasswordExpires: resetTokenExpire
+  });
+
+  // Send the email
+  const transporter = nodemailer.createTransport({  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  }});
+  const resetUrl = `http://localhost:8080/api/v1/reset-password/${resetToken}`;
+
+  await transporter.sendMail({
+    to: user.email,
+    subject: 'Password Reset Request',
+    text: `Please click on the following link to reset your password: ${resetUrl}`
+  });
+
+// txke auyf laok glpi
+
+
+  res.send({ message: 'Password reset email sent.' });
+};
+
+const resetPassword = async(req, res) =>{
+  const { token, newPassword } = req.body;
+  const user = await userModel.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now ()}
+  })
+  if(!user){
+    return res.status(400).send({message: 'Password reset token is invalid or has expired'})
+  }
+try {
+
+  user.password = await hashPassword(newPassword)
+  user.resetPasswordToken = undefined
+  user.resetPasswordExpires = undefined
+  await user.save()
+  res.send({ message: 'Your password has been updated'})
+} catch (error){
+  res.status(500).send({ message: 'Error updating password', error: error.message})
+}
+}
 
 //Login
 
@@ -328,7 +413,7 @@ const muteConversation = async (req, res) => {
 
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset }
 
 
 

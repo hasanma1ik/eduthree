@@ -9,10 +9,16 @@ const connectDB = require('./config/db');
 //DOTENV
 dotenv.config();
 
+
 //MONGODB CONNECTION
 connectDB();
 //REST OBJECT
 const app = express();
+
+app.get('/api/v1/', (req, res) => {
+    res.send('API V1 Home');
+  });
+  
 
 //middlewares
 app.use(cors());

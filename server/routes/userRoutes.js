@@ -12,6 +12,8 @@ const {
      getMessagesInThread,
      deleteConversation,
      muteConversation,
+     requestPasswordReset,
+     resetPassword,
      
      } = require('../controllers/userController');
 
@@ -42,11 +44,16 @@ router.get("/all-users", allUsersController)
 router.get('/threads', requireSignIn, getAllThreads); // Add this route
 router.post('/threads', userPress);
 
-router.get('/threads/:threadId', getMessagesInThread);
+router.get('/threads/:threadId', requireSignIn, getMessagesInThread);
 router.post('/threads/:threadId/messages', postMessageToThread);
 
 router.delete('/threads/:threadId', deleteConversation);
 router.patch('/threads/:threadId/mute', muteConversation);
+
+//password reset Routes
+router.post('/request-password-reset', requestPasswordReset)
+router.post('/reset-password', resetPassword)
+
 
 //export 
 module.exports = router;

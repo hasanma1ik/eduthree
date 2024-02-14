@@ -1,11 +1,12 @@
-import { View, Text, TextInput, StyleSheet, Alert } from 'react-native'
+import { View, Text, TextInput, StyleSheet, Alert, Button, Modal } from 'react-native'
 import React, { useState,useContext } from "react";
 import { AuthContext } from './context/authContext';
 import InputBox from '../InputBox'
-import SubmitButton from '../SubmitButton'
+import LoginButton from '../LoginButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useUser } from './context/userContext';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -17,6 +18,8 @@ const Login = ({ navigation }) => {
 
   // Global state from AuthContext
   const [state, setState] = useContext(AuthContext);
+
+
 
   const handleSubmit = async () => {
       try {
@@ -39,7 +42,7 @@ const Login = ({ navigation }) => {
               
 
               // Navigate to Home
-              navigation.navigate('Home');
+            //   navigation.navigate('Home');
           } else {
               Alert.alert("Login failed", "Invalid response from server");
           }
@@ -61,16 +64,29 @@ const Login = ({ navigation }) => {
     return (
      
       <View style={styles.container}>
-        <Text style={styles.pageTitle}>LoginScreen</Text>
-        <View style={{ marginHorizontal:20 }}>
-        <InputBox inputTitle={"Email"} keyboardType="email-address" autoComplete="email" value={email} setValue={setEmail}/>
-        <InputBox inputTitle={"Password"} secureTextEntry={true} autoComplete="password" value={password} setValue={setPassword}/>
+        <Text style={styles.pageTitle}>Login</Text>
+        <View style={styles.inputContainer}>
+        <InputBox inputTitle={"Email"} keyboardType="email-address" autoComplete="email" value={email} setValue={setEmail} icon="envelope"/>
+        <InputBox inputTitle={"Password"} secureTextEntry={true} autoComplete="password" value={password} setValue={setPassword} icon="lock"/>
   
         </View>
         {/* <Text>{JSON.stringify({ name, email, password }, null, 4)}</Text> */}
-        <SubmitButton btnTitle="Login" loading={loading} handleSubmit={handleSubmit} />
-        <Text style={styles.linkText}>Not a User Please {" "} <Text style ={styles.link} onPress={()=>navigation.navigate("Register")}>Register</Text></Text>
+
         
+        <LoginButton btnTitle="Submit" loading={loading} handleSubmit={handleSubmit} textStyle={styles.loginButtonText}  />
+        
+
+        <TouchableOpacity onPress={()=> navigation.navigate("Register")}>
+            <Text style={styles.linkText}>
+                Not a user please <Text style={styles.link}>Register</Text>
+            </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={()=> navigation.navigate("ForgetPassword")}>
+            <Text style={styles.forgetPasswordLink}>Forget Password</Text>
+        </TouchableOpacity>
+
+
       </View>
     )
 }
@@ -78,29 +94,55 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: "center",
-        backgroundColor: 'white',
+        backgroundColor: '#F5F5F5',
+        padding: 20,
     },
+    loginButtonText: {
+        fontFamily: 'outfit-bold',
+      },
+
+   
     pageTitle:{
-        fontSize:40,
-        fontWeight: 'bold',
+        fontSize: 24,
+        fontFamily: 'outfit-bold',
         textAlign: 'center',
-        color: "#1e2225"
-    },
-    inputBox: {
-        height: 40,
+        color: "#1e2225",
         marginBottom: 20,
-        backgroundColor: '#ffffff',
-        borderRadius : 10,
-        marginTop: 10,
-        paddingLeft:10,
-        color: "#af9f85",
+        
     },
-    linkText: {
-        textAlign: "center",
+    inputContainer: {
+        marginHorizontal: 20,
+      },
+      logo: {
+        width: 100,
+        height: 100,
+        marginBottom: 20,
+        alignSelf: 'center',
+      },
+
+   
+    logo: {
+        width: 100,
+        height: 100,
+        marginBottom: 20,
+        alignSelf: 'center',
       },
       link: {
-        color: "red",
+        color: "#007BFF",
+        fontWeight: 'bold',
       },
+      
+
+      link: {
+        color: "#007BFF",
+        fontWeight: 'bold',
+      },
+      forgetPasswordLink:{
+        textAlign: "center",
+        color: "#007BFF",
+        marginTop: 20,
+        fontWeight: 'bold',
+      }
 })
 
 

@@ -9,7 +9,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
 import RootNavigation from './Navigation';
 import { UserProvider } from './src/screen/context/userContext';
-import { ThreadsProvider } from './src/screen/context/ThreadsContext';
+
 
 
 SplashScreen.preventAutoHideAsync();
@@ -57,6 +57,8 @@ export default function App() {
     'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
     'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
     'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
+    
+   
   });
 
   const onLayoutRootView = useCallback(async () => {

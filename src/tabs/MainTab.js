@@ -5,6 +5,7 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import Home from '../screen/Home';
 import LoginPage from '../LoginPage';
 import RegisterScreen from '../screen/RegisterScreen';
+import handleForgetPassword  from '../screen/forgetpasswordscreen';
 import Login from '../screen/Login';
 import { AuthContext } from '../screen/context/authContext';
 import TopTab from './TopTab';
@@ -15,6 +16,7 @@ import MyPosts from '../screen/MyPosts';
 import { DrawerContent } from '../DrawerContent';
 import Messages from '../screen/Messages';
 import ChatScreen from '../screen/ChatScreen';
+
 
 
 
@@ -47,6 +49,7 @@ const MainStackNavigator = () => (
         <Stack.Screen name="Login" component={LoginPage} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Login1" component={Login} />
+        <Stack.Screen name="ForgetPassword" component={handleForgetPassword } />
        
         </>
     )    
@@ -62,9 +65,11 @@ return (
   </Drawer.Navigator>
   ) : (
     <Stack.Navigator initialRouteName="Login" headerShown={false}>
-    <Stack.Screen name="Login" component={LoginPage} />
-    <Stack.Screen name="Register" component={RegisterScreen} />
-    <Stack.Screen name="Login1" component={Login} />
+    <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }} />
+    <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+    <Stack.Screen name="Login1" component={Login} options={{ headerShown: false }} />
+    <Stack.Screen name="ForgetPassword" component={handleForgetPassword } options={{ headerShown: false }} />
+
   </Stack.Navigator>
   )}
   

@@ -1,33 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import axios from 'axios';
-
+import { useUser } from './context/userContext';
 
 const ChatScreen = ({ route }) => {
   const { threadId } = route.params;
+  const { currentUser } = useUser(); 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
+  useEffect(() => {
+    fetchMessages();
+  }, [threadId]);
 
- 
   // Fetch messages for a specific thread
-    const fetchMessages = async () => {
+  const fetchMessages = async () => {
     try {
       const response = await axios.get(`/auth/threads/${threadId}`);
-      setMessages(response.data.messages);
+      const fetchedMessages = response.data.messages.map(message => ({
+        ...message,
+        // Compare message.sender with currentUser.id, adjust the property names as necessary
+        sentByMe: message.sender === currentUser?._id,
+        
+      }));
+      setMessages(fetchedMessages);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  }
-
+  };
   
+
   const sendMessage = async () => {
     if (!threadId || newMessage.trim() === '') return;
 
+    // Include sentByMe in the optimistic UI update
     const newMessageObj = {
-      // Construct a temporary new message object
       text: newMessage,
-      // Add any other required properties
+      sentByMe: true, // Assume the new message is sent by the current user
     };
 
     setMessages([...messages, newMessageObj]); // Optimistically update the UI
@@ -36,26 +45,21 @@ const ChatScreen = ({ route }) => {
     try {
       await axios.post(`/auth/threads/${threadId}/messages`, { text: newMessage });
       fetchMessages(); // Refresh messages to get the updated list from the server
-      
     } catch (error) {
       console.error('Error sending message:', error);
-      // Optionally, handle failed message sending (e.g., remove the optimistic message)
     }
-};
-
+  };
 
   // Render each message item
-  const renderMessage = ({ item }) => (
-    <View style={styles.messageContainer}>
-      <Text style={styles.messageText}>{item.text}</Text>
-    </View>
-  );
+  const renderMessage = ({ item }) => {
+    const isSentByMe = item.sentByMe;
+    return (
+      <View style={[styles.messageContainer, isSentByMe? styles.userMessage : styles.otherUserMessage]}>
+        <Text style={styles.messageText}>{item.text}</Text>
+      </View>
+    );
+  };
 
-  useEffect(() => {
-    fetchMessages();
-  }, [threadId]);
-
-  
   return (
     <View style={styles.container}>
       <FlatList
@@ -78,35 +82,32 @@ const ChatScreen = ({ route }) => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#f5f5f5',
+  },
+  messageContainer: {
+    padding: 8,
+    marginVertical: 4,
+    borderRadius: 10,
+    marginHorizontal: 10,
+    maxWidth: '80%',
   },
   userMessage: {
     alignSelf: 'flex-end',
     backgroundColor: '#3f8ae0',
-    padding: 8,
-    margin: 5,
-    borderRadius: 8,
-    maxWidth: '70%',
   },
   otherUserMessage: {
     alignSelf: 'flex-start',
     backgroundColor: '#dcdcdc',
-    padding: 8,
-    margin: 5,
-    borderRadius: 8,
-    maxWidth: '70%',
   },
   messageText: {
-    color: 'black', // Adjust text color based on the background
+    color: 'black',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 10,
     backgroundColor: 'white',
   },

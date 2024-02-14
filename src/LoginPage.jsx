@@ -38,19 +38,24 @@ export default function LoginPage(){
 
     return (
         <View style={styles.container}>
+          <Text style={styles.loginText}>Learn Academy</Text>
                <Image source={require('./../assets/loginpic.png')} style={{width: 400, height: 400}} />
 
-      <Text style={styles.loginText}>Welcome to my Educational App!</Text>
-      <TouchableOpacity style={styles.button} onPress={onPress}>
+      
+
+      <TouchableOpacity style={styles.button1} onPress={onLogin}>
+      <Text style={styles.linkText1}> <Text style ={styles.link1}>LOGIN</Text></Text>
+      </TouchableOpacity>
+      <Text style={styles.orStyle}>or</Text>
+      <TouchableOpacity style={styles.button2} onPress={onPress}>
             <FontAwesome name="google" size={24} color="white" style={{marginRight:10}} />
-                <Text style={{color:Colors.BLACK}}>Sign In with Google</Text>
+                <Text style={styles.linkText2}><Text style ={styles.link1}>Sign in with Google</Text></Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={onSignUp}>
+
+            {/* <TouchableOpacity style={styles.button} onPress={onSignUp}>
         <Text style={{ color: Colors.BLACK }}>Sign Up</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={onLogin}>
-      <Text style={styles.linkText}>Alread Registered Please {" "} <Text style ={styles.link}>LOGIN</Text></Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
+   
       
         </View>
     )
@@ -63,23 +68,55 @@ const styles = StyleSheet.create({
       alignItems: "center",
       justifyContent: "center",
     },
-    loginText:{
-      fontSize:35, fontWeight:'bold', textAlign: 'center'
-  },
-  button:{
-    backgroundColor:Colors.PRIMARY,
+   
+  button1:{
+    backgroundColor:'#2B2D2F',
     padding:10,
     margin:30,
+    width: 200,
     display:'flex',
     flexDirection:'row',
     justifyContent:'center',
     alignItems:'center',
     borderRadius: 10
 },
-linkText:{
-  textAlign: "center",
+button2:{
+  backgroundColor:'#2B2D2F',
+  padding:10,
+  margin:30,
+  width: 200,
+  display:'flex',
+  flexDirection:'row',
+  justifyContent:'center',
+  alignItems:'center',
+  borderRadius: 10
 },
-link: {
-  color:'red',
+
+loginText:{
+  
+  fontSize:30,
+  textAlign: "center",
+  fontFamily: 'outfit-bold',
+},
+
+linkText1:{
+  textAlign: "center",
+  fontFamily: 'outfit-medium'
+},
+linkText2:{
+  textAlign: "center",
+  fontFamily: 'outfit-medium'
+},
+
+
+link1: {
+  color:'white',
+},
+orStyle:{
+  fontFamily: 'outfit-bold',
+  marginBottom:-10,
+  marginTop: -10,
+
 }
+
   });

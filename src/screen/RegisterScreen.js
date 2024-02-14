@@ -1,8 +1,9 @@
-import { View, Text, TextInput, StyleSheet, Alert } from 'react-native'
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react'
 import InputBox from '../InputBox'
 import SubmitButton from '../SubmitButton'
 import axios from 'axios'
+
 
 const RegisterScreen = ({navigation}) =>{
   const [name, setName] = useState('')
@@ -31,20 +32,36 @@ const RegisterScreen = ({navigation}) =>{
       console.log(error)
     }
   }
+  
   return (
    
     <View style={styles.container}>
-      <Text style={styles.pageTitle}>RegisterScreen</Text>
-      <View style={{ marginHorizontal:20 }}>
+      <Text style={styles.pageTitle}>Register</Text>
+      <View style={ styles.inputContainer }>
       <InputBox inputTitle={"Name"} value={name} setValue={setName}/>
       <InputBox inputTitle={"Email"} keyboardType="email-address" autoComplete="email" value={email} setValue={setEmail}/>
       <InputBox inputTitle={"Password"} secureTextEntry={true} autoComplete="password" value={password} setValue={setPassword}/>
 
       </View>
       {/* <Text>{JSON.stringify({ name, email, password }, null, 4)}</Text> */}
-      <SubmitButton btnTitle="Register" loading={loading} handleSubmit={handleSubmit} />
-      <Text style={styles.linkText}>Alread Registered Please {" "} <Text style ={styles.link} onPress={()=>navigation.navigate("Login1")}>LOGIN</Text></Text>
 
+      <TouchableOpacity
+      style={styles.submitButton}
+      onPress={handleSubmit}
+      disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.submitButtonText}>Submit</Text>
+        )}
+      </TouchableOpacity>
+
+     <TouchableOpacity onPress={()=> navigation.navigate("Login1")}>
+      <Text style={styles.linkText}>
+        Already Registered Please <Text style={styles.link}>LOGIN</Text>
+      </Text>
+     </TouchableOpacity>
 
     </View>
   )
@@ -54,28 +71,42 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: "center",
-        backgroundColor: 'white',
+        padding: 20,
+        backgroundColor: '#F5F5F5',
     },
     pageTitle:{
-        fontSize:40,
+      fontSize: 24,
         fontWeight: 'bold',
         textAlign: 'center',
-        color: "#1e2225"
-    },
-    inputBox: {
-        height: 40,
+        color: "#1e2225",
         marginBottom: 20,
-        backgroundColor: '#ffffff',
-        borderRadius : 10,
-        marginTop: 10,
-        paddingLeft:10,
-        color: "#af9f85",
+    },
+    inputContainer: {
+      marginHorizontal: 20,
+    },
+
+    submitButton:{
+      backgroundColor: '#007bff',
+      padding: 15,
+      borderRadius: 5,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: 10,
+      marginHorizontal: 20,
+    },
+
+    submitButtonText:{
+      fontSize:18,
+      color: '#ffffff',
+      fontWeight: 'bold',
     },
     linkText:{
       textAlign: "center",
+      marginTop: 10,
     },
     link: {
-      color:'red',
+      color: "#007BFF",
+      color: "#007BFF",
     }
 })
 export default RegisterScreen
