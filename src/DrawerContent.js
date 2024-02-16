@@ -20,6 +20,13 @@ const DrawerContent = (props) => {
       <DrawerContentScrollView {...props}>
         {/* Your custom drawer content goes here */}
  
+        <DrawerItem label="Attendance" onPress={() => props.navigation.navigate('AttendanceScreen')} />
+        <DrawerItem label="Timetable" onPress={() =>  props.navigation.navigate('TimetableScreen', {
+      userId: state.user.id, // Assuming `state.user.id` holds the userId. Adjust as needed.
+    })
+  } 
+/>
+        <DrawerItem label="Calendar" onPress={() => props.navigation.navigate('CalendarScreen')} />
         <DrawerItem label="My Posts" onPress={() => props.navigation.navigate('MyPosts')} />
         <DrawerItem label="Log Out" onPress={() =>  handleLogOut()} />
 

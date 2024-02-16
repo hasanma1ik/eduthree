@@ -16,6 +16,11 @@ import MyPosts from '../screen/MyPosts';
 import { DrawerContent } from '../DrawerContent';
 import Messages from '../screen/Messages';
 import ChatScreen from '../screen/ChatScreen';
+import AttendanceScreen from '../AttendanceScreen';
+import CalendarScreen from '../CalenderScreen';
+import TimetableScreen from '../Timetable';
+
+
 
 
 
@@ -42,7 +47,11 @@ const MainStackNavigator = () => (
     <Stack.Screen name="About" component={About} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="MyPosts" component={MyPosts} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="TimetableScreen" component={TimetableScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="CalendarScreen" component={CalendarScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+
    
     </>) : (
         <> 

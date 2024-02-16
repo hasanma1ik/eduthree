@@ -14,13 +14,22 @@ const {
      muteConversation,
      requestPasswordReset,
      resetPassword,
+     markStudentAttendance,
+     listStudentsInClass,
+     getTimetableForUser,
+     addEvent,
+     getEvents
+
+    
      
      } = require('../controllers/userController');
 
     //  const User = require('../models/userModel')
     const User = require('../models/userModel')
     const message = require('../models/messageModel')
+    // const Event = require('../models/eventmodel')
 
+    
 
 //router object
 const router = express.Router();
@@ -54,6 +63,20 @@ router.patch('/threads/:threadId/mute', muteConversation);
 router.post('/request-password-reset', requestPasswordReset)
 router.post('/reset-password', resetPassword)
 
+// Route to list students in a class
+
+router.get('/students/:classId', listStudentsInClass)
+router.post('/attendance/mark', markStudentAttendance)
+
+// router to fetch timetable
+
+router.get('/timetable/:userId', getTimetableForUser);
+
+
+
+// Route for fetching all events
+router.get('/events', getEvents);
+router.post('/events', addEvent);
 
 //export 
 module.exports = router;

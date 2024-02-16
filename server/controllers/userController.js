@@ -6,7 +6,10 @@ const nodemailer = require('nodemailer');
 var {expressjwt:jwt} = require('express-jwt')
 const Thread = require('../models/threadModel')
 const Message = require('../models/messageModel')
-
+const Student = require('../models/studentmodel')
+const AttendanceRecord = require('../models/attendancemodel');
+const Timetable = require('../models/timetablemodel')
+const Event = require('../models/eventmodel')
 
 
 
@@ -17,9 +20,6 @@ const requireSignIn = jwt({
   algorithms: ["HS256"],
   userProperty: 'auth'  // Now attaches decoded token payload to req.auth
 });
-
-
-
 
 
 // Middleware to log the user object after JWT middleware
@@ -411,9 +411,66 @@ const muteConversation = async (req, res) => {
   }
 };
 
+const listStudentsInClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const students = await Student.find({ classId });
+    res.json({ success: true, students });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error listing students', error });
+  }
+};
 
+const markStudentAttendance = async (req, res) => {
+  try {
+    const { studentId, classId, status } = req.body;
+    const attendanceRecord = new AttendanceRecord({
+      studentId,
+      classId,
+      date: new Date(),
+      status,
+    });
+    await attendanceRecord.save();
+    res.json({ success: true, message: 'Attendance marked successfully', attendanceRecord });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error marking attendance', error });
+  }
+};
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset }
+// Get a user's timetable
+
+const getTimetableForUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const timetableEntries = await Timetable.find({ userId }).sort('startTime');
+    res.json({ success: true, timetableEntries });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch timetable", error });
+  }
+};
+
+const getEvents = async (req, res) => {
+  try {
+    const events = await Event.find().sort({ date: 1 }); // Sort by date ascending
+    res.json({ success: true, events });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch events", error: error.message });
+  }
+};
+
+const addEvent = async (req, res) => {
+  try {
+    const newEvent = new Event(req.body);
+    await newEvent.save();
+    res.status(201).json({ success: true, event: newEvent });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to add event", error: error.message });
+  }
+};
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, markStudentAttendance, listStudentsInClass, getTimetableForUser, getEvents, addEvent }
 
 
 
