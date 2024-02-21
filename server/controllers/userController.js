@@ -10,6 +10,8 @@ const Student = require('../models/studentmodel')
 const AttendanceRecord = require('../models/attendancemodel');
 const Timetable = require('../models/timetablemodel')
 const Event = require('../models/eventmodel')
+const Assignment = require('../models/assignmentmodel')
+const Submission = require('../models/submissionmodel')
 
 
 
@@ -468,9 +470,81 @@ const addEvent = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to add event", error: error.message });
   }
+}
+
+const createAssignment = async (req, res) => {
+  try {
+    const { title, description, dueDate, files } = req.body;
+
+   
+    // Create a new assignment document
+    const newAssignment = new Assignment({
+      title,
+      description,
+      dueDate,
+      files
+    });
+  // Save the assignment to the database
+  await newAssignment.save();
+
+  // Respond with the created assignment
+  res.status(201).json({
+    message: 'Assignment created successfully',
+    assignment: newAssignment
+  });
+} catch (error) {
+  res.status(500).json({
+    message: 'Failed to create assignment',
+    error: error.message
+  });
+}
 };
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, markStudentAttendance, listStudentsInClass, getTimetableForUser, getEvents, addEvent }
+const submitAssignment = async (req, res) => {
+  try {
+    const { assignmentId, studentId, filePath } = req.body;
+
+    // Basic validation
+    if (!assignmentId || !studentId || !filePath) {
+      return res.status(400).json({ message: 'Assignment ID, student ID, and file path are required' });
+    }
+
+    // Additional validations here (e.g., check if assignment and student exist)
+
+    // Create and save the submission
+    const submission = new Submission({
+      assignmentId,
+      studentId,
+      filePath,
+    });
+
+    await submission.save();
+
+    res.status(201).json({ message: 'Assignment submitted successfully', data: submission });
+  } catch (error) {
+    console.log(error); // For debugging
+    res.status(500).json({ message: 'Failed to submit assignment', error: error.message });
+  }
+};
+
+const getAssignmentById = async (req, res) => {
+  try {
+    const assignment = await Assignment.findById(req.params.id)
+      .populate('submissions') // Assuming a relation to submissions
+      .exec();
+    
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    res.json(assignment);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching assignment', error: error.message });
+  }
+};
+
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, markStudentAttendance, listStudentsInClass, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment}
 
 
 

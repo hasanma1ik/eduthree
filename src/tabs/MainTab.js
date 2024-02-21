@@ -19,6 +19,8 @@ import ChatScreen from '../screen/ChatScreen';
 import AttendanceScreen from '../AttendanceScreen';
 import CalendarScreen from '../CalenderScreen';
 import TimetableScreen from '../Timetable';
+import Assignments from '../Assignments';
+import CreateAssignment from '../createAssignment';
 
 
 
@@ -51,6 +53,11 @@ const MainStackNavigator = () => (
     <Stack.Screen name="TimetableScreen" component={TimetableScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="CalendarScreen" component={CalendarScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="Assignments" component={Assignments} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="CreateAssignment" component={CreateAssignment} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      
+      
+
 
    
     </>) : (

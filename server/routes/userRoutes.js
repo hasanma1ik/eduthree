@@ -1,4 +1,6 @@
 const express = require('express');
+const multer = require('multer');
+const upload = require('../config/uploadConfig')
 const { 
     registerController,
      loginController,
@@ -18,20 +20,20 @@ const {
      listStudentsInClass,
      getTimetableForUser,
      addEvent,
-     getEvents
-
+     getEvents,
+     submitAssignment,
+     createAssignment,
+     getAssignmentById
     
-     
+    
      } = require('../controllers/userController');
-
+     const path = require('path')
     //  const User = require('../models/userModel')
     const User = require('../models/userModel')
     const message = require('../models/messageModel')
     // const Event = require('../models/eventmodel')
 
-    
 
-//router object
 const router = express.Router();
 
 //routes
@@ -77,6 +79,27 @@ router.get('/timetable/:userId', getTimetableForUser);
 // Route for fetching all events
 router.get('/events', getEvents);
 router.post('/events', addEvent);
+
+// In your routes file
+router.post('/upload', upload.single('file'), (req, res) => {
+  if (req.file) {
+    // Assuming the file's URL or path is accessible via req.file.path
+    // You may need to adjust based on your storage setup
+    res.status(200).json({ message: 'File uploaded successfully', filePath: req.file.path });
+  } else {
+    res.status(400).json({ message: 'No file uploaded' });
+  }
+});
+
+router.post('/submission', submitAssignment);
+
+
+
+// Route for creating a new assignment
+router.post('/create-assignments', createAssignment);
+
+// In your routes file
+router.get('/assignments/:id', getAssignmentById)
 
 //export 
 module.exports = router;

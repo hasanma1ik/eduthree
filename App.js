@@ -80,7 +80,7 @@ export default function App() {
         <NavigationContainer>
           <View style={styles.container} onLayout={onLayoutRootView}>
             <SignedIn>
-              {/* It seems like you intended to use a navigation stack/container here,
+              {/* It sees like you intended to use a navigation stack/container here,
                   but you've used a non-existent <stackContainer> component.
                   Ensure you correctly implement your navigation structure here. */}
               <TabNavigation />
