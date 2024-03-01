@@ -840,4 +840,750 @@ module.exports = { requireSignIn, registerController, loginController, updateUse
 // have notifications on my main tab,
 
 
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import axios from 'axios';
+import * as DocumentPicker from 'expo-document-picker';
+
+
+const Assignments = ({ route }) => {
+  const { assignmentId } = route.params;
+  const [assignment, setAssignment] = useState(null);
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [fileUrl, setFileUrl] = useState('');
+
+
+  useEffect(() => {
+    const fetchAssignment = async () => {
+      try {
+        const response = await axios.get(`auth/assignments/${assignmentId}`);
+        setAssignment(response.data);
+      } catch (error) {
+        console.error(error.response ? error.response.data : error.message);
+        Alert.alert("Error", error.response ? error.response.data.message : "Failed to fetch assignment details");
+      }
+    };
+    fetchAssignment();
+  }, [assignmentId]);
+
+  const selectFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*', // or specific MIME type
+      });
+  
+      if (result.canceled) {
+        console.log('Document selection was cancelled.');
+        Alert.alert('Cancelled', 'Document selection was cancelled.');
+        return;
+      }
+  
+      console.log('Selected file', result);
+      // Assuming you're interested in the first selected file
+      const selectedFile = result.assets ? result.assets[0] : null;
+      if (selectedFile) {
+        setFile(selectedFile);
+      } else {
+        Alert.alert('Error', 'No file selected');
+      }
+    } catch (err) {
+      console.error('Error picking document:', err);
+      Alert.alert('Error', 'An error occurred while picking the document.');
+    }
+  };
+  
+
+  const uploadFile = async () => {
+    if (!file) {
+      Alert.alert("Error", "Please select a file first");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", {
+      uri: file.uri,
+      name: file.name,
+      type: '*/*', // or the actual type of the file
+    });
+
+    setUploading(true);
+
+    try {
+      const response = await axios.post('auth/upload', formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setUploading(false);
+      setFileUrl(response.data.filePath); 
+      Alert.alert("Upload Successful", `File uploaded successfully: ${response.data.filePath}`);
+      // You can now use response.data.filePath in your assignment submission
+    } catch (err) {
+      setUploading(false);
+      Alert.alert("Upload Failed", "The file upload failed.");
+      console.error(err);
+    }
+  };
+
+  // This function now just alerts the user to upload a file
+  const handleSubmit = async () => {
+    if (!file) {
+      Alert.alert("Error", "Please upload a file first");
+      return;
+    }
+
+    // Upload the file first
+  await uploadFile(); // Make sure this function sets the fileUrl state upon success
+
+  // Check if the file URL is set
+  if (!fileUrl) {
+    Alert.alert("Error", "File upload failed or no file URL available");
+    return;
+  }
+  
+    // Assuming studentId is obtained from your auth context or passed in some way
+    const userId = req.auth._id; ; // Replace this with actual logic to obtain studentId
+  
+    try {
+      // Prepare the submission data
+      const submissionData = {
+        assignmentId: assignmentId,
+      userId: userId,
+      fileUrl: fileUrl, // Use the file URL obtained from the upload process
+      fileName: file.name,
+      fileType: file.type || 'application/octet-stream',
+      };
+  
+      // Send a POST request to your backend endpoint
+      const response = await axios.post('/auth/submission', submissionData);
+  
+      // Check the response status and act accordingly
+      if (response.status === 201) {
+        Alert.alert("Success", "Assignment submitted successfully.");
+      } else {
+        // Handle any other status codes as needed
+        Alert.alert("Error", "Failed to submit assignment.");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to submit assignment: " + error.message);
+    }
+  };
+  
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>{assignment ? assignment.name : 'Loading...'}</Text>
+      <Button title="Select File" onPress={selectFile} />
+      {file && <Text>File selected: {file.name}</Text>}
+      <Button title={uploading ? "Uploading..." : "Upload File"} onPress={uploadFile} disabled={uploading} />
+      <Button title="Submit Assignment" onPress={handleSubmit} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+});
+
+export default Assignments;
+
+
+
+
+
+const express = require('express');
+
+const upload = require('../config/uploadConfig')
+const { 
+    registerController,
+     loginController,
+     updateUserController,
+     requireSignIn,
+     searchController,
+     allUsersController,
+     userPress,
+     getAllThreads,
+     postMessageToThread,
+     getMessagesInThread,
+     deleteConversation,
+     muteConversation,
+     requestPasswordReset,
+     resetPassword,
+     markStudentAttendance,
+     listStudentsInClass,
+     getTimetableForUser,
+     addEvent,
+     getEvents,
+     submitAssignment,
+     createAssignment,
+     getAssignmentById
+    
+    
+     } = require('../controllers/userController');
+     
+
+
+const router = express.Router();
+
+//routes
+router.post("/register", registerController);
+
+// LOGIN || POST
+router.post("/login", loginController);
+
+//UPDATE || PUT
+
+router.put("/update-user", requireSignIn, updateUserController)
+
+// Search users
+router.get("/search", searchController)
+
+// All Users
+router.get("/all-users", allUsersController)
+  
+router.get('/threads', requireSignIn, getAllThreads); // Add this route
+router.post('/threads', userPress);
+
+router.get('/threads/:threadId', requireSignIn, getMessagesInThread);
+router.post('/threads/:threadId/messages', postMessageToThread);
+
+router.delete('/threads/:threadId', deleteConversation);
+router.patch('/threads/:threadId/mute', muteConversation);
+
+//password reset Routes
+router.post('/request-password-reset', requestPasswordReset)
+router.post('/reset-password', resetPassword)
+
+// Route to list students in a class
+
+router.get('/students/:classId', listStudentsInClass)
+router.post('/attendance/mark', markStudentAttendance)
+
+// router to fetch timetable
+
+router.get('/timetable/:userId', getTimetableForUser);
+
+
+
+// Route for fetching all events
+router.get('/events', getEvents);
+router.post('/events', addEvent);
+
+// In your routes file
+router.post('/upload', upload.single('file'), (req, res) => {
+  if (req.file) {
+    // Assuming the file's URL or path is accessible via req.file.path
+    // You may need to adjust based on your storage setup
+    res.status(200).json({ message: 'File uploaded successfully', filePath: req.file.path });
+  } else {
+    res.status(400).json({ message: 'No file uploaded' });
+  }
+});
+
+router.post('/submission', submitAssignment);
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, Button, Picker, StyleSheet, Alert } from 'react-native';
+import axios from 'axios';
+
+
+const CreateClasses = ({ navigation }) => {
+  const [className, setClassName] = useState('');
+  const [grade, setGrade] = useState('');
+  const [subjectName, setSubjectName] = useState('')
+  const [selectedClass, setSelectedClass] = useState('');
+  const [classes, setClasses] = useState([]);
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const response = await axios.get('/auth/classes');
+      setClasses(response.data);
+      if (response.data.length > 0) {
+        setSelectedClass(response.data[0]._id);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch classes");
+    }
+  };
+
+  const createClass = async () => {
+    try {
+      const response = await axios.post('/auth/classes', { name: className, grade });
+      setClasses([...classes, response.data]);
+      setClassName('');
+      setGrade('');
+      Alert.alert("Success", "Class created successfully");
+    } catch (error) {
+      Alert.alert("Error", "Failed to create class");
+    }
+  };
+  const createSubject = async () => {
+    try {
+      await axios.post('/auth/subjects', { name: subjectName, classId: selectedClass });
+      setSubjectName('');
+      Alert.alert("Success", "Subject created successfully");
+    } catch (error) {
+      Alert.alert("Error", "Failed to create subject");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        placeholder="Class Name"
+        value={className}
+        onChangeText={setClassName}
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="Grade"
+        value={grade}
+        onChangeText={setGrade}
+        keyboardType="numeric"
+        style={styles.input}
+      />
+      <Button title="Create Class" onPress={createClass} />
+
+      <TextInput
+        placeholder="Subject Name"
+        value={subjectName}
+        onChangeText={setSubjectName}
+        style={styles.input}
+      />
+      <Picker
+        selectedValue={selectedClass}
+        onValueChange={(itemValue) => setSelectedClass(itemValue)}
+        style={styles.picker}>
+        {classes.map((cls) => (
+          <Picker.Item label={cls.name} value={cls._id} key={cls._id} />
+        ))}
+      </Picker>
+      <Button title="Create Subject" onPress={createSubject} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 6,
+  },
+  picker: {
+    marginBottom: 20,
+  },
+});
+
+export default CreateClasses
+
+
+
+
+const styles = StyleSheet.create({
+  container: { padding: 20 },
+  input: { marginBottom: 10, borderWidth: 1, borderColor: 'gray', borderRadius: 5, padding: 10 },
+  picker: { marginBottom: 20, borderWidth: 1, borderColor: 'gray', borderRadius: 5 },
+});
+const result = await User.updateMany({}, { $set: { subjects: [] } });
+
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { View, Text, Button, StyleSheet, ScrollView } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+
+const StudentForm = ({}) => {
+  const [selectedGrade, setSelectedGrade] = useState('Grade 1');
+  const [users, setUsers] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [subjects, setSubjects] = useState(['English Literature', 'History']);
+
+  useEffect(() => {
+   const fetchSubjects = async () => {
+  try {
+    const response = await axios.get(`/auth/subjects/byGrade/${selectedGrade}`);
+    // Assuming the response directly contains an array of subjects
+    // Adjust this line based on your actual response structure
+    setSubjects(response.data || []); // Fallback to an empty array if undefined
+  } catch (error) {
+    console.error("Failed to fetch subjects:", error);
+    setSubjects([]); // Ensure subjects is set to an empty array on error
+  }
+};
+
+    fetchStudents();
+  }, [selectedGrade]);
+
+  const handleSubmit = async () => {
+    try {
+      await axios.post('/auth/users/registerSubject', {
+        userId: selectedStudent,
+        subject: selectedSubject, // Ensure this matches backend expectation (name vs. ID)
+      });
+      alert('Subject registered successfully!');
+    } catch (error) {
+      alert(`Failed to register subject: ${error.response ? error.response.data.error : 'Unknown error'}`);
+    }
+  };
+
+  // Moved inside the component for clarity
+  const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'];
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Picker
+        selectedValue={selectedGrade}
+        onValueChange={(itemValue, itemIndex) => setSelectedGrade(itemValue)}
+        style={styles.picker}>
+        {grades.map((grade, index) => (
+          <Picker.Item key={index} label={grade} value={grade} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedStudent}
+        onValueChange={(itemValue, itemIndex) => setSelectedStudent(itemValue)}
+        style={styles.picker}>
+        {users.map((user, index) => (
+          <Picker.Item key={index} label={user.name} value={user._id} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedSubject}
+        onValueChange={(itemValue, itemIndex) => setSelectedSubject(itemValue)}
+        style={styles.picker}>
+        {subjects.map((subject, index) => (
+          <Picker.Item key={index} label={subject} value={subject} />
+        ))}
+      </Picker>
+
+      <Button title="Register for Subject" onPress={handleSubmit} />
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { padding: 20 },
+  picker: { marginBottom: 20, borderWidth: 1, borderColor: 'gray', borderRadius: 5 },
+});
+
+export default StudentForm;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import { View, Button, StyleSheet, Alert } from 'react-native';
+import axios from 'axios';
+import { Picker } from '@react-native-picker/picker';
+
+
+const CreateClasses = ({ navigation }) => {
+  const [selectedGrade, setSelectedGrade] = useState('Grade 1');
+  const [selectedSubject, setSelectedSubject] = useState('Math');
+  const [classes, setClasses] = useState([]);
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const response = await axios.get('/auth/classes');
+      setClasses(response.data);
+      // Assuming response.data is an array of classes
+      // No setSelectedClass here since it's not defined in your component
+    } catch (error) {
+      console.error(error); // Log the error for debugging
+      Alert.alert("Error", "Failed to fetch classes");
+    }
+  };
+  
+
+
+  const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']; // Extend this list as needed
+  const subjects = ['Math', 'Science', 'Islamiat', 'History', 'English Language', 'English Literature', 'Urdu']; // Extend this list as needed
+
+
+  const createClassAndSubject = async () => {
+    if (selectedGrade === "Please select a grade" || selectedSubject === "Please select a subject") {
+      Alert.alert("Validation Error", "Please select both a grade and a subject");
+      return;
+    }
+    try {
+      // Assuming your backend can handle these parameters directly
+      // You might need to adjust the payload structure according to your backend implementation
+      await axios.post('/auth/classesAndSubjects', {
+        grade: selectedGrade,
+        subject: selectedSubject
+      });
+      Alert.alert("Success", "Class and Subject created successfully");
+      // Optionally, fetch classes again to refresh the list
+    } catch (error) {
+      console.log(error); // Log the error for debugging
+      Alert.alert("Error", "Failed to create class and subject");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Picker
+        selectedValue={selectedGrade}
+        onValueChange={(itemValue, itemIndex) => setSelectedGrade(itemValue)}
+        style={styles.picker}>
+        {grades.map((grade, index) => (
+          <Picker.Item key={index} label={grade} value={grade} />
+        ))}
+      </Picker>
+      <Picker
+        selectedValue={selectedSubject}
+        onValueChange={(itemValue, itemIndex) => setSelectedSubject(itemValue)}
+        style={styles.picker}>
+        {subjects.map((subject, index) => (
+          <Picker.Item key={index} label={subject} value={subject} />
+        ))}
+      </Picker>
+      <Button title="Create Class and Subject" onPress={createClassAndSubject} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+    marginBottom: 20,
+  },
+});
+
+export default CreateClasses;
+
+
+
+const createClassAndSubject = async (req, res) => {
+  const { grade, subject } = req.body;
+
+  try {
+    // Check if the class for the selected grade already exists
+    let classForGrade = await Class.findOne({ grade });
+
+    if (!classForGrade) {
+      // If not, create a new class with the selected grade
+      classForGrade = new Class({ grade });
+      await classForGrade.save();
+    }
+
+    // Check if the subject already exists for the class
+    const subjectExists = await Subject.findOne({ name: subject, classId: classForGrade._id });
+
+    if (subjectExists) {
+      // If the subject already exists, respond indicating no new subject was created
+      return res.status(200).json({
+        message: 'Subject already exists for this class',
+        class: classForGrade,
+        subject: subjectExists,
+        subjectCreated: false,
+        subjectExists: true,
+      });
+    }
+
+    // Since subjectExists check passed, create a new subject
+    const newSubject = new Subject({ name: subject, classId: classForGrade._id });
+    await newSubject.save();
+
+    // Add the subject's ObjectId to the class's subjects array
+    classForGrade.subjects.push(newSubject._id);
+    await classForGrade.save();
+
+    res.status(201).json({
+      message: 'New class and subject created/updated successfully',
+      class: classForGrade,
+      subject: newSubject, // Include the newly created subject in the response
+      subjectCreated: true,
+      subjectExists: false,
+    });
+  } catch (error) {
+    console.error('Failed to create or update class and subject:', error);
+    res.status(500).json({ message: 'Failed to create or update class and subject', error: error.message });
+  }
+};
+
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { View, Text, Button, StyleSheet, ScrollView } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+
+const StudentForm = ({}) => {
+  const [selectedGrade, setSelectedGrade] = useState('Grade 1');
+  const [users, setUsers] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [subjects, setSubjects] = useState(['English Literature', 'History']);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await axios.get(`/auth/users/grade/${selectedGrade}`);
+        setUsers(response.data);
+        setSelectedStudent(response.data[0]?._id || '');
+      } catch (error) {
+        console.error("Failed to fetch students:", error.response ? error.response.data : error.message);
+      }
+    };
+
+    fetchStudents();
+  }, [selectedGrade]);
+
+  const handleSubmit = async () => {
+    try {
+      await axios.post('/auth/users/registerSubject', {
+        userId: selectedStudent,
+        subject: selectedSubject, // Ensure this matches backend expectation (name vs. ID)
+      });
+      alert('Subject registered successfully!');
+    } catch (error) {
+      alert(`Failed to register subject: ${error.response ? error.response.data.error : 'Unknown error'}`);
+    }
+  };
+
+  // Moved inside the component for clarity
+  const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'];
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Picker
+        selectedValue={selectedGrade}
+        onValueChange={(itemValue, itemIndex) => setSelectedGrade(itemValue)}
+        style={styles.picker}>
+        {grades.map((grade, index) => (
+          <Picker.Item key={index} label={grade} value={grade} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedStudent}
+        onValueChange={(itemValue, itemIndex) => setSelectedStudent(itemValue)}
+        style={styles.picker}>
+        {users.map((user, index) => (
+          <Picker.Item key={index} label={user.name} value={user._id} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedSubject}
+        onValueChange={(itemValue, itemIndex) => setSelectedSubject(itemValue)}
+        style={styles.picker}>
+        {subjects.map((subject, index) => (
+          <Picker.Item key={index} label={subject} value={subject} />
+        ))}
+      </Picker>
+
+      <Button title="Register for Subject" onPress={handleSubmit} />
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { padding: 20 },
+  picker: { marginBottom: 20, borderWidth: 1, borderColor: 'gray', borderRadius: 5 },
+});
+
+export default StudentForm;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```
+
+
+
+
+
+My Current Set Up 
+
+Grades and Subjects together
+
+Grades fetching users and then we further registering the user with a subject
+
+
+
+How about ?
+
+Grades and Subjects seperate of each other, we create Grade 1, Grade 2, Grade 3, all the way to Grade 8.
+We Create Subjects
+
+and now we associate Grades with Users and then enroll them Subjects
+
+So now Users already have a Grade, now they will have all the subject ids 

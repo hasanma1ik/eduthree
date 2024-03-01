@@ -6,12 +6,15 @@ const nodemailer = require('nodemailer');
 var {expressjwt:jwt} = require('express-jwt')
 const Thread = require('../models/threadModel')
 const Message = require('../models/messageModel')
-const Student = require('../models/studentmodel')
 const AttendanceRecord = require('../models/attendancemodel');
 const Timetable = require('../models/timetablemodel')
 const Event = require('../models/eventmodel')
 const Assignment = require('../models/assignmentmodel')
 const Submission = require('../models/submissionmodel')
+
+ const User = require('../models/userModel')
+const Class = require('../models/classmodel')
+const Subject = require('../models/subjectmodel')
 
 
 
@@ -50,7 +53,7 @@ const registerController = async (req, res) => {
       });
     }
      //exisiting user
-    const exisitingUser = await userModel.findOne({ email });
+    const exisitingUser = await User.findOne({ email });
     if (exisitingUser) {
       return res.status(500).send({
         success: false,
@@ -61,7 +64,7 @@ const registerController = async (req, res) => {
     const hashedPassword = await hashPassword(password);
 
     //save user
-    const user = await userModel({
+    const user = await User({
       name,
       email,
       password: hashedPassword,
@@ -86,7 +89,7 @@ const registerController = async (req, res) => {
 const searchController = async (req, res) => {
   try {
     const { query } = req.params;
-    const users = await userModel.find({
+    const users = await User.find({
       $or: [
         { name: { $regex: new RegExp(query, 'i') } },
         { email: { $regex: new RegExp(query, 'i') } }
@@ -102,7 +105,7 @@ const searchController = async (req, res) => {
 // All Users
 const allUsersController = async (req, res) => {
   try {
-    const users = await userModel.find();
+    const users = await User.find();
     res.status(200).json({ success: true, users });
   } catch (error) {
     console.error('Error fetching all users:', error);
@@ -413,31 +416,187 @@ const muteConversation = async (req, res) => {
   }
 };
 
-const listStudentsInClass = async (req, res) => {
+// Subject creation controller
+const createSubject = async (req, res) => {
   try {
-    const { classId } = req.params;
-    const students = await Student.find({ classId });
-    res.json({ success: true, students });
+    const { name } = req.body;
+    const subjectExists = await Subject.findOne({ name });
+    if (subjectExists) {
+      return res.status(400).json({ message: 'Subject already exists' });
+    }
+    const newSubject = new Subject({ name });
+    await newSubject.save();
+    res.status(201).json({ message: 'Subject created successfully', subject: newSubject });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Error listing students', error });
+    res.status(500).json({ message: 'Failed to create subject', error: error.message });
   }
 };
 
+const createGrade = async (req, res) => {
+  const { grade } = req.body;
+
+  try {
+    const existingGrade = await Class.findOne({ grade });
+    if (existingGrade) {
+      return res.status(400).json({ message: 'Grade already exists' });
+    }
+
+    const newGrade = new Class({ grade });
+    await newGrade.save();
+    res.status(201).json({ message: 'Grade created successfully', grade: newGrade });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to create grade', error: error.message });
+  }
+};
+
+
+
+
+const getAllClasses = async (req, res) => {
+  try {
+    const classes = await Class.find();
+    res.json(classes);
+  } catch (error) {
+    res.status(500).send({ message: 'Failed to fetch classes', error: error.message });
+  }
+};
+
+const getSubjectsByClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const subjects = await Subject.find({ classId });
+    res.json({ success: true, subjects });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching subjects', error: error.message });
+  }
+};
+
+// Assuming you have a route like "/auth/users/grade/:grade"
+// const getUsersByClass = async (req, res) => {
+//   try {
+//     const users = await User.find({ grade: req.params.grade });
+//     res.json(users);
+// } catch (error) {
+//     res.status(500).send("Server error");
+// }
+// }
+
+// const registerSubjectForStudent = async (req, res) => {
+//   try {
+//     const { email, subjectId } = req.body; // Assuming you're passing the subject's ID
+//     const subject = await Subject.findById(subjectId);
+//     if (!subject) {
+//         return res.status(404).send("Subject not found");
+//     }
+//     const user = await User.findOneAndUpdate(
+//         { email: email },
+//         { $addToSet: { subjects: subjectId } }, // Prevents adding duplicate subject IDs
+//         { new: true }
+//     );
+//     res.json(user);
+// } catch (error) {
+//     res.status(500).send("Server error");
+// }
+// }
+
+const getSubjects = async (req, res) => {
+  try {
+    const subjects = await Subject.find({});
+    res.json({ subjects });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch subjects', error: error.message });
+  }
+};
+const getUsersByGrade = async (req, res) => {
+  try {
+    const users = await User.find({ grade: req.params.grade });
+    res.json({ users });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch students', error: error.message });
+  }
+};
+
+const registerStudentForSubject = async (req, res) => {
+  const { userId, subjectId } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user.subjects.includes(subjectId)) {
+      user.subjects.push(subjectId);
+      await user.save();
+      res.json({ message: "Student registered for subject successfully" });
+    } else {
+      res.status(400).json({ message: "Student already registered for this subject" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to register student for subject', error: error.message });
+  }
+};
+
+
+
 const markStudentAttendance = async (req, res) => {
   try {
-    const { studentId, classId, status } = req.body;
-    const attendanceRecord = new AttendanceRecord({
-      studentId,
+    const { userId, classId, status } = req.body;
+    const newAttendanceRecord = new AttendanceRecord({
+      userId,
       classId,
       date: new Date(),
       status,
     });
-    await attendanceRecord.save();
-    res.json({ success: true, message: 'Attendance marked successfully', attendanceRecord });
+
+    await newAttendanceRecord.save();
+    res.status(201).json({ message: 'Attendance marked successfully', data: newAttendanceRecord });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Error marking attendance', error });
+    res.status(500).json({ message: 'Error marking attendance', error: error.message });
+  }
+};
+
+const getStudentsByClassAndSubject = async (req, res) => {
+  const { classId, subjectId } = req.params;
+
+  try {
+    const students = await User.find({
+      classId: classId,
+      subjects: { $in: [subjectId] }, // This line is crucial
+    }).populate('subjects'); // Optional, if you want to return subject details
+
+    res.json(students);
+  } catch (error) {
+    console.error("Failed to fetch students:", error);
+    res.status(500).send({ message: "Failed to fetch students", error: error.message });
+  }
+};
+
+const addOrUpdateStudent = async (req, res) => {
+  const { name, email, classId, subjects } = req.body;
+
+  try {
+    let student = await User.findOne({ email: email });
+
+    if (student) {
+      // Update existing student
+      student.name = name; // Assuming you want to update the name as well
+      student.classId = classId;
+      student.subjects = subjects;
+      await student.save();
+    } else {
+      // Create a new student
+      student = new User({
+        name,
+        email,
+        classId,
+        subjects,
+        // Add other fields as necessary
+      });
+      await student.save();
+    }
+
+    res.status(200).json({ message: "Student added/updated successfully", student });
+  } catch (error) {
+    console.error("Error adding/updating student:", error);
+    res.status(500).send({ message: "Failed to add/update student", error: error.message });
   }
 };
 
@@ -500,33 +659,37 @@ const createAssignment = async (req, res) => {
 }
 };
 
+
 const submitAssignment = async (req, res) => {
   try {
-    const { assignmentId, studentId, filePath } = req.body;
+    const { assignmentId, userId, filePath } = req.body;
 
-    // Basic validation
-    if (!assignmentId || !studentId || !filePath) {
-      return res.status(400).json({ message: 'Assignment ID, student ID, and file path are required' });
+    if (!assignmentId || !userId || !filePath) {
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Additional validations here (e.g., check if assignment and student exist)
+    // Check if the assignment exists
+    const assignmentExists = await Assignment.findById(assignmentId);
+    if (!assignmentExists) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // Check if the user exists
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     // Create and save the submission
-    const submission = new Submission({
-      assignmentId,
-      studentId,
-      filePath,
-    });
-
+    const submission = new Submission({ assignmentId, userId, filePath });
     await submission.save();
 
     res.status(201).json({ message: 'Assignment submitted successfully', data: submission });
   } catch (error) {
-    console.log(error); // For debugging
+    console.error(error); // Better error handling for debugging
     res.status(500).json({ message: 'Failed to submit assignment', error: error.message });
   }
 };
-
 const getAssignmentById = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
@@ -543,8 +706,18 @@ const getAssignmentById = async (req, res) => {
   }
 };
 
+// const getStudentsByGrade = async (req, res) => {
+//   try {
+//     const { grade } = req.query;
+//     const students = await User.find({ classId: grade });
+//     res.json(students);
+//   } catch (error) {
+//     res.status(500).send({ message: "Failed to fetch students", error: error.message });
+//   }
+// };
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, markStudentAttendance, listStudentsInClass, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment}
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, markStudentAttendance, getSubjects, getUsersByGrade, registerStudentForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject }
 
 
 

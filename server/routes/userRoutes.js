@@ -1,5 +1,5 @@
 const express = require('express');
-const multer = require('multer');
+
 const upload = require('../config/uploadConfig')
 const { 
     registerController,
@@ -17,21 +17,30 @@ const {
      requestPasswordReset,
      resetPassword,
      markStudentAttendance,
-     listStudentsInClass,
+     getStudentsByClassAndSubject,
      getTimetableForUser,
      addEvent,
      getEvents,
      submitAssignment,
      createAssignment,
-     getAssignmentById
+     getAssignmentById,
+     getSubjects,
+     getUsersByGrade,
+     registerStudentForSubject,
+     getAllClasses,
+     getUsersByClass,
+     getSubjectsByClass,
+     createClassAndSubject,
+     addOrUpdateStudent,
+     getStudentsByClass,
+     createSubject,
+     createGrade,
+    
+     registerSubjectForStudent
     
     
      } = require('../controllers/userController');
-     const path = require('path')
-    //  const User = require('../models/userModel')
-    const User = require('../models/userModel')
-    const message = require('../models/messageModel')
-    // const Event = require('../models/eventmodel')
+     
 
 
 const router = express.Router();
@@ -67,8 +76,9 @@ router.post('/reset-password', resetPassword)
 
 // Route to list students in a class
 
-router.get('/students/:classId', listStudentsInClass)
-router.post('/attendance/mark', markStudentAttendance)
+router.get('/users/:classId/:subjectId', getStudentsByClassAndSubject)
+
+router.post('/attendance/mark', markStudentAttendance);
 
 // router to fetch timetable
 
@@ -91,8 +101,10 @@ router.post('/upload', upload.single('file'), (req, res) => {
   }
 });
 
-router.post('/submission', submitAssignment);
-
+router.post('/submission', (req, res) => {
+  console.log("Received submission:", req.body);
+  submitAssignment(req, res);
+});
 
 
 // Route for creating a new assignment
@@ -100,6 +112,33 @@ router.post('/create-assignments', createAssignment);
 
 // In your routes file
 router.get('/assignments/:id', getAssignmentById)
+
+// router.get('/users/class/:classId', getStudentsByClass);
+
+// Inside your routes file
+// router.get('/classes', getAllClasses);
+
+router.get('/subjects/class/:classId', getSubjectsByClass);
+
+// router.post('/classes', createClass);
+// router.post('/subjects', createSubject)
+
+router.post('/grades', createGrade);
+router.post('/subjects', createSubject);
+
+// Route to add or update a student
+// router.post('/students/addOrUpdate', addOrUpdateStudent);
+
+// router.get('/users/grade/:grade', getUsersByClass);
+
+// router.post('/users/registerSubject', registerSubjectForStudent);
+router.get('/subjects', getSubjects);
+
+// Route to fetch students by grade
+router.get('/users/grade/:grade', getUsersByGrade);
+
+// Route to register a student for a subject
+router.post('/users/registerSubject', registerStudentForSubject);
 
 //export 
 module.exports = router;

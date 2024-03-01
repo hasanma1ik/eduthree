@@ -9,7 +9,9 @@ const Assignments = ({ route }) => {
   const [assignment, setAssignment] = useState(null);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  
+  const [fileUrl, setFileUrl] = useState('');
+
+
   useEffect(() => {
     const fetchAssignment = async () => {
       try {
@@ -72,6 +74,7 @@ const Assignments = ({ route }) => {
         },
       });
       setUploading(false);
+      setFileUrl(response.data.filePath); 
       Alert.alert("Upload Successful", `File uploaded successfully: ${response.data.filePath}`);
       // You can now use response.data.filePath in your assignment submission
     } catch (err) {
@@ -82,49 +85,42 @@ const Assignments = ({ route }) => {
   };
 
   // This function now just alerts the user to upload a file
-  const handleSubmit = async () => {
-    if (!file) {
-      Alert.alert("Error", "Please upload a file first");
-      return;
-    }
-
-    // Upload the file first
-  await uploadFile(); // Make sure this function sets the fileUrl state upon success
-
-  // Check if the file URL is set
+  // Assuming `userId` is known and `fileUrl` is set after a successful upload
+const handleSubmit = async () => {
   if (!fileUrl) {
-    Alert.alert("Error", "File upload failed or no file URL available");
+    Alert.alert("Error", "Please upload a file first");
     return;
   }
-  
-    // Assuming studentId is obtained from your auth context or passed in some way
-    const studentId = 'YOUR_STUDENT_ID'; // Replace this with actual logic to obtain studentId
-  
-    try {
-      // Prepare the submission data
-      const submissionData = {
-        assignmentId: assignmentId,
-      studentId: studentId,
-      fileUrl: fileUrl, // Use the file URL obtained from the upload process
-      fileName: file.name,
-      fileType: file.type || 'application/octet-stream',
-      };
-  
-      // Send a POST request to your backend endpoint
-      const response = await axios.post('/auth/submission', submissionData);
-  
-      // Check the response status and act accordingly
-      if (response.status === 201) {
-        Alert.alert("Success", "Assignment submitted successfully.");
-      } else {
-        // Handle any other status codes as needed
-        Alert.alert("Error", "Failed to submit assignment.");
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "Failed to submit assignment: " + error.message);
-    }
+
+  const submissionData = {
+    assignmentId: assignmentId,
+    userId: '65956fc3ccf9b92da0493d86', // Ensure you have a way to obtain the current user's ID
+    fileUrl: fileUrl,
+    fileName: file.name,
+    fileType: file.type || 'application/octet-stream',
   };
+
+  try {
+    
+
+    const response = await axios.post('auth/submission', submissionData, {
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 201) {
+      Alert.alert("Success", "Assignment submitted successfully.");
+    } else {
+      Alert.alert("Error", "Failed to submit assignment.");
+    }
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "Failed to submit assignment: " + error.message);
+  }
+};
+
   
 
   return (
