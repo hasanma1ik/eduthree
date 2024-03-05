@@ -1,36 +1,43 @@
-// require('dotenv').config();
+require('dotenv').config();
 
-// const mongoose = require("mongoose");
-// const connectDB = require('./config/db'); // Adjust the path to where connectDB is located
-// const User = require('../server/models/userModel'); // Adjust the path according to your project structure
+const mongoose = require("mongoose");
+const connectDB = require('./config/db'); // Adjust the path to where connectDB is located
+const User = require('../server/models/userModel'); // Adjust the path according to your project structure
+const Class = require('../server/models/classmodel'); // Ensure you have the correct path to your Class model
 
-// const updateUsersAddSubjects = async () => {
-//   try {
-//     // Connect to the database
-//     await connectDB();
+const updateUsersClassIdAndEmptySubjects = async () => {
+  try {
+    // Connect to the database
+    await connectDB();
 
-//     // ObjectIds to add to each user's subjects field, corrected with 'new' keyword
-//     const subjectIdsToAdd = [
-//       new mongoose.Types.ObjectId("65e0a8078cc12055a8e5c433"),
-//       new mongoose.Types.ObjectId("65e0a80c8cc12055a8e5c43a")
-//     ];
+    // Fetch all classes
+    const classes = await Class.find({});
+    const gradeToClassIdMap = classes.reduce((acc, curr) => {
+      acc[curr.grade] = curr._id;
+      return acc;
+    }, {});
 
-//     // Update all users to add specified subject ObjectIds to the subjects field
-//     const result = await User.updateMany({}, { $set: { subjects: subjectIdsToAdd } });
-   
+    // Update each user with their classId based on grade and set subjects to an empty array
+    for (const grade in gradeToClassIdMap) {
+      await User.updateMany(
+        { grade: grade },
+        { 
+          $set: { 
+            subjects: [],
+            classId: gradeToClassIdMap[grade] // Update classId based on the grade to classId mapping
+          } 
+        }
+      );
+    }
 
+    console.log("Update complete: All users' classId and subjects updated");
 
-//     console.log("Update complete:", result);
+  } catch (error) {
+    console.error("Error updating users:", error);
+  } finally {
+    // Disconnect from the database whether an error occurred or not
+    mongoose.disconnect();
+  }
+};
 
-//   } catch (error) {
-//     console.error("Error updating users:", error);
-//   } finally {
-//     // Disconnect from the database whether an error occurred or not
-//     mongoose.disconnect();
-//   }
-// };
-
-// updateUsersAddSubjects();
-
-
-
+updateUsersClassIdAndEmptySubjects();

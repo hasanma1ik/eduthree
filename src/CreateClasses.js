@@ -43,9 +43,9 @@ const CreateClasses = () => {
       <Picker
         selectedValue={selectedGrade}
         onValueChange={setSelectedGrade}
-        style={styles.picker}>
+        >
         {grades.map((grade, index) => (
-          <Picker.Item key={index} label={grade} value={grade} />
+          <Picker.Item key={index} label={grade} value={grade} style={styles.pickerItem} />
         ))}
       </Picker>
       <Button title="Create Grade" onPress={createGrade} />
@@ -54,9 +54,9 @@ const CreateClasses = () => {
       <Picker
         selectedValue={selectedSubject}
         onValueChange={setSelectedSubject}
-        style={styles.picker}>
+        >
         {subjects.map((subject, index) => (
-          <Picker.Item key={index} label={subject} value={subject} />
+          <Picker.Item key={index} label={subject} value={subject} style={styles.pickerItem} />
         ))}
       </Picker>
       <Button title="Create Subject" onPress={createSubject} />
@@ -70,10 +70,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  picker: {
+  pickerItem: {
     height: 50,
     width: '100%',
     marginBottom: 20,
+    fontSize: 20,
   },
   title: {
     fontSize: 18,

@@ -25,8 +25,9 @@ const {
      createAssignment,
      getAssignmentById,
      getSubjects,
-     getUsersByGrade,
-     registerStudentForSubject,
+     getClassIdByGrade,
+     getClassUsersByGrade,
+     registerUserForSubject,
      getAllClasses,
      getUsersByClass,
      getSubjectsByClass,
@@ -35,8 +36,10 @@ const {
      getStudentsByClass,
      createSubject,
      createGrade,
+     
     
-     registerSubjectForStudent
+     registerSubjectForStudent,
+     setGradeForUser
     
     
      } = require('../controllers/userController');
@@ -135,10 +138,14 @@ router.post('/subjects', createSubject);
 router.get('/subjects', getSubjects);
 
 // Route to fetch students by grade
-router.get('/users/grade/:grade', getUsersByGrade);
+router.get('/class/grade/:grade', getClassIdByGrade);
+// router.get('/users/class/:classId', getUsersByClassId);
+
 
 // Route to register a student for a subject
-router.post('/users/registerSubject', registerStudentForSubject);
+router.post('/users/registerSubject', registerUserForSubject);
+router.post('/users/setGrade', setGradeForUser);
+router.get('/class/grade/:grade/users', getClassUsersByGrade);
 
 //export 
 module.exports = router;

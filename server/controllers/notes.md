@@ -1545,19 +1545,206 @@ const styles = StyleSheet.create({
 export default StudentForm;
 
 
+// see how in messages users were fetched
 
 
 
 
 
 
+import React, { useState, useEffect } from 'react';
+import { View, Button, StyleSheet, Alert} from 'react-native';
+import axios from 'axios';
+import { Picker } from '@react-native-picker/picker';
+
+
+const StudentForm = () => {
+  const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3']); // Example grades
+  const [subjects, setSubjects] = useState([]); // Subjects will be fetched from the backend
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  useEffect(() => {
+    if (selectedGrade) {
+      fetchStudentsByGrade(selectedGrade);
+    }
+  }, [selectedGrade]);
+
+  const fetchSubjects = async () => {
+    try {
+      const response = await axios.get('/auth/subjects');
+      setSubjects(response.data.subjects);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to fetch subjects");
+    }
+  };
+
+  const fetchStudentsByGrade = async (grade) => {
+    try {
+      const response = await axios.get(`/auth/users/grade/${grade}`);
+      setStudents(response.data.users);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to fetch students");
+    }
+  };
+
+  const registerStudentForSubject = async (userId) => {
+    try {
+      await axios.post('/auth/users/registerSubject', { userId, subjectId: selectedSubject });
+      Alert.alert("Success", "Student registered for subject successfully");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to register student for subject");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Picker
+        selectedValue={selectedGrade}
+        onValueChange={(itemValue) => setSelectedGrade(itemValue)}>
+        {grades.map((grade) => 
+        <Picker.Item label={grade} value={grade} key={grade} style={styles.pickerItem} />)}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedSubject}
+        onValueChange={(itemValue) => setSelectedSubject(itemValue)}>
+        {subjects.map((subject) => 
+        <Picker.Item label={subject.name} value={subject._id} key={subject._id} style={styles.pickerItem} />)}
+      </Picker>
+
+      {students.map((student) => (
+        <View key={student._id}>
+          <Button title={`Register ${student.name} for Selected Subject`} onPress={() => registerStudentForSubject(student._id)} />
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  pickerItem: {
+    height: 50,
+    width: '100%',
+    marginBottom: 20,
+    fontSize: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+});
+
+export default StudentForm;
 
 
 
 
 
+import React, { useState, useEffect } from 'react';
+import { View, Button, StyleSheet, Alert } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
 
+const StudentForm = () => {
+  const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
+  const [subjects, setSubjects] = useState([]);
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [users, setUsers] = useState([]);
 
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  useEffect(() => {
+    if (selectedGrade) {
+      fetchUsersByGrade(selectedGrade);
+    }
+  }, [selectedGrade]);
+
+  const fetchSubjects = async () => {
+    try {
+      const response = await axios.get('/auth/subjects');
+      setSubjects(response.data.subjects);
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch subjects: " + error.message);
+    }
+  };
+
+  const fetchUsersByGrade = async (grade) => {
+    try {
+      const response = await axios.get(`/auth/users/grade/${grade}`);
+      setUsers(response.data); // Assuming the backend sends the users array directly
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch users: " + error.message);
+    }
+  };
+
+  const registerUserForSubject = async (userId) => {
+    try {
+      await axios.post('/auth/users/registerSubject', { userId, subjectId: selectedSubject });
+      Alert.alert("Success", "User registered for subject successfully");
+    } catch (error) {
+      Alert.alert("Error", "Failed to register user for subject: " + error.message);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Picker
+        selectedValue={selectedGrade}
+        onValueChange={setSelectedGrade}>
+        {grades.map((grade, index) => (
+          <Picker.Item label={grade} value={grade} key={index} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedSubject}
+        onValueChange={setSelectedSubject}>
+        {subjects.map((subject, index) => (
+          <Picker.Item label={subject.name} value={subject._id} key={index} />
+        ))}
+      </Picker>
+
+      {users.map((user) => (
+        <View key={user._id} style={styles.userContainer}>
+          <Button title={`Register ${user.name} for Selected Subject`} onPress={() => registerUserForSubject(user._id)} />
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  userContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+});
+
+export default StudentForm
 
 
 
@@ -1587,3 +1774,5 @@ We Create Subjects
 and now we associate Grades with Users and then enroll them Subjects
 
 So now Users already have a Grade, now they will have all the subject ids 
+
+see how setGrade button in grade setter was created

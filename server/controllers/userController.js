@@ -32,7 +32,7 @@ const requireSignIn = jwt({
 
 const registerController = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password} = req.body;
     //validation
     if (!name) {
       return res.status(400).send({
@@ -68,6 +68,8 @@ const registerController = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+    
+    
     }).save();
 
   
@@ -508,28 +510,57 @@ const getSubjects = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch subjects', error: error.message });
   }
 };
-const getUsersByGrade = async (req, res) => {
+// Example controller method to fetch users by grade
+const getClassIdByGrade = async (req, res) => {
   try {
-    const users = await User.find({ grade: req.params.grade });
-    res.json({ users });
+    const classObj = await Class.findOne({ grade: req.params.grade });
+    if (!classObj) {
+      return res.status(404).json({ message: "Class for the specified grade not found." });
+    }
+    res.json({ classId: classObj._id });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch students', error: error.message });
+    console.error(`Failed to fetch classId for grade ${req.params.grade}:`, error);
+    res.status(500).json({ message: "Error fetching classId for the specified grade", error: error.message });
   }
 };
 
-const registerStudentForSubject = async (req, res) => {
+
+const registerUserForSubject = async (req, res) => {
   const { userId, subjectId } = req.body;
   try {
     const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    // Prevent duplicate subject registrations
     if (!user.subjects.includes(subjectId)) {
       user.subjects.push(subjectId);
       await user.save();
-      res.json({ message: "Student registered for subject successfully" });
+      res.json({ message: "User registered for subject successfully." });
     } else {
-      res.status(400).json({ message: "Student already registered for this subject" });
+      res.status(400).json({ message: "User already registered for this subject." });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Failed to register student for subject', error: error.message });
+    console.error(`Failed to register user ${userId} for subject ${subjectId}:`, error);
+    res.status(500).json({ message: "Error registering user for subject", error: error.message });
+  }
+};
+
+const getClassUsersByGrade = async (req, res) => {
+  try {
+    // Find the class for the specified grade and populate the users field
+    const classWithUsers = await Class.findOne({ grade: req.params.grade })
+                                      .populate('users');
+    
+    if (!classWithUsers) {
+      return res.status(404).json({ message: "Class not found for the specified grade." });
+    }
+    
+    // Respond with the users associated with the class
+    res.json(classWithUsers.users);
+  } catch (error) {
+    console.error(`Failed to fetch users for grade ${req.params.grade}:`, error);
+    res.status(500).json({ message: "Error fetching users for the specified grade", error: error.message });
   }
 };
 
@@ -568,6 +599,7 @@ const getStudentsByClassAndSubject = async (req, res) => {
     res.status(500).send({ message: "Failed to fetch students", error: error.message });
   }
 };
+
 
 const addOrUpdateStudent = async (req, res) => {
   const { name, email, classId, subjects } = req.body;
@@ -716,8 +748,21 @@ const getAssignmentById = async (req, res) => {
 //   }
 // };
 
+const setGradeForUser = async (req, res) => {
+  const { userId, grade } = req.body;
+  try {
+    const user = await User.findByIdAndUpdate(userId, { $set: { grade: grade } }, { new: true });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ message: 'Grade updated successfully', user });
+  } catch (error) {
+    console.error('Error setting grade for user:', error);
+    res.status(500).json({ message: 'Failed to set grade for user', error: error.message });
+  }
+};
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, markStudentAttendance, getSubjects, getUsersByGrade, registerStudentForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, markStudentAttendance, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade }
 
 
 

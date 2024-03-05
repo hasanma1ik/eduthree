@@ -21,8 +21,14 @@ const userSchema = new mongoose.Schema({
   },
   grade: {
     type: String,
-    required: [true, "Please specify a grade"], // Assuming grade is a required field
+    required: false, // Assuming grade is a required field
+
   },
+  classId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Class'
+  },
+
   subjects: [{
     type: Schema.Types.ObjectId,
     ref: 'Subject',

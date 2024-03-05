@@ -5,9 +5,13 @@ const classSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true // Ensure there are no duplicate classes for the same grade
-  }
-  // Removed the subjects array
+  },
+  users: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 });
+
 
 classSchema.index({ grade: 1 });
 
