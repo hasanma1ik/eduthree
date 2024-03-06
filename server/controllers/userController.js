@@ -547,24 +547,25 @@ const registerUserForSubject = async (req, res) => {
 };
 
 const getClassUsersByGrade = async (req, res) => {
+  const { grade } = req.params; // Assuming grade is passed as a URL parameter
+
   try {
-    // Find the class for the specified grade and populate the users field
-    const classWithUsers = await Class.findOne({ grade: req.params.grade })
-                                      .populate('users');
-    
-    if (!classWithUsers) {
-      return res.status(404).json({ message: "Class not found for the specified grade." });
+    // Find the class ID(s) associated with the specified grade
+    const classObj = await Class.findOne({ grade: grade });
+
+    if (!classObj) {
+      return res.status(404).json({ message: "No class found for this grade." });
     }
-    
-    // Respond with the users associated with the class
-    res.json(classWithUsers.users);
+
+    // Fetch users associated with the class ID
+    const users = await User.find({ classId: classObj._id }).populate('classId', 'grade');
+
+    res.json(users);
   } catch (error) {
-    console.error(`Failed to fetch users for grade ${req.params.grade}:`, error);
-    res.status(500).json({ message: "Error fetching users for the specified grade", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch users for the specified grade.", error: error.message });
   }
 };
-
-
 
 const markStudentAttendance = async (req, res) => {
   try {
@@ -750,18 +751,34 @@ const getAssignmentById = async (req, res) => {
 
 const setGradeForUser = async (req, res) => {
   const { userId, grade } = req.body;
+
   try {
-    const user = await User.findByIdAndUpdate(userId, { $set: { grade: grade } }, { new: true });
-    if (!user) {
+    // Look for an existing class for this grade
+    let classForGrade = await Class.findOne({ grade });
+
+    // If no class exists for this grade, create one
+    if (!classForGrade) {
+      classForGrade = new Class({ grade });
+      await classForGrade.save();
+    }
+
+    // Update the user with the grade and classId
+    const updatedUser = await User.findByIdAndUpdate(
+      userId, 
+      { $set: { grade: grade, classId: classForGrade._id } }, 
+      { new: true }
+    ).populate('classId'); // Optionally populate the classId to return the class details
+
+    if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json({ message: 'Grade updated successfully', user });
+
+    res.json({ message: 'Grade and classId updated successfully', user: updatedUser });
   } catch (error) {
     console.error('Error setting grade for user:', error);
-    res.status(500).json({ message: 'Failed to set grade for user', error: error.message });
+    res.status(500).json({ message: 'Failed to set grade and classId for user', error: error.message });
   }
 };
-
 module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, markStudentAttendance, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade }
 
 
