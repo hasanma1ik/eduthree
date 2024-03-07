@@ -27,6 +27,7 @@ const {
      getSubjects,
      getClassIdByGrade,
      getClassUsersByGrade,
+     getUsersByGradeAndSubject,
      registerUserForSubject,
      getAllClasses,
      getUsersByClass,
@@ -146,6 +147,10 @@ router.get('/class/grade/:grade', getClassIdByGrade);
 router.post('/users/registerSubject', registerUserForSubject);
 router.post('/users/setGrade', setGradeForUser);
 router.get('/class/grade/:grade/users', getClassUsersByGrade);
+
+// fetches users from grade and that are enrolled in a particular subject
+router.get('/class/grade/:grade/subject/:subjectId/users', getUsersByGradeAndSubject);
+
 
 //export 
 module.exports = router;

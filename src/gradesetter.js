@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Button, StyleSheet, Alert } from 'react-native';
+import { View, Button, StyleSheet, Alert, Text } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
@@ -32,26 +32,32 @@ const GradeSetter = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Set User Grade</Text>
       <Picker
         selectedValue={selectedUserId}
         onValueChange={(itemValue) => setSelectedUserId(itemValue)}
+        style={styles.picker}
+        itemStyle={styles.pickerItem}
       >
-        <Picker.Item label="Select a user" value="" style={styles.picker} />
+        <Picker.Item label="Select a user" value="" />
         {users.map((user) => (
-          <Picker.Item key={user._id} label={user.name} value={user._id} style={styles.picker} />
+          <Picker.Item key={user._id} label={user.name} value={user._id} />
         ))}
       </Picker>
       <Picker
         selectedValue={grade}
         onValueChange={(itemValue) => setGrade(itemValue)}
         style={styles.picker}
+        itemStyle={styles.pickerItem}
       >
-        <Picker.Item label="Select a grade" value="" style={styles.picker} />
+        <Picker.Item label="Select a grade" value="" />
         {grades.map((g) => (
-          <Picker.Item key={g} label={g} value={g} style={styles.picker} />
+          <Picker.Item key={g} label={g} value={g} />
         ))}
       </Picker>
-      <Button title="Set Grade" onPress={handleSubmit} />
+      <View style={styles.buttonContainer}>
+        <Button title="Set Grade" onPress={handleSubmit} color="#007BFF" />
+      </View>
     </View>
   );
 };
@@ -61,16 +67,33 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#F5F5F5',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   picker: {
-    height: 150,
-    width: 150,
-    fontSize: 20,
-
-   
-
+    marginBottom: 20,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  pickerItem: {
+    fontSize: 18,
+  },
+  buttonContainer: {
+    marginTop: 10,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
 });
 
 export default GradeSetter;
+
 

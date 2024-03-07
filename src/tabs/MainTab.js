@@ -22,7 +22,7 @@ import TimetableScreen from '../Timetable';
 import Assignments from '../Assignments';
 import CreateAssignment from '../createAssignment';
 import CreateClasses from '../CreateClasses';
-import ClassesScreen from '../classes';
+import ClassesScreen from '../AttendanceScreen';
 import StudentForm from '../studentform';
 import GradeSetter from '../gradesetter';
 
@@ -60,7 +60,7 @@ const MainStackNavigator = () => (
       <Stack.Screen name="Assignments" component={Assignments} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
       <Stack.Screen name="CreateAssignment" component={CreateAssignment} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
       <Stack.Screen name="CreateClasses" component={CreateClasses} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-      <Stack.Screen name="ClassesScreen" component={ClassesScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      {/* <Stack.Screen name="ClassesScreen" component={ClassesScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
       <Stack.Screen name="StudentForm" component={StudentForm} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
       <Stack.Screen name="GradeSetter" component={GradeSetter} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
 

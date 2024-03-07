@@ -12,7 +12,7 @@ const Event = require('../models/eventmodel')
 const Assignment = require('../models/assignmentmodel')
 const Submission = require('../models/submissionmodel')
 
- const User = require('../models/userModel')
+const User = require('../models/userModel')
 const Class = require('../models/classmodel')
 const Subject = require('../models/subjectmodel')
 
@@ -474,33 +474,6 @@ const getSubjectsByClass = async (req, res) => {
   }
 };
 
-// Assuming you have a route like "/auth/users/grade/:grade"
-// const getUsersByClass = async (req, res) => {
-//   try {
-//     const users = await User.find({ grade: req.params.grade });
-//     res.json(users);
-// } catch (error) {
-//     res.status(500).send("Server error");
-// }
-// }
-
-// const registerSubjectForStudent = async (req, res) => {
-//   try {
-//     const { email, subjectId } = req.body; // Assuming you're passing the subject's ID
-//     const subject = await Subject.findById(subjectId);
-//     if (!subject) {
-//         return res.status(404).send("Subject not found");
-//     }
-//     const user = await User.findOneAndUpdate(
-//         { email: email },
-//         { $addToSet: { subjects: subjectId } }, // Prevents adding duplicate subject IDs
-//         { new: true }
-//     );
-//     res.json(user);
-// } catch (error) {
-//     res.status(500).send("Server error");
-// }
-// }
 
 const getSubjects = async (req, res) => {
   try {
@@ -564,6 +537,22 @@ const getClassUsersByGrade = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch users for the specified grade.", error: error.message });
+  }
+};
+
+const getUsersByGradeAndSubject = async (req, res) => {
+  try{
+    const {grade, subjectId} = req.params
+        // Query the database for users in the given grade and registered for the given subject
+    // This query assumes that your User schema has fields for grade and subjects that are arrays or references
+    const users = await User.find({
+      grade: grade,
+      subjects: subjectId
+    })
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+    res.status(500).send('Server error');
   }
 };
 
@@ -739,15 +728,7 @@ const getAssignmentById = async (req, res) => {
   }
 };
 
-// const getStudentsByGrade = async (req, res) => {
-//   try {
-//     const { grade } = req.query;
-//     const students = await User.find({ classId: grade });
-//     res.json(students);
-//   } catch (error) {
-//     res.status(500).send({ message: "Failed to fetch students", error: error.message });
-//   }
-// };
+
 
 const setGradeForUser = async (req, res) => {
   const { userId, grade } = req.body;
@@ -779,7 +760,7 @@ const setGradeForUser = async (req, res) => {
     res.status(500).json({ message: 'Failed to set grade and classId for user', error: error.message });
   }
 };
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, markStudentAttendance, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, markStudentAttendance, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject }
 
 
 

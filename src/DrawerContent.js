@@ -20,7 +20,7 @@ const DrawerContent = (props) => {
       <DrawerContentScrollView {...props}>
         {/* Your custom drawer content goes here */}
  
-        <DrawerItem label="Attendance" onPress={() => props.navigation.navigate('ClassesScreen')}/>
+        <DrawerItem label="Attendance" onPress={() => props.navigation.navigate('AttendanceScreen')}/>
         <DrawerItem label="Course Creation" onPress={() => props.navigation.navigate('CreateClasses')}/>
         <DrawerItem label="Student Form" onPress={() => props.navigation.navigate('StudentForm')} />
 

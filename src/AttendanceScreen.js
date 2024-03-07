@@ -1,53 +1,127 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, Alert, FlatList, StyleSheet } from 'react-native';
+import { View, Button, StyleSheet, Alert, Text, ScrollView, Platform } from 'react-native';
 import axios from 'axios';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 
-const AttendanceScreen = ({ route }) => {
-  const { classId, subjectId } = route.params;
+const AttendanceScreen = () => {
+  const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [users, setUsers] = useState([]);
+  const [userAttendance, setUserAttendance] = useState({});
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const onChangeDate = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(Platform.OS === 'ios');
+    setDate(currentDate);
+  };
+
+  const showDatepicker = () => {
+    setShowDatePicker(true);
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get(`/auth/users/${classId}/${subjectId}`); // Adjust endpoint as necessary
-        setUsers(response.data); // Ensure this aligns with your API response structure
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-        Alert.alert("Error", "Failed to fetch users");
-      }
-    };
+    fetchSubjects();
+  }, []);
 
-    fetchUsers();
-  }, [classId, subjectId]);
-
-  const markAttendance = async (userId, status) => {
-    try {
-      await axios.post('/auth/attendance/mark', {
-        userId,
-        classId,
-        subjectId,
-        status,
-      });
-      Alert.alert("Success", "Attendance marked successfully");
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "Failed to mark attendance");
+  useEffect(() => {
+    if (selectedGrade && selectedSubject) {
+      fetchUsersByGradeAndSubject();
     }
+  }, [selectedGrade, selectedSubject]);
+
+  const fetchUsersByGradeAndSubject = async () => {
+    try {
+      const response = await axios.get(`/auth/class/grade/${selectedGrade}/subject/${selectedSubject}/users`);
+      setUsers(response.data);
+      // Reset userAttendance whenever users are fetched
+      const initialAttendance = response.data.reduce((acc, user) => ({ ...acc, [user._id]: '' }), {});
+      setUserAttendance(initialAttendance);
+    } catch (error) {
+      console.error(`Failed to fetch users:`, error);
+      Alert.alert("Error", `Failed to fetch users`);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      const response = await axios.get('/auth/subjects');
+      setSubjects(response.data.subjects);
+    } catch (error) {
+      console.error('Failed to fetch subjects:', error);
+      Alert.alert("Error", "Failed to fetch subjects");
+    }
+  };
+
+  const handleAttendanceChange = (userId, status) => {
+    setUserAttendance(prevState => ({ ...prevState, [userId]: status }));
   };
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={users}
-        renderItem={({ item }) => (
-          <View style={styles.listItem}>
-            <Text>{item.name}</Text>
-            <Button title="Present" onPress={() => markAttendance(item._id, 'present')} />
-            <Button title="Absent" onPress={() => markAttendance(item._id, 'absent')} />
+      <ScrollView contentContainerStyle={styles.scrollView}>
+        <View style={styles.datePickerContainer}>
+          <Button onPress={showDatepicker} title="Select Date" />
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={date}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
+        </View>
+
+        <Text style={styles.headerText}>Select a Grade:</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={selectedGrade}
+            onValueChange={(itemValue) => setSelectedGrade(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Select a grade" value="" />
+            {grades.map((grade) => (
+              <Picker.Item key={grade} label={grade} value={grade} />
+            ))}
+          </Picker>
+        </View>
+
+        <Text style={styles.headerText}>Select a Subject:</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={selectedSubject}
+            onValueChange={(itemValue) => setSelectedSubject(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Select a subject" value="" />
+            {subjects.map((subject) => (
+              <Picker.Item key={subject._id} label={subject.name} value={subject._id} />
+            ))}
+          </Picker>
+        </View>
+
+        {users.map((user) => (
+          <View key={user._id} style={styles.userContainer}>
+            <Text style={styles.userName}>{user.name}</Text>
+            <Picker
+              selectedValue={userAttendance[user._id]}
+              onValueChange={(itemValue) => handleAttendanceChange(user._id, itemValue)}
+              style={styles.attendancePicker}
+            >
+              <Picker.Item label="Select Status" value="" />
+              <Picker.Item label="Present" value="Present" />
+              <Picker.Item label="Absent" value="Absent" />
+              <Picker.Item label="Late" value="Late" />
+            </Picker>
           </View>
-        )}
-        keyExtractor={item => item._id.toString()}
-      />
+        ))}
+      </ScrollView>
     </View>
   );
 };
@@ -55,13 +129,60 @@ const AttendanceScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: 10,
   },
-  listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
+  scrollView: {
+    alignItems: 'center',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginBottom: 20,
+    width: '90%',
+    backgroundColor: '#fafafa',
+  },
+  picker: {
+    width: '100%',
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  userContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    width: '90%',
+    backgroundColor: '#fff',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  userName: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  attendancePicker: {
+    width: '100%',
+    marginBottom: 10,
+  },
+  datePickerContainer: {
+    margin: 20,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 8,
   },
 });
 
