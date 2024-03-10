@@ -98,9 +98,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
+    fontSize: 18,
     marginBottom: 20,
     width: '90%',
-    backgroundColor: '#fafafa',
+   
   },
   picker: {
     width: '100%',

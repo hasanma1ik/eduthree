@@ -1826,6 +1826,33 @@ export default GradeSetter;
 
 
 
+const getAttendanceData = async (req, res) => {
+  try {
+    const { date, grade, subject } = req.params;
+    const attendanceRecords = await AttendanceRecord.find({ date, grade, subject });
+
+    // Extract userIds and fetch corresponding user names
+    const userIds = attendanceRecords.map(record => record.attendance.map(a => a.userId)).flat();
+    const users = await User.find({ '_id': { $in: userIds } }, 'name');
+    const userNameMap = users.reduce((acc, user) => ({ ...acc, [user._id]: user.name }), {});
+
+    // Enrich attendance records with user names
+    const enrichedAttendance = attendanceRecords.map(record => ({
+      ...record._doc,
+      attendance: record.attendance.map(entry => ({
+        ...entry._doc,
+        userName: userNameMap[entry.userId]
+      }))
+    }));
+
+    res.json(enrichedAttendance);
+  } catch (error) {
+    console.error('Error fetching enriched attendance data:', error);
+    res.status(500).json({ message: 'Failed to fetch enriched attendance data', error });
+  }
+};
+
+
 
 
 
@@ -1833,8 +1860,50 @@ export default GradeSetter;
 
 ```
 
+select a grade displays users in that particular grade
+select subject and then enroll in that subject
+
+fetchUsersbyGrade
+await axios.get(`/auth/class/grade/${grade}/users`);
+
+
+
+const getClassUsersByGrade = async (req, res) => {
+  const { grade } = req.params; // Assuming grade is passed as a URL parameter
+
+  try {
+    // Find the class ID(s) associated with the specified grade
+    const classObj = await Class.findOne({ grade: grade });
+
+    if (!classObj) {
+      return res.status(404).json({ message: "No class found for this grade." });
+    }
+
+    // Fetch users associated with the class ID
+    const users = await User.find({ classId: classObj._id }).populate('classId', 'grade');
+
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch users for the specified grade.", error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 404 is url error
-500 is major backend issue
+500 is major backend issue (like wo usermodel wala, where we had to then set up users field in class)
 
 
 
@@ -1872,5 +1941,39 @@ Select a grade, select a subject, Select a date - Displays users via grade and t
 
 TAKE ATTENDANCE
 
-SEE ATTENDANCE - where all the attendance results are displayed when dae, grade and subject is selected
+SEE ATTENDANCE - where all the attendance results are displayed when date, grade and subject is selected
+
+submit attendance for certain date, do u want to update attendance for this date? Student status refreshed when i select new date
+
+2 buttons on Attendance Screen, See attendance and take attendance
+
+Basically in my attendance screen, i select date and mark all students attendance and then select submit button -> Attendance submitted successfully, the see attendance page will have options select grade, select subject, select date input(only those dates should show up for those subjects and grades that attendance has been taken, for instance, if Grade 3's Math Class attendance was only taken on 2 days 5th March and 7th, then after selecting grade 3 and Math, only dates of 5th March and 7th March should be available for selection), once selected show all users attendance status.
+
+
+attendance already marked for this date, would you like to update status
+
+
+
+
+
+
+The whole app hierarchy
+
+- Course Creation
+
+1- Create Grade (in classes section, it creates a grade and assigns it an objectId)
+2- Create Subject (in subjects section, it creates a subject and assigns it an objectId)
+
+- Grade Setter
+
+1- Select user, Select grade and set grade ( this basically adds users in users field array in the classes section of the grade selected)
+
+
+Student Form
+1- Select Grade displays all users registered in that particular grade, Select Subject and then enrolling student to the subject adds 
+
+
+functionalities to add
+Take attendance - cannot submit attendance unless we have selected attendance status, show message of plz mark all users attendance
+Retaking attendance for same day again will update status of attendance, do u want to update these submissions.
 

@@ -475,14 +475,7 @@ const getSubjectsByClass = async (req, res) => {
 };
 
 
-const getSubjects = async (req, res) => {
-  try {
-    const subjects = await Subject.find({});
-    res.json({ subjects });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch subjects', error: error.message });
-  }
-};
+
 // Example controller method to fetch users by grade
 const getClassIdByGrade = async (req, res) => {
   try {
@@ -553,24 +546,6 @@ const getUsersByGradeAndSubject = async (req, res) => {
   } catch (error) {
     console.error('Failed to fetch users:', error);
     res.status(500).send('Server error');
-  }
-};
-
-const markStudentAttendance = async (req, res) => {
-  try {
-    const { userId, classId, status } = req.body;
-    const newAttendanceRecord = new AttendanceRecord({
-      userId,
-      classId,
-      date: new Date(),
-      status,
-    });
-
-    await newAttendanceRecord.save();
-    res.status(201).json({ message: 'Attendance marked successfully', data: newAttendanceRecord });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error marking attendance', error: error.message });
   }
 };
 
@@ -760,7 +735,59 @@ const setGradeForUser = async (req, res) => {
     res.status(500).json({ message: 'Failed to set grade and classId for user', error: error.message });
   }
 };
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, markStudentAttendance, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject }
+
+
+const submitAttendance = async (req, res) => {
+  const { date, grade, subject, attendance } = req.body;
+
+  try {
+    const record = await AttendanceRecord.findOneAndUpdate(
+      { date, grade, subject },
+      { $set: { attendance } },
+      { new: true, upsert: true }
+    );
+    res.status(200).json(record);
+  } catch (error) {
+    console.error(`Failed to save attendance: ${error}`);
+    res.status(500).json({ message: "Failed to save attendance", error });
+  }
+};
+
+const getSubjects = async (req, res) => {
+  try {
+    const subjects = await Subject.find({});
+    res.json({ subjects });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch subjects', error: error.message });
+  }
+};
+
+const getAttendanceDates = async (req, res) => {
+  try {
+    const { grade, subject } = req.params;
+    const dates = await AttendanceRecord.find({ grade, subject }).distinct('date');
+    res.json({ dates });
+  } catch (error) {
+    console.error('Error fetching attendance dates:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const getAttendanceData = async (req, res) => {
+  try {
+    const { grade, subject, date } = req.params;
+    const attendance = await AttendanceRecord.find({ grade, subject, date })
+                            .populate('attendance.userId', 'name'); // Populate the 'name' field from the User document
+    res.json({ attendance });
+  } catch (error) {
+    console.error('Error fetching attendance data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates }
+
 
 
 

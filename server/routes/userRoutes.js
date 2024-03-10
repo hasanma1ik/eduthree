@@ -16,7 +16,9 @@ const {
      muteConversation,
      requestPasswordReset,
      resetPassword,
-     markStudentAttendance,
+     getAttendanceDates,
+     getAttendanceData,
+     
      getStudentsByClassAndSubject,
      getTimetableForUser,
      addEvent,
@@ -37,10 +39,11 @@ const {
      getStudentsByClass,
      createSubject,
      createGrade,
-     
+     submitAttendance,
     
      registerSubjectForStudent,
-     setGradeForUser
+     setGradeForUser,
+    
     
     
      } = require('../controllers/userController');
@@ -81,8 +84,6 @@ router.post('/reset-password', resetPassword)
 // Route to list students in a class
 
 router.get('/users/:classId/:subjectId', getStudentsByClassAndSubject)
-
-router.post('/attendance/mark', markStudentAttendance);
 
 // router to fetch timetable
 
@@ -136,7 +137,7 @@ router.post('/subjects', createSubject);
 // router.get('/users/grade/:grade', getUsersByClass);
 
 // router.post('/users/registerSubject', registerSubjectForStudent);
-router.get('/subjects', getSubjects);
+
 
 // Route to fetch students by grade
 router.get('/class/grade/:grade', getClassIdByGrade);
@@ -150,6 +151,15 @@ router.get('/class/grade/:grade/users', getClassUsersByGrade);
 
 // fetches users from grade and that are enrolled in a particular subject
 router.get('/class/grade/:grade/subject/:subjectId/users', getUsersByGradeAndSubject);
+
+router.post('/attendance', submitAttendance);
+
+
+
+
+router.get('/subjects', getSubjects);
+router.get('/attendance/:grade/:subject/dates', getAttendanceDates);
+router.get('/attendance/:grade/:subject/:date', getAttendanceData);
 
 
 //export 
