@@ -5,6 +5,8 @@ import React from 'react'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
 import { AntDesign } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import NotificationIcon from '../bellicon';
 
 
 const BottomTab = () => {
@@ -31,6 +33,8 @@ const BottomTab = () => {
     <FontAwesome5 name="list" style={styles.iconStyle} color={route.name === "MyPosts" && 'orange'}/>
       <Text>My Posts</Text>
     </TouchableOpacity> */}
+
+<NotificationIcon navigation={navigation} />
 
        <TouchableOpacity onPress={()=> navigation.navigate('Account')} color={route.name === "Account" && 'orange'}>
     <FontAwesome5 name="user" style={styles.iconStyle}/>

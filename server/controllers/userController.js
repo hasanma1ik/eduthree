@@ -11,7 +11,7 @@ const Timetable = require('../models/timetablemodel')
 const Event = require('../models/eventmodel')
 const Assignment = require('../models/assignmentmodel')
 const Submission = require('../models/submissionmodel')
-
+const Notification = require('../models/notificationmodel')
 const User = require('../models/userModel')
 const Class = require('../models/classmodel')
 const Subject = require('../models/subjectmodel')
@@ -550,20 +550,13 @@ const getUsersByGradeAndSubject = async (req, res) => {
 };
 
 const getStudentsByClassAndSubject = async (req, res) => {
-  const { classId, subjectId } = req.params;
-
   try {
-    const students = await User.find({
-      classId: classId,
-      subjects: { $in: [subjectId] }, // This line is crucial
-    }).populate('subjects'); // Optional, if you want to return subject details
-
-    res.json(students);
+    const { grade, subject } = req.params;
+    const assignments = await Assignment.find({ grade, subject });
+    res.json({ assignments });
   } catch (error) {
-    console.error("Failed to fetch students:", error);
-    res.status(500).send({ message: "Failed to fetch students", error: error.message });
-  }
-};
+    res.status(500).json({ message: "Failed to fetch assignments", error: error.message });
+  }}
 
 
 const addOrUpdateStudent = async (req, res) => {
@@ -630,31 +623,46 @@ const addEvent = async (req, res) => {
 
 const createAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, files } = req.body;
+    const { title, description, dueDate, files, grade, subject } = req.body;
 
-   
     // Create a new assignment document
     const newAssignment = new Assignment({
       title,
       description,
       dueDate,
-      files
+      files,
+      grade,
+      subject,
     });
-  // Save the assignment to the database
-  await newAssignment.save();
 
-  // Respond with the created assignment
-  res.status(201).json({
-    message: 'Assignment created successfully',
-    assignment: newAssignment
-  });
-} catch (error) {
-  res.status(500).json({
-    message: 'Failed to create assignment',
-    error: error.message
-  });
-}
+    // Save the assignment to the database
+    await newAssignment.save();
+
+    // Find users in the specified grade and enrolled in the specified subject
+    const users = await User.find({
+      grade: grade,
+      subjects: subject, // Ensure this matches how subjects are stored in your User model (IDs, names, etc.)
+    });
+
+    // For each user, create a new notification about the assignment
+    users.forEach(async (user) => {
+      await Notification.create({
+        user: user._id,
+        message: `New assignment: ${title} due ${dueDate}`,
+        assignmentId: newAssignment._id,
+      });
+    });
+
+    res.status(201).json({
+      message: 'Assignment created successfully',
+      assignment: newAssignment
+    });
+  } catch (error) {
+    console.error('Failed to create assignment:', error);
+    res.status(500).json({ message: 'Failed to create assignment', error: error.message });
+  }
 };
+
 
 
 const submitAssignment = async (req, res) => {
@@ -762,6 +770,32 @@ const getSubjects = async (req, res) => {
   }
 };
 
+// Assuming you have a middleware that authenticates the user and sets req.user
+const getAssignmentsForLoggedInUser = async (req, res) => {
+  try {
+    // Fetch user details from the database using the ID from req.auth
+    const user = await User.findById(req.auth._id).populate('subjects');
+
+    // Check if the user was found
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // Fetch assignments that match the user's grade and subjects
+    const assignments = await Assignment.find({
+      grade: user.grade,
+      subject: { $in: user.subjects.map(subject => subject._id) }, // Assuming subjects is populated
+    }).populate('subject'); // Populate subject details for each assignment
+
+    // Send the fetched assignments as the response
+    res.json(assignments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
+};
+
+
 const getAttendanceDates = async (req, res) => {
   try {
     const { grade, subject } = req.params;
@@ -776,8 +810,9 @@ const getAttendanceDates = async (req, res) => {
 const getAttendanceData = async (req, res) => {
   try {
     const { grade, subject, date } = req.params;
+    // Ensure dates in the DB are stored in "YYYY-MM-DD" format to match the query exactly
     const attendance = await AttendanceRecord.find({ grade, subject, date })
-                            .populate('attendance.userId', 'name'); // Populate the 'name' field from the User document
+                            .populate('attendance.userId', 'name');
     res.json({ attendance });
   } catch (error) {
     console.error('Error fetching attendance data:', error);
@@ -785,8 +820,55 @@ const getAttendanceData = async (req, res) => {
   }
 };
 
+const getNotifications = async (req, res) => {
+  try {
+    const userId = req.auth._id; // Assuming req.auth contains the authenticated user's ID
+    const notifications = await Notification.find({ user: userId }).sort({ createdAt: -1 });
+    res.json({ notifications });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).send('Error fetching notifications');
+  }
+};
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates }
+ const markNotificationAsRead = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    const userId = req.auth._id; // Ensure the notification belongs to the user
+
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, user: userId },
+      { read: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).send('Notification not found or does not belong to the user');
+    }
+
+    res.json({ success: true, message: 'Notification marked as read', notification });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).send('Error marking notification as read');
+  }
+};
+
+const getUnreadNotificationsCount = async (req, res) => {
+  try {
+    const userId = req.auth._id; // Assuming you have middleware to set req.user from the token
+    const count = await Notification.countDocuments({
+      user: userId,
+      read: false, // Assuming 'read' is a boolean field in your Notification model
+    });
+
+    res.json({ unreadCount: count });
+  } catch (error) {
+    console.error('Failed to fetch unread notifications count:', error);
+    res.status(500).json({ message: 'Failed to fetch unread notifications count', error: error.message });
+  }
+};
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount }
 
 
 

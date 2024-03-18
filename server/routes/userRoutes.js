@@ -18,7 +18,7 @@ const {
      resetPassword,
      getAttendanceDates,
      getAttendanceData,
-     
+     getAssignmentsForLoggedInUser,
      getStudentsByClassAndSubject,
      getTimetableForUser,
      addEvent,
@@ -31,6 +31,9 @@ const {
      getClassUsersByGrade,
      getUsersByGradeAndSubject,
      registerUserForSubject,
+     getNotifications,
+     markNotificationAsRead,
+     getUnreadNotificationsCount,
      getAllClasses,
      getUsersByClass,
      getSubjectsByClass,
@@ -118,6 +121,9 @@ router.post('/create-assignments', createAssignment);
 // In your routes file
 router.get('/assignments/:id', getAssignmentById)
 
+router.get('/assignments',  requireSignIn, getAssignmentsForLoggedInUser)
+
+
 // router.get('/users/class/:classId', getStudentsByClass);
 
 // Inside your routes file
@@ -154,7 +160,9 @@ router.get('/class/grade/:grade/subject/:subjectId/users', getUsersByGradeAndSub
 
 router.post('/attendance', submitAttendance);
 
-
+router.get('/notifications', requireSignIn, getNotifications);
+router.post('/notifications/:notificationId/mark-read', requireSignIn, markNotificationAsRead);
+router.get('/notifications/unread-count', requireSignIn, getUnreadNotificationsCount);
 
 
 router.get('/subjects', getSubjects);

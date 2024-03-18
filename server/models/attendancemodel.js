@@ -17,7 +17,7 @@ const AttendanceEntrySchema = new Schema({
 
 const AttendanceRecordSchema = new Schema({
   date: {
-    type: Date,
+    type: String,
     required: true
   },
   grade: {

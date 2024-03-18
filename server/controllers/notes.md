@@ -1855,6 +1855,65 @@ const getAttendanceData = async (req, res) => {
 
 
 
+  <ScrollView style={styles.attendanceContainer}>
+  {attendanceData.map((record, index) => (
+    record.attendance.map((entry, subIndex) => (
+      <View key={`${index}-${subIndex}`} style={styles.attendanceItem}>
+       {/* Now accessing 'entry.userId.name' to get the student's name */}
+        <Text>{entry.userId.name}: {entry.status}</Text>
+      </View>
+    ))
+  ))}
+</ScrollView>
+
+const createAssignment = async (req, res) => {
+  try {
+    const { title, description, dueDate, files } = req.body;
+
+   
+    // Create a new assignment document
+    const newAssignment = new Assignment({
+      title,
+      description,
+      dueDate,
+      files
+    });
+  // Save the assignment to the database
+  await newAssignment.save();
+
+  // Respond with the created assignment
+  res.status(201).json({
+    message: 'Assignment created successfully',
+    assignment: newAssignment
+  });
+} catch (error) {
+  res.status(500).json({
+    message: 'Failed to create assignment',
+    error: error.message
+  });
+}
+};
+
+app.post('/auth/create-assignments', async (req, res) => {
+  const { title, description, dueDate, grade, subject } = req.body;
+  
+  try {
+    // Logic to save the assignment in the database
+
+    // Find users registered in the specified grade and subject
+    const usersToNotify = await User.find({ grade, subjects: subject });
+
+    // Send notification to these users (pseudo-code, adapt based on your setup)
+    usersToNotify.forEach(user => {
+      sendNotification(user, `New assignment: ${title} due on ${dueDate}`);
+    });
+
+    res.json({ success: true, message: 'Assignment created and notifications sent' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to create assignment' });
+  }
+});
 
 
 
@@ -1976,4 +2035,26 @@ Student Form
 functionalities to add
 Take attendance - cannot submit attendance unless we have selected attendance status, show message of plz mark all users attendance
 Retaking attendance for same day again will update status of attendance, do u want to update these submissions.
+
+
+// ensure all routes that require authentication have the requireSignIn middleware properly applied. 
+
+
+What the App contains
+1- Login Logout functionality
+2- Post functionality allows users to post and posts will appear on news feed
+3- Attendance tracking, Real time Attendance- (when u click the student, should display whole attendance record for that subject)
+4- Create Grades and Create Courses
+5- Grade Setter -> Assign student to his particular class (grade)
+6- Student Form - allows enrollment of students in subjects
+7- Chat, in app messaging functionality
+8- Create Assignments. select grade and select subject
+
+
+
+ok so in my create assigment what i want is that I select grade, select subject and then create the assignment, once assignment is created the user which is registered in that particular class and subject should get a notificatation, that this assignment is due on that date,  also all created assignments should be displayed on Assignment section of the user belonging to that grade and subject
+
+When assignment is created that user should get a red notification thingy on the notification icon
+
+
 
