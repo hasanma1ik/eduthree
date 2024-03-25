@@ -14,3 +14,13 @@ const getAttendanceData = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+
+ useEffect(()=>{
+            const loadLocalStorageData = async () =>{
+                    let data = await AsyncStorage.getItem('@auth')
+                    let loginData = JSON.parse(data)
+                    setState({...state, user:loginData?.user, token : loginData?.token})  //loginData - it will redirect us to homepage
+            }
+            loadLocalStorageData()
+        }, [])

@@ -1915,6 +1915,394 @@ app.post('/auth/create-assignments', async (req, res) => {
   }
 });
 
+import React,{createContext, useState, useEffect} from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+import axios from 'axios';
+//context
+const AuthContext = createContext()
+
+//provider
+const AuthProvider = ({ children })=> {
+    //global state
+        const [state, setState] = useState({
+            user:null,
+            token: "",
+        })
+
+        // initial local storage data
+        useEffect(()=>{
+            const loadLocalStorageData = async () =>{
+                    let data = await AsyncStorage.getItem('@auth')
+                    let loginData = JSON.parse(data)
+                    setState({...state, user:loginData?.user, token : loginData?.token})  //loginData - it will redirect us to homepage
+            }
+            loadLocalStorageData()
+        }, [])
+
+        
+
+let token = state && state.token
+       
+ //default axios setting
+ axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
+ axios.defaults.baseURL = 'http://192.168.0.104:8080/api/v1/';
+
+
+        return (
+            <AuthContext.Provider value={[state, setState]}>
+                {children}
+              
+            </AuthContext.Provider>
+        )
+}
+export { AuthContext, AuthProvider}
+
+
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import axios from 'axios';
+
+const NotificationsScreen = () => {
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await axios.get('/auth/notifications');
+      // Assuming notifications are sorted from the server; otherwise, sort them here
+      setNotifications(response.data.notifications);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await axios.post(`/auth/notifications/${notificationId}/mark-read`);
+      const updatedNotifications = notifications.map(notification =>
+        notification._id === notificationId ? { ...notification, read: true } : notification
+      );
+      setNotifications(updatedNotifications);
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={notifications}
+        keyExtractor={(item) => item._id.toString()}
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            style={[
+              styles.notificationItem,
+              !item.read ? styles.unreadNotification : {},
+            ]}
+            onPress={() => markNotificationAsRead(item._id)}
+          >
+            <View style={styles.notificationContent}>
+              <Text style={styles.notificationMessage}>{item.message}</Text>
+              {!item.read && <View style={styles.unreadIndicator} />}
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f5', // Light gray background for the whole screen
+  },
+  notificationItem: {
+    backgroundColor: '#ffffff', // White background for each item
+    padding: 15,
+    borderRadius: 10, // Rounded corners for each notification
+    marginVertical: 5,
+    marginHorizontal: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000', // Shadow for depth
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  unreadNotification: {
+    backgroundColor: '#eef2ff', // Slightly different background for unread notifications
+  },
+  notificationContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationMessage: {
+    fontSize: 16,
+    color: '#333',
+    flexShrink: 1, // Ensure text does not push other elements out of view
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6347', // Tomate color for a noticeable indicator
+    marginLeft: 10,
+  },
+});
+
+export default NotificationsScreen;
+
+
+
+const MainTab = () => {
+    // global state
+
+    const [state, setState] = useContext(AuthContext)
+    const authenticatedUser = state?.user && state?.token
+
+const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
+
+const MainStackNavigator = () => (
+      <Stack.Navigator initialRouteName="Login" headerShown="false">
+        {authenticatedUser ?
+    (
+    <>
+       <Stack.Screen name="Home" component={Home} options={{title: "Learn Academy",
+     headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="Post" component={Post} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="About" component={About} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+
+    <Stack.Screen name="MyPosts" component={MyPosts} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+    <Stack.Screen name="TakeAttendance" component={TakeAttendance} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+    <Stack.Screen name="SeeAttendance" component={SeeAttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+
+    <Stack.Screen name="TimetableScreen" component={TimetableScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="Assignments" component={Assignments} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="CreateAssignment" component={CreateAssignment} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="CreateClasses" component={CreateClasses} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      {/* <Stack.Screen name="ClassesScreen" component={ClassesScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
+      <Stack.Screen name="StudentForm" component={StudentForm} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="GradeSetter" component={GradeSetter} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+
+
+
+        
+
+      
+      
+
+
+   
+    </>) : (
+        <> 
+        <Stack.Screen name="Login" component={LoginPage} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Login1" component={Login} />
+        <Stack.Screen name="ForgetPassword" component={handleForgetPassword } />
+       
+        </>
+    )    
+    }
+
+      </Stack.Navigator>      
+  )
+return (
+  <>
+  {authenticatedUser ?(
+    <Drawer.Navigator drawerContent={(props) => <DrawerContent {...props} />}>
+    <Drawer.Screen name="Main" component={MainStackNavigator} />
+  </Drawer.Navigator>
+  ) : (
+    <Stack.Navigator initialRouteName="Login" headerShown={false}>
+    <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }} />
+    <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+    <Stack.Screen name="Login1" component={Login} options={{ headerShown: false }} />
+    <Stack.Screen name="ForgetPassword" component={handleForgetPassword } options={{ headerShown: false }} />
+
+  </Stack.Navigator>
+  )}
+  
+  </>
+)
+}
+
+export default MainTab
+
+import { View, Text, TextInput, StyleSheet, Alert, Button, Modal } from 'react-native'
+import React, { useState,useContext } from "react";
+import { AuthContext } from './context/authContext';
+import InputBox from '../InputBox'
+import LoginButton from '../LoginButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { useUser } from './context/userContext';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+
+const Login = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Use UserContext to set the current user
+  const { setCurrentUser } = useUser();
+
+  // Global state from AuthContext
+  const [state, setState] = useContext(AuthContext);
+
+
+
+  const handleSubmit = async () => {
+      try {
+          setLoading(true);
+          if (!email || !password) {
+              Alert.alert("Please Fill All Fields");
+              setLoading(false);
+              return;
+          }
+
+          const { data } = await axios.post('/auth/login', { email, password });
+
+          if (data && data.user) {
+              // Update context
+              setCurrentUser(data.user);
+              setState({ ...state, user: data.user, token: data.token });
+
+              // Save to AsyncStorage
+              await AsyncStorage.setItem('@auth', JSON.stringify(data));
+              
+
+              // Navigate to Home
+            //   navigation.navigate('Home');
+          } else {
+              Alert.alert("Login failed", "Invalid response from server");
+          }
+
+          setLoading(false);
+      } catch (error) {
+          Alert.alert("Login Error", error.response.data.message);
+          setLoading(false);
+      }
+  };
+
+  //  temporary function to check local storage data
+   const getLocalStorageData = async () => {
+    let data = await AsyncStorage.getItem("@auth");
+    console.log("Local Storage ==> ", data);
+  };
+  getLocalStorageData();
+
+    return (
+     
+      <View style={styles.container}>
+        <Text style={styles.pageTitle}>Login</Text>
+        <View style={styles.inputContainer}>
+        <InputBox inputTitle={"Email"} keyboardType="email-address" autoComplete="email" value={email} setValue={setEmail} icon="envelope"/>
+        <InputBox inputTitle={"Password"} secureTextEntry={true} autoComplete="password" value={password} setValue={setPassword} icon="lock"/>
+  
+        </View>
+        {/* <Text>{JSON.stringify({ name, email, password }, null, 4)}</Text> */}
+
+        
+        <LoginButton btnTitle="Submit" loading={loading} handleSubmit={handleSubmit} textStyle={styles.loginButtonText}  />
+        
+
+        <TouchableOpacity onPress={()=> navigation.navigate("Register")}>
+            <Text style={styles.linkText}>
+                Not a user please <Text style={styles.link}>Register</Text>
+            </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={()=> navigation.navigate("ForgetPassword")}>
+            <Text style={styles.forgetPasswordLink}>Forget Password</Text>
+        </TouchableOpacity>
+
+
+      </View>
+    )
+}
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        backgroundColor: '#F5F5F5',
+        padding: 20,
+    },
+    loginButtonText: {
+        fontFamily: 'outfit-bold',
+      },
+
+   
+    pageTitle:{
+        fontSize: 24,
+        fontFamily: 'outfit-bold',
+        textAlign: 'center',
+        color: "#1e2225",
+        marginBottom: 20,
+        
+    },
+    inputContainer: {
+        marginHorizontal: 20,
+      },
+      logo: {
+        width: 100,
+        height: 100,
+        marginBottom: 20,
+        alignSelf: 'center',
+      },
+
+   
+    logo: {
+        width: 100,
+        height: 100,
+        marginBottom: 20,
+        alignSelf: 'center',
+      },
+      link: {
+        color: "#007BFF",
+        fontWeight: 'bold',
+      },
+      
+
+      link: {
+        color: "#007BFF",
+        fontWeight: 'bold',
+      },
+      forgetPasswordLink:{
+        textAlign: "center",
+        color: "#007BFF",
+        marginTop: 20,
+        fontWeight: 'bold',
+      }
+})
+
+
+export default Login
+
+
+
 
 
 ```
@@ -2054,7 +2442,22 @@ What the App contains
 
 ok so in my create assigment what i want is that I select grade, select subject and then create the assignment, once assignment is created the user which is registered in that particular class and subject should get a notificatation, that this assignment is due on that date,  also all created assignments should be displayed on Assignment section of the user belonging to that grade and subject
 
-When assignment is created that user should get a red notification thingy on the notification icon
+When assignment is created that user should get a red notification thingy on the notification icon, 
+
+1- latest notification should be shown in a darker background color
+2- once notifications icon have been clicked on, then the notification badge of 1 or 2 or however many notifications should not show up, right now only when i refresh app is when the notification badge dissappears.
+3- Page Refresh when assignment is created
 
 
 
+
+make 100 users and test the app, 90 students and 8 teachers
+Role based login, different features available for students and teachers
+Teachers - all bottom tab features
+Students - no Posting allowed, Drawer- Only assignments and Timetable
+
+
+Role-Based Login- First assigning different features to students and teachers
+
+1- Add a role field in userModel
+2-

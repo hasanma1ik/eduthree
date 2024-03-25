@@ -6,11 +6,19 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const CreateAssignment = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState(new Date());
-  const [grade, setGrade] = useState('');
-  const [subject, setSubject] = useState('');
+  const initialState = {
+    title: '',
+    description: '',
+    dueDate: new Date(),
+    grade: '',
+    subject: '',
+  };
+
+  const [title, setTitle] = useState(initialState.title);
+  const [description, setDescription] = useState(initialState.description);
+  const [dueDate, setDueDate] = useState(initialState.dueDate);
+  const [grade, setGrade] = useState(initialState.grade);
+  const [subject, setSubject] = useState(initialState.subject);
   const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
   const [subjects, setSubjects] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -31,7 +39,7 @@ const CreateAssignment = () => {
   const handleCreate = async () => {
     try {
       const formattedDueDate = `${dueDate.getFullYear()}-${('0' + (dueDate.getMonth() + 1)).slice(-2)}-${('0' + dueDate.getDate()).slice(-2)}`;
-      const response = await axios.post('/auth/create-assignments', {
+      await axios.post('/auth/create-assignments', {
         title,
         description,
         dueDate: formattedDueDate,
@@ -39,6 +47,12 @@ const CreateAssignment = () => {
         subject,
       });
       Alert.alert("Success", "Assignment created successfully");
+      // Reset state to initial after successful creation
+      setTitle(initialState.title);
+      setDescription(initialState.description);
+      setDueDate(initialState.dueDate);
+      setGrade(initialState.grade);
+      setSubject(initialState.subject);
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to create assignment");
@@ -47,10 +61,10 @@ const CreateAssignment = () => {
 
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      setDueDate(selectedDate);
-    }
+    const currentDate = selectedDate || dueDate; // Fallback to dueDate if selectedDate is undefined
+    setDueDate(currentDate);
   };
+
 
   return (
     <KeyboardAwareScrollView style={{ backgroundColor: '#EAEAEA' }} resetScrollToCoords={{ x: 0, y: 0 }} contentContainerStyle={styles.container}>

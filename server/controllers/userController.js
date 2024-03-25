@@ -648,7 +648,7 @@ const createAssignment = async (req, res) => {
     users.forEach(async (user) => {
       await Notification.create({
         user: user._id,
-        message: `New assignment: ${title} due ${dueDate}`,
+        message: `New assignment: ${title}, ${description}, due: ${dueDate}`,
         assignmentId: newAssignment._id,
       });
     });

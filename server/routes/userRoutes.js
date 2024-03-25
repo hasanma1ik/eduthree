@@ -43,7 +43,6 @@ const {
      createSubject,
      createGrade,
      submitAttendance,
-    
      registerSubjectForStudent,
      setGradeForUser,
     
