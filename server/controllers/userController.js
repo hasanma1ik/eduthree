@@ -29,53 +29,74 @@ const requireSignIn = jwt({
 
 // Middleware to log the user object after JWT middleware
 
-
 const registerController = async (req, res) => {
   try {
-    const { name, email, password} = req.body;
-    //validation
+    const { name, email, password, role, verificationCode } = req.body; // Include verificationCode in the request body
+
+    // Validation
     if (!name) {
       return res.status(400).send({
         success: false,
-        message: "name is required",
+        message: "Name is required",
       });
     }
     if (!email) {
       return res.status(400).send({
         success: false,
-        message: "email is required",
+        message: "Email is required",
       });
     }
     if (!password || password.length < 6) {
       return res.status(400).send({
         success: false,
-        message: "password is required and 6 character long",
+        message: "Password is required and should be at least 6 characters long",
       });
     }
-     //exisiting user
-    const exisitingUser = await User.findOne({ email });
-    if (exisitingUser) {
+    if (!role || !['student', 'teacher'].includes(role)) {
+      return res.status(400).send({
+        success: false,
+        message: "Valid role is required ('student' or 'teacher')",
+      });
+    }
+
+    // Check for teacher verification code if role is 'teacher'
+    if (role === 'teacher') {
+      const validTeacherCode = "TEACH2023"; // Hardcoded verification code for teachers
+
+      if (verificationCode !== validTeacherCode) {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid verification code for teacher registration.",
+        });
+      }
+    }
+
+    // Existing user check
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(500).send({
         success: false,
-        message: "User Already Register With This EMail",
+        message: "User already registered with this email",
       });
     }
-     //hashed pasword
+
+    // Hash password
     const hashedPassword = await hashPassword(password);
 
-    //save user
-    const user = await User({
+    // Save user with role
+    const user = new User({
       name,
       email,
       password: hashedPassword,
-    
-    
-    }).save();
+      role, // Add the role to the user document
+      // Optionally handle the 'isApproved' field for teachers if implementing approval process
+    });
 
-  
+    await user.save();
+
     return res.status(201).send({
       success: true,
-      message: "Registeration Successfull please login",
+      message: "Registration successful, please login",
     });
   } catch (error) {
     console.log(error);
@@ -86,6 +107,7 @@ const registerController = async (req, res) => {
     });
   }
 };
+
 
 // Search Controller
 const searchController = async (req, res) => {

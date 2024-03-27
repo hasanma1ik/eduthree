@@ -1,17 +1,23 @@
 // react-native icons directory
 
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import React from 'react'
+import React, { useContext } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native'
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
+import { AuthContext } from '../screen/context/authContext';
 import NotificationIcon from '../bellicon';
 
 
+
 const BottomTab = () => {
-  const navigation = useNavigation()
-  const route = useRoute()
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { state } = useContext(AuthContext);
+  const userRole = state?.user?.role;
+
+
   return (
     <View style={styles.container}>
     <TouchableOpacity onPress={()=> navigation.navigate('Home')}>
@@ -24,15 +30,15 @@ const BottomTab = () => {
       <Text>Messages</Text>
     </TouchableOpacity>
 
+    {userRole === 'teacher' && (
+        <>
     <TouchableOpacity onPress={()=> navigation.navigate('Post')}>
     <FontAwesome5 name="plus-square" style={styles.iconStyle} color={route.name === "Post" && 'orange'}/>
       <Text>Post</Text>
     </TouchableOpacity>
     
-    {/* <TouchableOpacity onPress={()=> navigation.navigate('MyPosts')}>
-    <FontAwesome5 name="list" style={styles.iconStyle} color={route.name === "MyPosts" && 'orange'}/>
-      <Text>My Posts</Text>
-    </TouchableOpacity> */}
+    </>
+      )}
 
 <NotificationIcon navigation={navigation} />
 

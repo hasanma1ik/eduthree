@@ -31,87 +31,67 @@ import NotificationsScreen from '../screen/Notifications';
 
 
 
-
-
-
-
 const MainTab = () => {
-    // global state
+  const [state] = useContext(AuthContext);
+  const authenticatedUser = state?.user && state?.token;
+  const userRole = state?.user?.role;
 
-    const [state, setState] = useContext(AuthContext)
-    const authenticatedUser = state?.user && state?.token
-
-const Stack = createStackNavigator();
+  const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
-const MainStackNavigator = () => (
-      <Stack.Navigator initialRouteName="Login" headerShown="false">
-        {authenticatedUser ?
-    (
-    <>
-       <Stack.Screen name="Home" component={Home} options={{title: "Learn Academy",
-     headerRight:()=> <TopTab />}} />
-    <Stack.Screen name="Post" component={Post} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-    <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-    <Stack.Screen name="About" component={About} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-    <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-    <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+  const TeacherStackNavigator = () => (
+      <Stack.Navigator initialRouteName="Home">
+          {/* Teacher specific screens */}
+          <Stack.Screen name="Home" component={Home} />
+          <Stack.Screen name="CreateAssignment" component={CreateAssignment} />
+          <Stack.Screen name="CreateClasses" component={CreateClasses} />
+          {/* Include other screens accessible to teachers */}
+          {/* Repeat for common screens like About, Account, etc. */}
+      </Stack.Navigator>
+  );
 
-    <Stack.Screen name="MyPosts" component={MyPosts} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-    <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
-    <Stack.Screen name="TakeAttendance" component={TakeAttendance} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
-    <Stack.Screen name="SeeAttendance" component={SeeAttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+  const StudentStackNavigator = () => (
+      <Stack.Navigator initialRouteName="Home">
+          {/* Student specific screens */}
+          <Stack.Screen name="Home" component={Home} options={{title: "Learn Academy", headerRight:()=> <TopTab />}} />
+          <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
 
     <Stack.Screen name="TimetableScreen" component={TimetableScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-    {/* <Stack.Screen name="CalendarScreen" component={CalendarScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
-      <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
       <Stack.Screen name="Assignments" component={Assignments} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-      <Stack.Screen name="CreateAssignment" component={CreateAssignment} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-      <Stack.Screen name="CreateClasses" component={CreateClasses} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-      {/* <Stack.Screen name="ClassesScreen" component={ClassesScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
-      <Stack.Screen name="StudentForm" component={StudentForm} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
-      <Stack.Screen name="GradeSetter" component={GradeSetter} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
 
 
+          {/* Repeat for common screens like About, Account, etc. */}
+      </Stack.Navigator>
+  );
 
-        
-
-      
-      
-
-
-   
-    </>) : (
-        <> 
-        <Stack.Screen name="Login" component={LoginPage} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Login1" component={Login} />
-        <Stack.Screen name="ForgetPassword" component={handleForgetPassword } />
-       
-        </>
-    )    
-    }
-
-      </Stack.Navigator>      
-  )
-return (
-  <>
-  {authenticatedUser ?(
-    <Drawer.Navigator drawerContent={(props) => <DrawerContent {...props} />}>
-    <Drawer.Screen name="Main" component={MainStackNavigator} />
-  </Drawer.Navigator>
-  ) : (
-    <Stack.Navigator initialRouteName="Login" headerShown={false}>
-    <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }} />
-    <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
-    <Stack.Screen name="Login1" component={Login} options={{ headerShown: false }} />
+  const AuthenticationStackNavigator = () => (
+      <Stack.Navigator initialRouteName="Login">
+          <Stack.Screen name="Login" component={LoginPage} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Login1" component={Login} options={{ headerShown: false }} />
     <Stack.Screen name="ForgetPassword" component={handleForgetPassword } options={{ headerShown: false }} />
 
-  </Stack.Navigator>
-  )}
-  
-  </>
-)
-}
 
-export default MainTab
+      </Stack.Navigator>
+  );
+
+  return (
+      <>
+          {authenticatedUser ? (
+              <Drawer.Navigator drawerContent={(props) => <DrawerContent {...props} />}>
+                  {userRole === 'teacher' ? (
+                      <Drawer.Screen name="TeacherStack" component={TeacherStackNavigator} />
+                  ) : (
+                      <Drawer.Screen name="StudentStack" component={StudentStackNavigator} />
+                  )}
+              </Drawer.Navigator>
+          ) : (
+              <AuthenticationStackNavigator />
+          )}
+      </>
+  );
+};
+
+export default MainTab;

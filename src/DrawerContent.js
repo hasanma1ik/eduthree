@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const DrawerContent = (props) => {
     const[state, setState] = useContext(AuthContext)
+    const userRole = state?.user?.role;
     // Logout Functionality
 
     const handleLogOut = async () => {
@@ -19,17 +20,24 @@ const DrawerContent = (props) => {
     <View style={{ flex: 1 }}>
       <DrawerContentScrollView {...props}>
         {/* Your custom drawer content goes here */}
+        {userRole === 'teacher' && (
+        <>
  
         <DrawerItem label="Attendance" onPress={() => props.navigation.navigate('AttendanceScreen')}/>
         <DrawerItem label="Course Creation" onPress={() => props.navigation.navigate('CreateClasses')}/>
         <DrawerItem label="Student Form" onPress={() => props.navigation.navigate('StudentForm')} />
-
-        <DrawerItem label="Timetable" onPress={() =>  props.navigation.navigate('TimetableScreen', {userId: state.user.id})} />
-        <DrawerItem label="Create Assignment" onPress={() => props.navigation.navigate('CreateAssignment')} />
-        <DrawerItem label="Assignments" onPress={() => props.navigation.navigate('Assignments' , { assignmentId: '65d36a1d36c62925038c6e78' })} />
-        <DrawerItem label="Calendar" onPress={() => props.navigation.navigate('CalendarScreen')} />
         <DrawerItem label="My Posts" onPress={() => props.navigation.navigate('MyPosts')} />
         <DrawerItem label="Grade Setter" onPress={() => props.navigation.navigate('GradeSetter')} />
+        <DrawerItem label="Create Assignment" onPress={() => props.navigation.navigate('CreateAssignment')} />
+
+        </>
+      )}
+
+        <DrawerItem label="Timetable" onPress={() =>  props.navigation.navigate('TimetableScreen', {userId: state.user.id})} />
+       
+        <DrawerItem label="Assignments" onPress={() => props.navigation.navigate('Assignments' , { assignmentId: '65d36a1d36c62925038c6e78' })} />
+        <DrawerItem label="Calendar" onPress={() => props.navigation.navigate('CalendarScreen')} />
+      
         <DrawerItem label="Log Out" onPress={() =>  handleLogOut()} />
 
       </DrawerContentScrollView>

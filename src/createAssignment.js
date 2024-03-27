@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, TextInput, Button, StyleSheet, Alert, Text, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { UserContext } from './screen/context/userContext';
 
 const CreateAssignment = () => {
+
+  const { currentUser } = useContext(UserContext);
+  
+  // Early return if not a teacher
+  if (currentUser.role !== 'teacher') {
+    return <Text>You must be a teacher to create assignments.</Text>;
+  }
   const initialState = {
     title: '',
     description: '',
