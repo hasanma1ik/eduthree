@@ -2573,7 +2573,8 @@ Teachers - all bottom tab features
 Students - no Posting allowed, Drawer- Only assignments and Timetable
 
 
-Role-Based Login- First assigning different features to students and teachers
 
-1- Add a role field in userModel
-2-
+
+1- When teacher creates class, it should also select days and times, so when the student is registered in that class, it shows up in his schedule. 
+2- Also times should not overlap with other classes. 
+3- Teacher should also have option to cancel class which will send notification to himself and student that class has been cancelled.

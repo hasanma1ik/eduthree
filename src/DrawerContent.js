@@ -33,11 +33,14 @@ const DrawerContent = (props) => {
         </>
       )}
 
-        <DrawerItem label="Timetable" onPress={() =>  props.navigation.navigate('TimetableScreen', {userId: state.user.id})} />
-       
+{userRole === 'student' && (
+        <>
+
+        <DrawerItem label="Class Schedule" onPress={() =>  props.navigation.navigate('ClassSchedule', {userId: state.user.id})} />
+        </>
+      )}
         <DrawerItem label="Assignments" onPress={() => props.navigation.navigate('Assignments' , { assignmentId: '65d36a1d36c62925038c6e78' })} />
-        <DrawerItem label="Calendar" onPress={() => props.navigation.navigate('CalendarScreen')} />
-      
+        
         <DrawerItem label="Log Out" onPress={() =>  handleLogOut()} />
 
       </DrawerContentScrollView>

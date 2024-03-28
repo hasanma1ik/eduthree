@@ -15,6 +15,7 @@ const Notification = require('../models/notificationmodel')
 const User = require('../models/userModel')
 const Class = require('../models/classmodel')
 const Subject = require('../models/subjectmodel')
+const ClassSchedule = require('../models/ClassScheduleModel')
 
 
 
@@ -890,7 +891,16 @@ const getUnreadNotificationsCount = async (req, res) => {
   }
 };
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount }
+const getClassSchedules = async (req, res) => {
+  try {
+    const classSchedules = await ClassSchedule.find().populate('classId').populate('teacher');
+    res.json({ success: true, classSchedules });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch class schedules", error: error.message });
+  }
+};
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedules }
 
 
 

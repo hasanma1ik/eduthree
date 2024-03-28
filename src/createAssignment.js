@@ -11,9 +11,9 @@ const CreateAssignment = () => {
   const { currentUser } = useContext(UserContext);
   
   // Early return if not a teacher
-  if (currentUser.role !== 'teacher') {
-    return <Text>You must be a teacher to create assignments.</Text>;
-  }
+  // if (currentUser.role !== 'teacher') {
+  //   return <Text>You must be a teacher to create assignments.</Text>;
+  // }
   const initialState = {
     title: '',
     description: '',

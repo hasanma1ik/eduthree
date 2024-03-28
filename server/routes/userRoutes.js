@@ -45,6 +45,7 @@ const {
      submitAttendance,
      registerSubjectForStudent,
      setGradeForUser,
+     getClassSchedules,
     
     
     
@@ -167,6 +168,8 @@ router.get('/notifications/unread-count', requireSignIn, getUnreadNotificationsC
 router.get('/subjects', getSubjects);
 router.get('/attendance/:grade/:subject/dates', getAttendanceDates);
 router.get('/attendance/:grade/:subject/:date', getAttendanceData);
+
+router.get('/class-schedules', getClassSchedules);
 
 
 //export 
