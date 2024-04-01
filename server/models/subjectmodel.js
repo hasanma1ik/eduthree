@@ -6,6 +6,7 @@ const subjectSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
   // Additional fields as needed
 });
 subjectSchema.index({ name: 1 });

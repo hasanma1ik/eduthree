@@ -17,12 +17,10 @@ import { DrawerContent } from '../DrawerContent';
 import Messages from '../screen/Messages';
 import ChatScreen from '../screen/ChatScreen';
 import AttendanceScreen from '../AttendanceScreen';
-import CalendarScreen from '../CalenderScreen';
 import TimetableScreen from '../ClassSchedule';
 import Assignments from '../Assignments';
 import CreateAssignment from '../createAssignment';
 import CreateClasses from '../CreateClasses';
-import ClassesScreen from '../AttendanceScreen';
 import StudentForm from '../studentform';
 import GradeSetter from '../gradesetter';
 import TakeAttendance from '../TakeAttendance';
@@ -55,6 +53,8 @@ const Drawer = createDrawerNavigator();
     <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
     <Stack.Screen name="TakeAttendance" component={TakeAttendance} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
     <Stack.Screen name="SeeAttendance" component={SeeAttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+    <Stack.Screen name="ClassSchedule" component={ClassSchedule} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+
 
     <Stack.Screen name="TimetableScreen" component={TimetableScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
     {/* <Stack.Screen name="CalendarScreen" component={CalendarScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
@@ -77,12 +77,35 @@ const Drawer = createDrawerNavigator();
     <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
 
+
+    <Stack.Screen name="ClassSchedule" component={ClassSchedule} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
       <Stack.Screen name="Assignments" component={Assignments} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
       
 
           {/* Repeat for common screens like About, Account, etc. */}
       </Stack.Navigator>
   );
+
+  const AdminStackNavigator = () => (
+    <Stack.Navigator initialRouteName="Home">
+        {/* Student specific screens */}
+        <Stack.Screen name="Home" component={Home} options={{title: "Learn Academy", headerRight:()=> <TopTab />}} />
+        <Stack.Screen name="Post" component={Post} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+        <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+  <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+  <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+
+  <Stack.Screen name="MyPosts" component={MyPosts} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+  <Stack.Screen name="CreateClasses" component={CreateClasses} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+    <Stack.Screen name="StudentForm" component={StudentForm} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="GradeSetter" component={GradeSetter} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} />
+      <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+      <Stack.Screen name="TakeAttendance" component={TakeAttendance} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+    <Stack.Screen name="SeeAttendance" component={SeeAttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+
+        {/* Repeat for common screens like About, Account, etc. */}
+    </Stack.Navigator>
+);
 
   const AuthenticationStackNavigator = () => (
       <Stack.Navigator initialRouteName="Login">
@@ -96,19 +119,22 @@ const Drawer = createDrawerNavigator();
   );
 
   return (
-      <>
-          {authenticatedUser ? (
-              <Drawer.Navigator drawerContent={(props) => <DrawerContent {...props} />}>
-                  {userRole === 'teacher' ? (
-                      <Drawer.Screen name="TeacherStack" component={TeacherStackNavigator} />
-                  ) : (
-                      <Drawer.Screen name="StudentStack" component={StudentStackNavigator} />
-                  )}
-              </Drawer.Navigator>
-          ) : (
-              <AuthenticationStackNavigator />
+    <>
+      {authenticatedUser ? (
+        <Drawer.Navigator drawerContent={(props) => <DrawerContent {...props} />}>
+          {userRole === 'teacher' ? (
+            <Drawer.Screen name="TeacherStack" component={TeacherStackNavigator} />
+          ) : userRole === 'admin' ? (
+            <Drawer.Screen name="AdminStack" component={AdminStackNavigator} />
+          ) :  ( 
+            <Drawer.Screen name="StudentStack" component={StudentStackNavigator} />
           )}
-      </>
+        </Drawer.Navigator>
+        
+      ) : (
+        <AuthenticationStackNavigator />
+      )}
+    </>
   );
 };
 

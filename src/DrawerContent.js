@@ -24,23 +24,35 @@ const DrawerContent = (props) => {
         <>
  
         <DrawerItem label="Attendance" onPress={() => props.navigation.navigate('AttendanceScreen')}/>
-        <DrawerItem label="Course Creation" onPress={() => props.navigation.navigate('CreateClasses')}/>
-        <DrawerItem label="Student Form" onPress={() => props.navigation.navigate('StudentForm')} />
-        <DrawerItem label="My Posts" onPress={() => props.navigation.navigate('MyPosts')} />
-        <DrawerItem label="Grade Setter" onPress={() => props.navigation.navigate('GradeSetter')} />
+        <DrawerItem label="Assignments" onPress={() => props.navigation.navigate('Assignments' , { assignmentId: '65d36a1d36c62925038c6e78' })} />
         <DrawerItem label="Create Assignment" onPress={() => props.navigation.navigate('CreateAssignment')} />
 
+        <DrawerItem label="My Posts" onPress={() => props.navigation.navigate('MyPosts')} />
+    
         </>
       )}
+
+{userRole === 'admin' && (
+        <>
+        <DrawerItem label="Course Creation" onPress={() => props.navigation.navigate('CreateClasses')}/>
+        <DrawerItem label="Attendance" onPress={() => props.navigation.navigate('AttendanceScreen')}/>
+  <DrawerItem label="My Posts" onPress={() => props.navigation.navigate('MyPosts')} />
+    <DrawerItem label="Grade Setter" onPress={() => props.navigation.navigate('GradeSetter')} />
+    <DrawerItem label="Student Form" onPress={() => props.navigation.navigate('StudentForm')} />
+
+
+</>
+      )}
+
 
 {userRole === 'student' && (
         <>
-
         <DrawerItem label="Class Schedule" onPress={() =>  props.navigation.navigate('ClassSchedule', {userId: state.user.id})} />
-        </>
-      )}
         <DrawerItem label="Assignments" onPress={() => props.navigation.navigate('Assignments' , { assignmentId: '65d36a1d36c62925038c6e78' })} />
         
+        </>
+      )}
+      
         <DrawerItem label="Log Out" onPress={() =>  handleLogOut()} />
 
       </DrawerContentScrollView>

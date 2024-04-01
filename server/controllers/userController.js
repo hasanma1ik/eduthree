@@ -18,7 +18,6 @@ const Subject = require('../models/subjectmodel')
 const ClassSchedule = require('../models/ClassScheduleModel')
 
 
-
 //middleware
 
 const requireSignIn = jwt({
@@ -32,7 +31,7 @@ const requireSignIn = jwt({
 
 const registerController = async (req, res) => {
   try {
-    const { name, email, password, role, verificationCode } = req.body; // Include verificationCode in the request body
+    const { name, email, password, role, verificationCode } = req.body;
 
     // Validation
     if (!name) {
@@ -53,23 +52,29 @@ const registerController = async (req, res) => {
         message: "Password is required and should be at least 6 characters long",
       });
     }
-    if (!role || !['student', 'teacher'].includes(role)) {
+    if (!role || !['student', 'teacher', 'admin'].includes(role)) { // Include 'admin' in the validation
       return res.status(400).send({
         success: false,
-        message: "Valid role is required ('student' or 'teacher')",
+        message: "Valid role is required ('student', 'teacher', or 'admin')",
       });
     }
 
-    // Check for teacher verification code if role is 'teacher'
-    if (role === 'teacher') {
-      const validTeacherCode = "TEACH2023"; // Hardcoded verification code for teachers
+    // Check for verification code if role is 'teacher' or 'admin'
+    const validTeacherCode = "TEACH2023"; // Hardcoded verification code for teachers
+    const validAdminCode = "ADMIN2023"; // Hardcoded verification code for admins
 
-      if (verificationCode !== validTeacherCode) {
-        return res.status(400).send({
-          success: false,
-          message: "Invalid verification code for teacher registration.",
-        });
-      }
+    if (role === 'teacher' && verificationCode !== validTeacherCode) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid verification code for teacher registration.",
+      });
+    }
+
+    if (role === 'admin' && verificationCode !== validAdminCode) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid verification code for admin registration.",
+      });
     }
 
     // Existing user check
@@ -90,7 +95,6 @@ const registerController = async (req, res) => {
       email,
       password: hashedPassword,
       role, // Add the role to the user document
-      // Optionally handle the 'isApproved' field for teachers if implementing approval process
     });
 
     await user.save();
@@ -458,21 +462,30 @@ const createSubject = async (req, res) => {
 };
 
 const createGrade = async (req, res) => {
-  const { grade } = req.body;
+  const { grade, subject, timeSlot, day, teacher } = req.body;
+
+  if (!grade || !subject || !timeSlot || !day || !teacher) {
+      return res.status(400).json({ message: 'Please fill all fields.' });
+  }
 
   try {
-    const existingGrade = await Class.findOne({ grade });
-    if (existingGrade) {
-      return res.status(400).json({ message: 'Grade already exists' });
-    }
+      // Check for any class that has the same grade, day, and timeSlot
+      const existingClass = await Class.findOne({ grade, day, timeSlot });
+      if (existingClass) {
+          // If a class with the same grade, day, and time slot exists, return a conflict message
+          return res.status(409).json({ 
+              message: `Conflict: Another class for grade ${grade} is already scheduled on ${day} at ${timeSlot}.`
+          });
+      }
 
-    const newGrade = new Class({ grade });
-    await newGrade.save();
-    res.status(201).json({ message: 'Grade created successfully', grade: newGrade });
+      const newClass = new Class({ grade, subject, timeSlot, day, teacher });
+      await newClass.save();
+      res.status(201).json({ message: 'Grade and class created successfully', class: newClass });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create grade', error: error.message });
+      res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
   }
 };
+
 
 
 
@@ -516,19 +529,34 @@ const getClassIdByGrade = async (req, res) => {
 
 const registerUserForSubject = async (req, res) => {
   const { userId, subjectId } = req.body;
+
   try {
     const user = await User.findById(userId);
+    const subject = await Subject.findById(subjectId);
+
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    // Prevent duplicate subject registrations
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found." });
+    }
+
+    // Add subject to user's subjects array if not already present
     if (!user.subjects.includes(subjectId)) {
       user.subjects.push(subjectId);
       await user.save();
-      res.json({ message: "User registered for subject successfully." });
     } else {
-      res.status(400).json({ message: "User already registered for this subject." });
+      return res.status(400).json({ message: "User already registered for this subject." });
     }
+
+    // Update Class document
+    const classToUpdate = await Class.findOne({ grade: user.grade, subject: subject.name });
+    if (classToUpdate && !classToUpdate.users.includes(userId)) {
+      classToUpdate.users.push(userId);
+      await classToUpdate.save();
+    }
+
+    res.json({ message: "User registered for subject successfully." });
   } catch (error) {
     console.error(`Failed to register user ${userId} for subject ${subjectId}:`, error);
     res.status(500).json({ message: "Error registering user for subject", error: error.message });
@@ -900,9 +928,51 @@ const getClassSchedules = async (req, res) => {
   }
 };
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedules }
+const getAllTeachers = async (req, res) => {
+  try {
+    const teachers = await User.find({ role: 'teacher' }).select('name'); // Filter by role and select name
+    res.json({ teachers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedules, getAllTeachers }
+
+
+
+
+// const createClass = async (req, res) => {
+//   const { grade, subject, timeSlot, day, teacher } = req.body;
+
+//   try {
+//     // Validation
+//     if (!grade || !subject || !timeSlot || !day || !teacher) {
+//       return res.status(400).json({ message: 'Please fill all fields' });
+//     }
+
+//     // Check for existing class with the same grade, subject, time slot, and day
+//     const existingClass = await Class.findOne({ grade, subject, timeSlot, day });
+//     if (existingClass) {
+//       // If such a class exists, return an error
+//       return res.status(400).json({ message: 'A class with these exact details already exists.' });
+//     }
+
+//     // Attempt to create and save the new class
+//     const newClass = new Class({ grade, subject, timeSlot, day, teacher });
+//     await newClass.save();
+
+//     // Successfully created
+//     res.status(201).json({ message: 'Class created successfully', class: newClass });
+//   } catch (error) {
+//     console.error(error);
+//     // General error response
+//     res.status(500).json({ message: 'Failed to create class', error: error.toString() });
+//   }
+// };
 
 
 

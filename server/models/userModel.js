@@ -21,21 +21,19 @@ const userSchema = new mongoose.Schema({
   },
   grade: {
     type: String,
-    required: false, // Assuming grade is a required field
-
+    required: false,
   },
   classId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Class'
   },
-
   subjects: [{
     type: Schema.Types.ObjectId,
     ref: 'Subject',
   }],
   role: {
     type: String,
-    enum: ['student', 'teacher'],
+    enum: ['student', 'teacher', 'admin'], // Added 'admin' to the list of valid roles
     required: true
   },
   resetPasswordToken: String,

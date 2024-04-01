@@ -54,11 +54,16 @@ const RegisterScreen = ({ navigation }) => {
           <Picker.Item label="Select Role" value="" />
           <Picker.Item label="Student" value="student" />
           <Picker.Item label="Teacher" value="teacher" />
+          <Picker.Item label="Admin" value="admin" />
         </Picker>
 
         {/* Conditionally render verification code input for teachers */}
-        {role === 'teacher' && (
-          <InputBox inputTitle={"Verification Code"} value={verificationCode} setValue={setVerificationCode} />
+        {(role === 'teacher' || role === 'admin') && ( // Show for both teacher and admin roles
+          <InputBox
+            inputTitle="Verification Code"
+            value={verificationCode}
+            setValue={setVerificationCode}
+          />
         )}
       </View>
 

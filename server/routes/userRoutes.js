@@ -37,11 +37,13 @@ const {
      getAllClasses,
      getUsersByClass,
      getSubjectsByClass,
+    
      createClassAndSubject,
      addOrUpdateStudent,
      getStudentsByClass,
      createSubject,
      createGrade,
+     getAllTeachers,
      submitAttendance,
      registerSubjectForStudent,
      setGradeForUser,
@@ -131,7 +133,7 @@ router.get('/assignments',  requireSignIn, getAssignmentsForLoggedInUser)
 
 router.get('/subjects/class/:classId', getSubjectsByClass);
 
-// router.post('/classes', createClass);
+// router.post('/classes', createClass)
 // router.post('/subjects', createSubject)
 
 router.post('/grades', createGrade);
@@ -148,6 +150,7 @@ router.post('/subjects', createSubject);
 // Route to fetch students by grade
 router.get('/class/grade/:grade', getClassIdByGrade);
 // router.get('/users/class/:classId', getUsersByClassId);
+
 
 
 // Route to register a student for a subject
@@ -172,5 +175,7 @@ router.get('/attendance/:grade/:subject/:date', getAttendanceData);
 router.get('/class-schedules', getClassSchedules);
 
 
-//export 
+router.get('/teachers', getAllTeachers);
+
+//export p
 module.exports = router;

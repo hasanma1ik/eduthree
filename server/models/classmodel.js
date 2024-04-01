@@ -4,7 +4,25 @@ const classSchema = new mongoose.Schema({
   grade: {
     type: String,
     required: true,
-    unique: true // Ensure there are no duplicate classes for the same grade
+
+  },
+  subject: {
+    type: String,
+    required: true,
+  },
+  timeSlot: {
+    type: String,
+    required: true,
+  },
+  day: {
+    type: String,
+    required: true,
+  },
+  teacher: {
+    // Assuming a class has one teacher. Adjust according to your needs.
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
   users: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -13,7 +31,8 @@ const classSchema = new mongoose.Schema({
 });
 
 
-classSchema.index({ grade: 1 });
+classSchema.index({ grade: 1, day: 1, timeSlot: 1 }, { unique: true });
+
 
 const Class = mongoose.model('Class', classSchema);
 
