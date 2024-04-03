@@ -16,7 +16,7 @@ const User = require('../models/userModel')
 const Class = require('../models/classmodel')
 const Subject = require('../models/subjectmodel')
 const ClassSchedule = require('../models/ClassScheduleModel')
-
+const Term = require('../models/termmodel')
 
 //middleware
 
@@ -462,30 +462,53 @@ const createSubject = async (req, res) => {
 };
 
 const createGrade = async (req, res) => {
-  const { grade, subject, timeSlot, day, teacher } = req.body;
+  const { grade, subject, timeSlot, day, teacher, term } = req.body;
 
-  if (!grade || !subject || !timeSlot || !day || !teacher) {
-      return res.status(400).json({ message: 'Please fill all fields.' });
+  // Validate all required fields including 'term'
+  if (!grade || !subject || !timeSlot || !day || !teacher || !term) {
+      return res.status(400).json({ message: 'Please fill all fields including term.' });
   }
 
   try {
-      // Check for any class that has the same grade, day, and timeSlot
-      const existingClass = await Class.findOne({ grade, day, timeSlot });
-      if (existingClass) {
-          // If a class with the same grade, day, and time slot exists, return a conflict message
-          return res.status(409).json({ 
-              message: `Conflict: Another class for grade ${grade} is already scheduled on ${day} at ${timeSlot}.`
-          });
+      // Ensure the term exists
+      const termExists = await Term.findById(term);
+      if (!termExists) {
+          return res.status(404).json({ message: "Selected term does not exist." });
       }
 
-      const newClass = new Class({ grade, subject, timeSlot, day, teacher });
-      await newClass.save();
-      res.status(201).json({ message: 'Grade and class created successfully', class: newClass });
+      // Check if a class with these exact details already exists including the same term
+      const existingClass = await Class.findOne({ grade, subject, timeSlot, day, term });
+      if (existingClass) {
+          return res.status(400).json({ message: 'A class with these exact details already exists for the selected term.' });
+      }
+
+      // Proceed to create a new class with the term included
+      const newClass = await new Class({ grade, subject, timeSlot, day, teacher, term }).save();
+
+      // Find all students assigned to this grade
+      const studentsInGrade = await User.find({ grade }).select('_id');
+
+      // Update the newly created Class document with the student IDs (This might be redundant if users are to be populated in ClassSchedule instead)
+      await Class.findByIdAndUpdate(newClass._id, { $set: { users: studentsInGrade } });
+
+      // Create a ClassSchedule entry with all students in this grade and the specified term
+      await new ClassSchedule({
+          classId: newClass._id,
+          dayOfWeek: day,
+          startTime: timeSlot.split(' - ')[0],
+          endTime: timeSlot.split(' - ')[1],
+          subject,
+          teacher,
+          users: studentsInGrade,
+          term // Added term to ClassSchedule as well
+      }).save();
+
+      res.status(201).json({ message: 'Grade, class, and class schedule created successfully', class: newClass });
   } catch (error) {
+      console.error("Failed to create grade/class due to error:", error);
       res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
   }
 };
-
 
 
 
@@ -919,14 +942,41 @@ const getUnreadNotificationsCount = async (req, res) => {
   }
 };
 
-const getClassSchedules = async (req, res) => {
+const getClassSchedulesForLoggedInUser = async (req, res) => {
+  const userId = req.auth._id; // Assuming you have middleware that sets req.user based on the logged-in user
+  const { date } = req.query; // 'YYYY-MM-DD'
+
   try {
-    const classSchedules = await ClassSchedule.find().populate('classId').populate('teacher');
+    // Find the term that includes the selected date
+    const term = await Term.findOne({ 
+      startDate: { $lte: date }, 
+      endDate: { $gte: date }
+    });
+
+    if (!term) {
+      return res.status(404).json({ message: 'No term found for the selected date.' });
+    }
+
+    // Parse the date to get the day of the week
+    const parsedDate = new Date(date);
+    const dayOfWeek = parsedDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+    // Fetch class schedules for the user that fall on the selected date's day of the week and within the found term
+    const classSchedules = await ClassSchedule.find({
+      term: term._id,
+      users: userId,
+      dayOfWeek
+    })
+    .populate('classId')
+    .populate('teacher', 'name');
+
     res.json({ success: true, classSchedules });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to fetch class schedules", error: error.message });
+    console.error("Failed to fetch class schedules:", error);
+    res.status(500).json({ message: "Failed to fetch class schedules", error });
   }
 };
+
 
 const getAllTeachers = async (req, res) => {
   try {
@@ -938,9 +988,30 @@ const getAllTeachers = async (req, res) => {
   }
 };
 
+const createTerms = async (req, res) => {
+  try {
+    const { name, startDate, endDate } = req.body;
+    const term = new Term({ name, startDate, endDate });
+    await term.save();
+    res.status(201).json({ message: 'Term created successfully', term });
+  } catch (error) {
+    console.error('Error adding term:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+}
+
+const getTerms = async (req, res) => {
+  try {
+      const terms = await Term.find({}); // Fetch all terms from the database
+      res.json({ success: true, terms });
+  } catch (error) {
+      console.error("Failed to fetch terms:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch terms", error: error.message });
+  }
+};
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedules, getAllTeachers }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms }
 
 
 

@@ -8,23 +8,26 @@ const updateClassIndexes = async () => {
   try {
     await connectDB();
 
-    // Dropping the old index if it exists. Replace 'grade_1' with the actual index name if different.
-    // This is a manual operation and should be used with caution.
-    console.log("Dropping old indexes if they exist...");
-    await Class.collection.dropIndex('grade_1').catch(e => console.log("Index grade_1 not found, skipping..."));
+    // Optionally, list current indexes to identify the one you want to drop
+    const currentIndexes = await Class.listIndexes();
+    console.log("Current Indexes:", currentIndexes);
 
-    // Explicitly ensuring new indexes based on the schema
-    // This is typically not necessary as Mongoose does this automatically on application start.
-    // However, it's included here for completeness.
+    // Dropping the old index if it exists
+    console.log("Dropping old indexes if they exist...");
+    await Class.collection.dropIndex('grade_1_day_1_timeSlot_1').catch(e => console.log("Index not found, skipping..."));
+
+    // MongoDB should automatically create the new indexes based on your schema
+    // when the application starts. But if you want to explicitly ensure indexes:
     console.log("Ensuring new indexes based on the updated schema...");
     await Class.ensureIndexes();
 
     console.log("Index update complete.");
   } catch (error) {
-    console.error("Error updating class indexes:", error);
+    console.error("Error updating indexes:", error);
   } finally {
-    mongoose.disconnect();
+    await mongoose.disconnect();
   }
 };
 
 updateClassIndexes();
+

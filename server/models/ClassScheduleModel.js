@@ -23,11 +23,21 @@ const classScheduleSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  users: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  term: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Term', 
+    required: true
+  },
   teacher: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
-  }
+  },
+
 });
 
 const ClassSchedule = mongoose.model('ClassSchedule', classScheduleSchema);

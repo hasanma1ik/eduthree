@@ -47,7 +47,10 @@ const {
      submitAttendance,
      registerSubjectForStudent,
      setGradeForUser,
-     getClassSchedules,
+     getClassSchedulesForLoggedInUser,
+     createTerms,
+     getTerms,
+    
     
     
     
@@ -92,7 +95,7 @@ router.get('/users/:classId/:subjectId', getStudentsByClassAndSubject)
 
 // router to fetch timetable
 
-router.get('/timetable/:userId', getTimetableForUser);
+// router.get('/timetable/:userId', getTimetableForUser);
 
 
 
@@ -172,10 +175,15 @@ router.get('/subjects', getSubjects);
 router.get('/attendance/:grade/:subject/dates', getAttendanceDates);
 router.get('/attendance/:grade/:subject/:date', getAttendanceData);
 
-router.get('/class-schedules', getClassSchedules);
+
+router.get('/class-schedules/logged-in-user', requireSignIn, getClassSchedulesForLoggedInUser);
 
 
 router.get('/teachers', getAllTeachers);
+
+router.post('/terms', createTerms)
+router.get('/terms', getTerms)
+
 
 //export p
 module.exports = router;

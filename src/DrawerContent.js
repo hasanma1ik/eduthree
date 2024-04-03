@@ -39,6 +39,8 @@ const DrawerContent = (props) => {
   <DrawerItem label="My Posts" onPress={() => props.navigation.navigate('MyPosts')} />
     <DrawerItem label="Grade Setter" onPress={() => props.navigation.navigate('GradeSetter')} />
     <DrawerItem label="Student Form" onPress={() => props.navigation.navigate('StudentForm')} />
+    <DrawerItem label="Create Term" onPress={() => props.navigation.navigate('AddTermScreen')} />
+
 
 
 </>

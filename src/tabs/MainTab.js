@@ -27,6 +27,7 @@ import TakeAttendance from '../TakeAttendance';
 import SeeAttendanceScreen from '../SeeAttendance';
 import NotificationsScreen from '../screen/Notifications';
 import ClassSchedule from '../ClassSchedule';
+import AddTermScreen from '../TermScreen';
 
 
 
@@ -102,6 +103,9 @@ const Drawer = createDrawerNavigator();
       <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
       <Stack.Screen name="TakeAttendance" component={TakeAttendance} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
     <Stack.Screen name="SeeAttendance" component={SeeAttendanceScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+    <Stack.Screen name="AddTermScreen" component={AddTermScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> 
+
+   
 
         {/* Repeat for common screens like About, Account, etc. */}
     </Stack.Navigator>

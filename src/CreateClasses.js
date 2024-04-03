@@ -7,7 +7,10 @@ const CreateClasses = () => {
   const [selectedGrade, setSelectedGrade] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedDay, setSelectedDay] = useState('');
+
+  const [terms, setTerms] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState('');
   const [teachers, setTeachers] = useState([]);
   const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
@@ -18,6 +21,7 @@ const CreateClasses = () => {
   useEffect(() => {
     // Fetch teachers from the backend when the component mounts
     fetchTeachers();
+    fetchTerms();
   }, []);
 
  const fetchTeachers = async () => {
@@ -30,18 +34,33 @@ const CreateClasses = () => {
     Alert.alert("Error", "Failed to fetch teachers");
   }
 };
+
+const fetchTerms = async () => {
+  try {
+    const response = await axios.get('/auth/terms');
+    setTerms(response.data.terms);
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "Failed to fetch terms");
+  }
+};
+
 const createGrade = async () => {
   if (selectedGrade === "" || selectedSubject === "" || selectedTimeSlot === "" || selectedDay === "" || selectedTeacher === "") {
       Alert.alert("Validation Error", "Please fill all fields");
       return;
   }
 
+ 
+
   const postData = {
       grade: selectedGrade,
       subject: selectedSubject,
       timeSlot: selectedTimeSlot,
       day: selectedDay,
-      teacher: selectedTeacher
+      teacher: selectedTeacher,
+      term: selectedTerm
+      
   };
 
   try {
@@ -112,6 +131,17 @@ const createGrade = async () => {
     <Picker.Item key={index} label={teacher.name} value={teacher._id} /> // Use teacher._id
   ))}
 </Picker>
+
+<Picker
+        selectedValue={selectedTerm}
+        onValueChange={setSelectedTerm}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Term" value="" />
+        {terms.map((term, index) => (
+          <Picker.Item key={index} label={term.name} value={term._id} />
+        ))}
+      </Picker>
 
       <Button title="Create Class" onPress={createGrade} />
     </ScrollView>

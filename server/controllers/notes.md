@@ -2504,6 +2504,205 @@ const styles = StyleSheet.create({
 export default CreateClasses;
 
 
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import axios from 'axios';
+import { AuthContext } from './screen/context/authContext';
+
+const ClassSchedule = () => {
+    const [classSchedules, setClassSchedules] = useState([]);
+    const [state] = useContext(AuthContext);
+
+   
+    useEffect(() => {
+        fetchClassSchedules();
+    }, []);
+
+    const fetchClassSchedules = async () => {
+        if (state.user && state.user._id) {
+            console.log("Fetching class schedules for user ID:", state.user._id); // Log the user ID being used
+            try {
+                const response = await axios.get(`/auth/class-schedules/user/${state.user._id}`);
+                console.log("Class schedules fetched successfully:", response.data.classSchedules); // Log fetched schedules
+                setClassSchedules(response.data.classSchedules);
+            } catch (error) {
+                console.error("Failed to fetch class schedules for the user:", error);
+            }
+        } else {
+            console.log("User ID not available for fetching class schedules.");
+        }
+    };
+
+    return (
+        <ScrollView style={styles.container}>
+            {classSchedules.length > 0 ? classSchedules.map((schedule, index) => (
+                <View key={index} style={styles.scheduleItem}>
+                    <Text style={styles.subject}>{schedule.subject}</Text>
+                    <Text>Day: {schedule.dayOfWeek}</Text>
+                    <Text>Time: {schedule.startTime} - {schedule.endTime}</Text>
+                    <Text>Teacher: {schedule.teacher ? schedule.teacher.name : 'No teacher info'}</Text>
+                </View>
+            )) : <Text>No class schedules found.</Text>}
+        </ScrollView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 10,
+    },
+    scheduleItem: {
+        backgroundColor: '#f0f0f0',
+        padding: 15,
+        marginBottom: 10,
+        borderRadius: 5,
+    },
+    subject: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    // Add more styles as needed
+});
+
+export default ClassSchedule;
+
+
+
+
+const getAssignmentsForLoggedInUser = async (req, res) => {
+  try {
+    // Fetch user details from the database using the ID from req.auth
+    const user = await User.findById(req.auth._id).populate('subjects');
+
+    // Check if the user was found
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // Fetch assignments that match the user's grade and subjects
+    const assignments = await Assignment.find({
+      grade: user.grade,
+      subject: { $in: user.subjects.map(subject => subject._id) }, // Assuming subjects is populated
+    }).populate('subject'); // Populate subject details for each assignment
+
+    // Send the fetched assignments as the response
+    res.json(assignments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
+};
+
+
+
+const getClassSchedulesForUser = async (req, res) => {
+  try {
+      // Assuming user's ID is passed as a parameter or you get it from the user session
+      const { userId } = req.params; // or req.user._id if you're using authentication middleware
+
+      // Find all class schedules for this user
+      const classSchedules = await ClassSchedule.find({ user: userId })
+          .populate('classId') // Assuming you want to get details about the class
+          .populate('teacher', 'name') // Populating only the name of the teacher
+          .populate('subject', 'name'); // Populating only the name of the subject
+
+      res.json({ classSchedules });
+  } catch (error) {
+      console.error("Failed to fetch class schedules for the user:", error);
+      res.status(500).json({ message: "Failed to fetch class schedules", error: error.message });
+  }
+};
+
+
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import axios from 'axios';
+
+
+const ClassSchedule = () => {
+    const [classSchedules, setClassSchedules] = useState([]);
+  
+
+    useEffect(() => {
+        const fetchClassSchedules = async () => {
+          try {
+            // If the backend uses the auth token to identify the user, no need to append userId in the URL.
+            const response = await axios.get('/auth/class-schedules/logged-in-user');
+            setClassSchedules(response.data);
+          } catch (error) {
+            console.error('Failed to fetch class schedules:', error);
+            Alert.alert("Error", "Failed to fetch class schedules");
+          }
+        };
+      
+        fetchClassSchedules();
+      }, []);
+      
+
+    return (
+        <ScrollView style={styles.container}>
+            {classSchedules.length > 0 ? classSchedules.map((schedule, index) => (
+                <View key={index} style={styles.scheduleItem}>
+                    <Text style={styles.subject}>{schedule.subject}</Text>
+                    <Text>Day: {schedule.dayOfWeek}</Text>
+                    <Text>Time: {schedule.startTime} - {schedule.endTime}</Text>
+                    <Text>Teacher: {schedule.teacher ? schedule.teacher.name : 'No teacher info'}</Text>
+                </View>
+            )) : <Text>No class schedules found.</Text>}
+        </ScrollView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 10,
+    },
+    scheduleItem: {
+        backgroundColor: '#f0f0f0',
+        padding: 15,
+        marginBottom: 10,
+        borderRadius: 5,
+    },
+    subject: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    // Add more styles as needed
+});
+
+export default ClassSchedule;
+
+
+const getClassSchedulesForLoggedInUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.auth._id);
+
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    // Assuming each ClassSchedule is associated with a grade directly or through the classId.
+    const classSchedules = await ClassSchedule.find()
+      .populate({
+        path: 'classId',
+        match: { grade: user.grade }, // Ensure the Class model has a 'grade' field.
+        populate: {
+          path: 'teacher', // Assuming the teacher is stored within the Class model.
+          select: 'name' // Adjust according to your schema.
+        }
+      })
+      .populate('teacher', 'name') 
+      .lean();
+
+    // Filter out schedules not matching the user's grade. This step is necessary if 'match' in populate does not filter out non-matching documents.
+    const filteredSchedules = classSchedules.filter(schedule => schedule.classId && schedule.classId.grade === user.grade);
+
+    res.json(filteredSchedules);
+  } catch (error) {
+    console.error('Failed to fetch class schedules:', error);
+    res.status(500).send({ message: 'Server Error', error });
+  }
+};
 
 
 
@@ -2665,3 +2864,17 @@ Students - no Posting allowed, Drawer- Only assignments and Timetable
 1- When teacher creates class, it should also select days and times, so when the student is registered in that class, it shows up in his schedule. 
 2- Also times should not overlap with other classes. 
 3- Teacher should also have option to cancel class which will send notification to himself and student that class has been cancelled.
+
+
+
+Schedule
+todays date
+
+i want classes to be displayed by date, like for instance
+ Jan 22nd Monday 2024, shows the class schedule for the day and then i can select another date and it can show me class Schedule for that particular date
+
+
+ Semester Jan 15th - May 17th 2024
+
+
+ once these terms are created i want them to show there in createClass option, when i select term class is created
