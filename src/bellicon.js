@@ -3,14 +3,16 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import axios from 'axios';
 import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 import { Ionicons } from '@expo/vector-icons'; // Or wherever you import Ionicons from
+import { useNotifications } from '../NotificationContext';
 
 const NotificationIcon = ({ navigation }) => {
-  const [unreadCount, setUnreadCount] = useState(0);
+  
+  const { notificationCount, resetNotificationCount } = useNotifications();
 
-  const fetchUnreadCount = useCallback(async () => {
+  const fetchNotificationCount = useCallback(async () => {
     try {
       const response = await axios.get('/auth/notifications/unread-count');
-      setUnreadCount(response.data.unreadCount);
+      resetNotificationCount (response.data.notificationCount);
     } catch (error) {
       console.log('Error fetching unread notifications count:', error);
     }
@@ -19,17 +21,20 @@ const NotificationIcon = ({ navigation }) => {
   // Use useFocusEffect to refetch unread count when the screen is focused
   useFocusEffect(
     useCallback(() => {
-      fetchUnreadCount();
-    }, [fetchUnreadCount])
+      fetchNotificationCount();
+    }, [fetchNotificationCount])
   );
 
   return (
-    <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.iconContainer}>
+    <TouchableOpacity onPress={() => {
+      navigation.navigate('Notifications');
+      resetNotificationCount(); // Optionally reset the count when navigating to notifications
+    }} style={styles.iconContainer}>
       <Ionicons name="notifications" size={24} color="black" />
-      {unreadCount > 0 && (
+      {notificationCount > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{unreadCount}</Text>
-        </View>
+        <Text style={styles.badgeText}>{notificationCount}</Text>
+      </View>
       )}
       <Text>Notifications</Text>
     </TouchableOpacity>
@@ -64,3 +69,8 @@ const styles = StyleSheet.create({
 });
 
 export default NotificationIcon;
+
+
+
+
+// const [unreadCount, setUnreadCount] = useState(0);

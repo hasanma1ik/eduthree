@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, useEffect, Text, View, Button} from 'react-native';
+import React, { useEffect } from "react";
+import { StyleSheet, Text, View, Button} from 'react-native';
 import { useFonts} from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider, SignedIn, SignedOut, useAuth  } from "@clerk/clerk-expo";
@@ -9,7 +10,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
 import RootNavigation from './Navigation';
 import { UserProvider } from './src/screen/context/userContext';
-
+import { initializeSocket, disconnectSocket } from './socketservice';
+import { NotificationProvider } from './NotificationContext';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -53,6 +55,16 @@ const SignOut = () => {
 
 
 export default function App() {
+
+  useEffect(() => {
+     initializeSocket();
+
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
+
+
   const [fontsLoaded] = useFonts({
     'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
     'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
@@ -72,6 +84,7 @@ export default function App() {
   }
   
   return (
+    <NotificationProvider>
     <UserProvider>
       <ClerkProvider
         tokenCache={tokenCache}
@@ -94,6 +107,7 @@ export default function App() {
         </NavigationContainer>
       </ClerkProvider>
     </UserProvider>
+    </NotificationProvider>
   );
 }
 

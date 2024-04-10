@@ -17,6 +17,7 @@ const Class = require('../models/classmodel')
 const Subject = require('../models/subjectmodel')
 const ClassSchedule = require('../models/ClassScheduleModel')
 const Term = require('../models/termmodel')
+const moment = require('moment');
 
 //middleware
 
@@ -461,55 +462,66 @@ const createSubject = async (req, res) => {
   }
 };
 
+
+
 const createGrade = async (req, res) => {
-  const { grade, subject, timeSlot, day, teacher, term } = req.body;
+    const { grade, subject, timeSlot, day, teacher, term } = req.body;
 
-  // Validate all required fields including 'term'
-  if (!grade || !subject || !timeSlot || !day || !teacher || !term) {
-      return res.status(400).json({ message: 'Please fill all fields including term.' });
-  }
+    if (!grade || !subject || !timeSlot || !day || !teacher || !term) {
+        return res.status(400).json({ message: 'Please fill all fields including term.' });
+    }
 
-  try {
-      // Ensure the term exists
-      const termExists = await Term.findById(term);
-      if (!termExists) {
-          return res.status(404).json({ message: "Selected term does not exist." });
-      }
+    try {
+        const termExists = await Term.findById(term);
+        if (!termExists) {
+            return res.status(404).json({ message: "Selected term does not exist." });
+        }
 
-      // Check if a class with these exact details already exists including the same term
-      const existingClass = await Class.findOne({ grade, subject, timeSlot, day, term });
-      if (existingClass) {
-          return res.status(400).json({ message: 'A class with these exact details already exists for the selected term.' });
-      }
+        // Convert to 24-hour format and calculate the UTC times
+        const [startTime, endTime] = timeSlot.split(' - ');
+        const startTimeUTC = moment.tz(startTime, 'h:mm A', true, 'UTC');
+        const endTimeUTC = moment.tz(endTime, 'h:mm A', true, 'UTC');
 
-      // Proceed to create a new class with the term included
-      const newClass = await new Class({ grade, subject, timeSlot, day, teacher, term }).save();
+        // Adjust day of the week if necessary
+        let utcDayOfWeek = day;
+        if (startTimeUTC.day() !== moment(startTime, 'h:mm A').day()) {
+            // If the UTC day is different from the local day, adjust the day of week
+            utcDayOfWeek = moment().day(startTimeUTC.day()).format('dddd');
+        }
 
-      // Find all students assigned to this grade
-      const studentsInGrade = await User.find({ grade }).select('_id');
+        const newClass = new Class({
+            grade,
+            subject,
+            timeSlot: `${startTimeUTC.format('HH:mm')} - ${endTimeUTC.format('HH:mm')}`,
+            day: utcDayOfWeek,
+            teacher,
+            term
+        });
 
-      // Update the newly created Class document with the student IDs (This might be redundant if users are to be populated in ClassSchedule instead)
-      await Class.findByIdAndUpdate(newClass._id, { $set: { users: studentsInGrade } });
+        await newClass.save();
 
-      // Create a ClassSchedule entry with all students in this grade and the specified term
-      await new ClassSchedule({
-          classId: newClass._id,
-          dayOfWeek: day,
-          startTime: timeSlot.split(' - ')[0],
-          endTime: timeSlot.split(' - ')[1],
-          subject,
-          teacher,
-          users: studentsInGrade,
-          term // Added term to ClassSchedule as well
-      }).save();
+        const studentsInGrade = await User.find({ grade }).select('_id');
+        
+        await new ClassSchedule({
+            classId: newClass._id,
+            dayOfWeek: utcDayOfWeek,
+            startTime: startTimeUTC.format('HH:mm'),
+            endTime: endTimeUTC.format('HH:mm'),
+            subject,
+            teacher,
+            users: studentsInGrade,
+            term
+        }).save();
 
-      res.status(201).json({ message: 'Grade, class, and class schedule created successfully', class: newClass });
-  } catch (error) {
-      console.error("Failed to create grade/class due to error:", error);
-      res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
-  }
+        res.status(201).json({
+            message: 'Grade, class, and class schedule created successfully',
+            class: newClass
+        });
+    } catch (error) {
+        console.error("Failed to create grade/class due to error:", error);
+        res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
+    }
 };
-
 
 
 
@@ -943,11 +955,10 @@ const getUnreadNotificationsCount = async (req, res) => {
 };
 
 const getClassSchedulesForLoggedInUser = async (req, res) => {
-  const userId = req.auth._id; // Assuming you have middleware that sets req.user based on the logged-in user
-  const { date } = req.query; // 'YYYY-MM-DD'
+  const userId = req.auth._id; // Adjust based on how you access the logged-in user's ID
+  const { date } = req.query; // Expected format: 'YYYY-MM-DD'
 
   try {
-    // Find the term that includes the selected date
     const term = await Term.findOne({ 
       startDate: { $lte: date }, 
       endDate: { $gte: date }
@@ -957,12 +968,10 @@ const getClassSchedulesForLoggedInUser = async (req, res) => {
       return res.status(404).json({ message: 'No term found for the selected date.' });
     }
 
-    // Parse the date to get the day of the week
     const parsedDate = new Date(date);
     const dayOfWeek = parsedDate.toLocaleDateString('en-US', { weekday: 'long' });
 
-    // Fetch class schedules for the user that fall on the selected date's day of the week and within the found term
-    const classSchedules = await ClassSchedule.find({
+    let classSchedules = await ClassSchedule.find({
       term: term._id,
       users: userId,
       dayOfWeek
@@ -970,13 +979,19 @@ const getClassSchedulesForLoggedInUser = async (req, res) => {
     .populate('classId')
     .populate('teacher', 'name');
 
+    // Convert startTime and endTime to 24-hour format
+    classSchedules = classSchedules.map(schedule => ({
+      ...schedule.toObject(), // Convert Mongoose document to plain JavaScript object
+      startTime: moment(schedule.startTime, 'h:mm A').format('HH:mm'),
+      endTime: moment(schedule.endTime, 'h:mm A').format('HH:mm'),
+    }));
+
     res.json({ success: true, classSchedules });
   } catch (error) {
     console.error("Failed to fetch class schedules:", error);
     res.status(500).json({ message: "Failed to fetch class schedules", error });
   }
 };
-
 
 const getAllTeachers = async (req, res) => {
   try {

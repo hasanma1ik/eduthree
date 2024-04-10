@@ -37,6 +37,10 @@ const classScheduleSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  notificationSent: {
+    type: Boolean,
+    default: false,
+  }
 
 });
 

@@ -20,6 +20,12 @@ const notificationSchema = new mongoose.Schema({
     ref: 'Assignment',
     required: false, // Not all notifications might be about assignments
   },
+  classSchedule: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ClassSchedule', // Referencing ClassSchedule
+    required: false, // Set based on your application's needs
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,

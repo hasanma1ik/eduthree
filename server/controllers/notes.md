@@ -2704,7 +2704,834 @@ const getClassSchedulesForLoggedInUser = async (req, res) => {
   }
 };
 
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, Button, Alert, Platform } from 'react-native';
+import axios from 'axios';
+import DateTimePicker from '@react-native-community/datetimepicker'; // Import the component
 
+const ClassSchedule = () => {
+    const [classSchedules, setClassSchedules] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+
+    // Fetch class schedules for the selected date
+    const fetchClassSchedules = async (date) => {
+        const formattedDate = `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`;
+        try {
+            // Adjust the endpoint as necessary
+            const response = await axios.get(`/auth/class-schedules/logged-in-user?date=${formattedDate}`);
+
+            setClassSchedules(response.data.classSchedules || []);
+        } catch (error) {
+            console.error('Failed to fetch class schedules:', error);
+            Alert.alert("Error", "Failed to fetch class schedules");
+        }
+    };
+
+    // Handler for date change
+    const onDateChange = (event, selectedDate) => {
+        setShowDatePicker(Platform.OS === 'ios'); // Hide picker on Android after selection
+        const currentDate = selectedDate || selectedDate;
+        setSelectedDate(currentDate);
+        fetchClassSchedules(currentDate); // Fetch schedules for the new date
+    };
+
+    // Toggle the date picker visibility
+    const toggleDatePicker = () => {
+        setShowDatePicker(!showDatePicker);
+    };
+
+    useEffect(() => {
+        fetchClassSchedules(selectedDate); // Initial fetch for today's schedules
+    }, []);
+
+    return (
+        <View style={styles.container}>
+            <Button title="Select Date" onPress={toggleDatePicker} />
+            {showDatePicker && (
+                <DateTimePicker
+                    testID="dateTimePicker"
+                    value={selectedDate}
+                    mode="date"
+                    is24Hour={true}
+                    display="default"
+                    onChange={onDateChange}
+                />
+            )}
+            <ScrollView style={styles.scheduleList}>
+                {classSchedules.length > 0 ? classSchedules.map((schedule, index) => (
+                    <View key={index} style={styles.scheduleItem}>
+                        <Text style={styles.subject}>{schedule.subject}</Text>
+                        <Text>Day: {schedule.dayOfWeek}</Text>
+                        <Text>Time: {schedule.startTime} - {schedule.endTime}</Text>
+                        <Text>Teacher: {schedule.teacher.name}</Text>
+                    </View>
+                )) : <Text>No class schedules found for the selected date.</Text>}
+            </ScrollView>
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    scheduleList: {
+        marginTop: 15,
+    },
+    scheduleItem: {
+        backgroundColor: '#f0f0f0',
+        padding: 15,
+        marginBottom: 10,
+        borderRadius: 5,
+        marginHorizontal: 10,
+    },
+    subject: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    // Add more styles as needed
+});
+
+export default ClassSchedule;
+
+
+import React, { useState, useEffect } from 'react';
+import { View, Button, StyleSheet, Alert, Text, ScrollView } from 'react-native';
+import axios from 'axios';
+import { Picker } from '@react-native-picker/picker';
+
+const CreateClasses = () => {
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
+
+  const [terms, setTerms] = useState([]);
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [teachers, setTeachers] = useState([]);
+  const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
+  const subjects = ['Math', 'Science', 'Islamiat', 'History', 'English Language', 'English Literature', 'Urdu'];
+  const timeSlots = ['8:00 AM - 9:00 AM', '9:00 AM - 10:00 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM'];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+  useEffect(() => {
+    // Fetch teachers from the backend when the component mounts
+    fetchTeachers();
+    fetchTerms();
+  }, []);
+
+ const fetchTeachers = async () => {
+  try {
+    const response = await axios.get('/auth/teachers');
+    console.log(response.data); // Log to see the actual structure
+    setTeachers(response.data.teachers); // Make sure this matches the logged structure
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "Failed to fetch teachers");
+  }
+};
+
+const fetchTerms = async () => {
+  try {
+    const response = await axios.get('/auth/terms');
+    setTerms(response.data.terms);
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "Failed to fetch terms");
+  }
+};
+
+const createGrade = async () => {
+  if (selectedGrade === "" || selectedSubject === "" || selectedTimeSlot === "" || selectedDay === "" || selectedTeacher === "") {
+      Alert.alert("Validation Error", "Please fill all fields");
+      return;
+  }
+
+ 
+
+  const postData = {
+      grade: selectedGrade,
+      subject: selectedSubject,
+      timeSlot: selectedTimeSlot,
+      day: selectedDay,
+      teacher: selectedTeacher,
+      term: selectedTerm
+      
+  };
+
+  try {
+      const response = await axios.post('/auth/grades', postData);
+      Alert.alert("Success", "Class created successfully");
+  } catch (error) {
+      // Display the custom error message from the backend
+      const errorMessage = error.response?.data?.message || "An unexpected error occurred";
+      Alert.alert("Error", errorMessage);
+  }
+};
+
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Create Class</Text>
+      <Picker
+        selectedValue={selectedGrade}
+        onValueChange={setSelectedGrade}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Grade" value="" />
+        {grades.map((grade, index) => (
+          <Picker.Item key={index} label={grade} value={grade} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedSubject}
+        onValueChange={setSelectedSubject}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Subject" value="" />
+        {subjects.map((subject, index) => (
+          <Picker.Item key={index} label={subject} value={subject} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedTimeSlot}
+        onValueChange={setSelectedTimeSlot}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Time Slot" value="" />
+        {timeSlots.map((slot, index) => (
+          <Picker.Item key={index} label={slot} value={slot} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedDay}
+        onValueChange={setSelectedDay}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Day" value="" />
+        {days.map((day, index) => (
+          <Picker.Item key={index} label={day} value={day} />
+        ))}
+      </Picker>
+
+      <Picker
+  selectedValue={selectedTeacher}
+  onValueChange={setSelectedTeacher}
+  style={styles.picker}
+>
+  <Picker.Item label="Select Teacher" value="" />
+  {teachers.map((teacher, index) => (
+    <Picker.Item key={index} label={teacher.name} value={teacher._id} /> // Use teacher._id
+  ))}
+</Picker>
+
+<Picker
+        selectedValue={selectedTerm}
+        onValueChange={setSelectedTerm}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Term" value="" />
+        {terms.map((term, index) => (
+          <Picker.Item key={index} label={term.name} value={term._id} />
+        ))}
+      </Picker>
+
+      <Button title="Create Class" onPress={createGrade} />
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  picker: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+});
+
+export default CreateClasses;
+
+
+const cron = require('node-cron');
+
+const mongoose = require('mongoose');
+const Notification = require('../server/models/notificationmodel'); // Adjust with your actual path
+const ClassSchedule = require('../server/models/ClassScheduleModel'); // Adjust with your actual path
+
+// Function to send notifications
+async function checkAndNotifyForUpcomingClasses() {
+  // Assume current day and time are fetched correctly
+  const now = new Date();
+  const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const currentTime = now.getHours() + ':' + now.getMinutes();
+
+  // Find classes starting in the next 15 minutes
+  const upcomingClasses = await ClassSchedule.find({
+    dayOfWeek: dayOfWeek,
+    startTime: { $gte: currentTime }, // Adjust this logic to compare times accurately
+    // Add more conditions if needed
+  });
+
+  // For each class, create a notification
+  upcomingClasses.forEach(async (cls) => {
+    const message = `Your ${cls.subject} class is about to start in 15 minutes.`;
+
+    // Create a notification for each user in the class
+    cls.users.forEach(async (userId) => {
+      const newNotification = new Notification({
+        user: userId,
+        message: message,
+        // Add other relevant fields
+      });
+
+      await newNotification.save();
+    });
+  });
+}
+
+// Schedule the task to run every minute (adjust as needed)
+cron.schedule('* * * * *', checkAndNotifyForUpcomingClasses);
+
+
+
+import React, { useState, useEffect } from 'react';
+import { View, Button, StyleSheet, Alert, Text, ScrollView } from 'react-native';
+import axios from 'axios';
+import { Picker } from '@react-native-picker/picker';
+import moment from 'moment-timezone'; // Import moment-timezone
+
+
+const CreateClasses = () => {
+
+
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
+
+  const [terms, setTerms] = useState([]);
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [teachers, setTeachers] = useState([]);
+
+  const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
+  const subjects = ['Math', 'Science', 'Islamiat', 'History', 'English Language', 'English Literature', 'Urdu'];
+ const timeSlots = ['6:45 AM - 7:45 AM', '8:00 AM - 9:00 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM', '9:00 PM - 10:00 PM' ];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  useEffect(() => {
+    // Fetch teachers from the backend when the component mounts
+    fetchTeachers();
+    fetchTerms();
+  }, []);
+
+ const fetchTeachers = async () => {
+  try {
+    const response = await axios.get('/auth/teachers');
+    console.log(response.data); // Log to see the actual structure
+    setTeachers(response.data.teachers); // Make sure this matches the logged structure
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "Failed to fetch teachers");
+  }
+};
+
+const fetchTerms = async () => {
+  try {
+    const response = await axios.get('/auth/terms');
+    setTerms(response.data.terms);
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "Failed to fetch terms");
+  }
+};
+
+// This function looks correct for converting UTC times back to the user's local time for display
+const displayLocalTimeSlot = (utcTimeSlot) => {
+  const [startTime, endTime] = utcTimeSlot.split(' - ');
+  const format = 'h:mm A';
+  const localStartTime = moment.utc(startTime, 'HH:mm').local().format(format);
+  const localEndTime = moment.utc(endTime, 'HH:mm').local().format(format);
+  return `${localStartTime} - ${localEndTime}`;
+};
+
+
+const createGrade = async () => {
+  if (selectedGrade === "" || selectedSubject === "" || selectedTimeSlot === "" || selectedDay === "" || selectedTeacher === "") {
+      Alert.alert("Validation Error", "Please fill all fields");
+      return;
+
+      
+  }
+  const [startTime, endTime] = selectedTimeSlot.split(' - ');
+  const format = 'h:mm A';
+  const utcStartTime = moment.tz(startTime, format, moment.tz.guess()).utc().format(format);
+  const utcEndTime = moment.tz(endTime, format, moment.tz.guess()).utc().format(format);
+  const utcTimeSlot = `${utcStartTime} - ${utcEndTime}`;
+
+  const postData = {
+    grade: selectedGrade,
+    subject: selectedSubject,
+    timeSlot: utcTimeSlot,
+    day: selectedDay,
+    teacher: selectedTeacher,
+    term: selectedTerm,
+  };
+
+ 
+  
+  // Utility function to convert UTC time slots to local timezone
+ 
+
+  try {
+      const response = await axios.post('/auth/grades', postData);
+      Alert.alert("Success", "Class created successfully");
+  } catch (error) {
+      // Display the custom error message from the backend
+      const errorMessage = error.response?.data?.message || "An unexpected error occurred";
+      Alert.alert("Error", errorMessage);
+  }
+};
+
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+     
+      <Text style={styles.title}>Create Class</Text>
+      <Picker
+        selectedValue={selectedGrade}
+        onValueChange={setSelectedGrade}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Grade" value="" />
+        {grades.map((grade, index) => (
+          <Picker.Item key={index} label={grade} value={grade} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedSubject}
+        onValueChange={setSelectedSubject}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Subject" value="" />
+        {subjects.map((subject, index) => (
+          <Picker.Item key={index} label={subject} value={subject} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedTimeSlot}
+        onValueChange={setSelectedTimeSlot}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Time Slot" value="" />
+        {timeSlots.map((slot, index) => (
+          <Picker.Item key={index} label={slot} value={slot} />
+        ))}
+      </Picker>
+
+      <Picker
+        selectedValue={selectedDay}
+        onValueChange={setSelectedDay}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Day" value="" />
+        {days.map((day, index) => (
+          <Picker.Item key={index} label={day} value={day} />
+        ))}
+      </Picker>
+
+      <Picker
+  selectedValue={selectedTeacher}
+  onValueChange={setSelectedTeacher}
+  style={styles.picker}
+>
+  <Picker.Item label="Select Teacher" value="" />
+  {teachers.map((teacher, index) => (
+    <Picker.Item key={index} label={teacher.name} value={teacher._id} /> // Use teacher._id
+  ))}
+</Picker>
+
+<Picker
+        selectedValue={selectedTerm}
+        onValueChange={setSelectedTerm}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select Term" value="" />
+        {terms.map((term, index) => (
+          <Picker.Item key={index} label={term.name} value={term._id} />
+        ))}
+      </Picker>
+
+      <Button title="Create Class" onPress={createGrade} />
+      {selectedTimeSlot && (
+  <Text>{displayLocalTimeSlot(selectedTimeSlot)}</Text>
+)}
+
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  picker: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  currentDateTime: {
+    fontSize: 16,
+    textAlign: 'center',
+    margin: 10,
+},
+});
+
+export default CreateClasses;
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 20,
+    color: '#2C3E50',
+    textAlign: 'center',
+  },
+  pickerContainer: {
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#BDC3C7',
+    borderRadius: 8,
+    backgroundColor: '#ECF0F1',
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingLeft: 10,
+    paddingTop: 5,
+    color: '#34495E',
+  },
+  picker: {
+    color: '#2C3E50',
+  },
+  button: {
+    backgroundColor: '#3498DB',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  localTimeText: {
+    fontSize: 16,
+    color: '#34495E',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+});
+
+
+const cron = require('node-cron');
+const moment = require('moment-timezone');
+const Notification = require('./models/notificationmodel'); // Ensure path is correct
+const ClassSchedule = require('./models/ClassScheduleModel'); // Ensure path is correct
+
+async function sendClassStartNotification(io, userId, message, classScheduleId) {
+    const notification = new Notification({
+        user: userId,
+        message,
+        classSchedule: classScheduleId, // Associate notification with a class schedule
+    });
+    await notification.save();
+
+    // Emitting a real-time notification to the specific user
+    // Replace 'notification-channel' with your actual channel name
+    // Use userId or a specific socket id if you want to target a specific user
+    io.emit('notification-channel', { message: message, notificationId: notification._id });
+}
+
+function resetNotificationSentFlags(ClassSchedule) {
+    // This task resets the notificationSent flag for all ClassSchedule documents daily at midnight
+    cron.schedule('0 0 * * *', async () => {
+        console.log('Resetting notificationSent flags...');
+        await ClassSchedule.updateMany({}, { $set: { notificationSent: false } });
+        console.log('notificationSent flags reset.');
+    });
+}
+
+function startScheduledTasks(io) {
+    // This task checks for classes starting in the next 15 minutes and sends notifications
+    cron.schedule('* * * * *', async () => {
+        console.log('Checking for classes starting in the next 15 minutes...');
+        const now = moment.utc();
+        const fifteenMinutesLater = now.clone().add(15, 'minutes');
+        const dayOfWeek = now.format('dddd');
+
+        const upcomingClasses = await ClassSchedule.find({
+            dayOfWeek: dayOfWeek,
+            notificationSent: false, // Only select classes that haven't had notifications sent
+        }).populate('users');
+
+        upcomingClasses.forEach(async (schedule) => {
+            const classStartTimeMoment = moment.utc(schedule.startTime, 'HH:mm');
+            if (now.isBefore(classStartTimeMoment) && fifteenMinutesLater.isSameOrAfter(classStartTimeMoment)) {
+                const message = `Reminder: Your ${schedule.subject} class starts in 15 minutes.`;
+                schedule.users.forEach(async (user) => {
+                    await sendClassStartNotification(io, user._id, message, schedule._id);
+                });
+
+                // Mark the notification as sent for this class schedule
+                await ClassSchedule.findByIdAndUpdate(schedule._id, { $set: { notificationSent: true } });
+            }
+        });
+    });
+
+    resetNotificationSentFlags(ClassSchedule);
+}
+
+module.exports = startScheduledTasks;
+
+
+
+
+import React, { useEffect } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, View, Alert } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-expo";
+import { NavigationContainer } from '@react-navigation/native';
+import io from 'socket.io-client';
+import TabNavigation from './src/navigations/TabNavigation';
+import RootNavigation from './Navigation';
+import { NotificationProvider } from './NotificationContext';
+import { UserProvider } from './src/screen/context/userContext';
+
+const App = () => {
+  const [fontsLoaded] = useFonts({
+    'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
+    'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
+    'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
+  });
+
+  SplashScreen.preventAutoHideAsync();
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    const socket = io("http://192.168.0.101:8080", { transports: ['websocket'] });
+
+    socket.on('notification-channel', (notification) => {
+      // Handling the notification
+      Alert.alert("New Notification", notification.message);
+    });
+
+    return () => {
+      socket.off('notification-channel');
+      socket.disconnect();
+    };
+  }, []); // Dependency array is empty to ensure this effect runs only once on mount
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <NotificationProvider>
+      <UserProvider>
+      <ClerkProvider
+       
+        publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}
+      >
+          <NavigationContainer>
+            <View style={styles.container}>
+              <SignedIn>
+                <TabNavigation />
+              </SignedIn>
+              <SignedOut>
+                <RootNavigation />
+              </SignedOut>
+              <StatusBar style="auto" />
+            </View>
+          </NavigationContainer>
+        </ClerkProvider>
+      </UserProvider>
+    </NotificationProvider>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+export default App;
+
+
+
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import axios from 'axios';
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { Ionicons } from '@expo/vector-icons'; // Or wherever you import Ionicons from
+
+const NotificationIcon = ({ navigation }) => {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await axios.get('/auth/notifications/unread-count');
+      setUnreadCount(response.data.unreadCount);
+    } catch (error) {
+      console.log('Error fetching unread notifications count:', error);
+    }
+  }, []);
+
+  // Use useFocusEffect to refetch unread count when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadCount();
+    }, [fetchUnreadCount])
+  );
+
+  return (
+    <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.iconContainer}>
+      <Ionicons name="notifications" size={24} color="black" />
+      {unreadCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{unreadCount}</Text>
+        </View>
+      )}
+      <Text>Notifications</Text>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    right: 20,
+    top: 0,
+    backgroundColor: '#AA0000',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    padding: 1,
+    textAlign: 'center',
+  },
+});
+
+export default NotificationIcon;
+
+
+const cron = require('node-cron');
+const moment = require('moment-timezone');
+const Notification = require('./models/notificationmodel'); // Ensure path is correct
+const ClassSchedule = require('./models/ClassScheduleModel'); // Ensure path is correct
+
+async function sendClassStartNotification(io, userId, message, classScheduleId) {
+    const notification = new Notification({
+        user: userId,
+        message,
+        classSchedule: classScheduleId, // Associate notification with a class schedule
+    });
+    await notification.save();
+
+    // Emitting a real-time notification to the specific user
+    // Replace 'notification-channel' with your actual channel name
+    // Use userId or a specific socket id if you want to target a specific user
+    io.emit('notification-channel', { message: message, notificationId: notification._id });
+}
+
+function resetNotificationSentFlags(ClassSchedule) {
+    // This task resets the notificationSent flag for all ClassSchedule documents daily at midnight
+    cron.schedule('0 0 * * *', async () => {
+        console.log('Resetting notificationSent flags...');
+        await ClassSchedule.updateMany({}, { $set: { notificationSent: false } });
+        console.log('notificationSent flags reset.');
+    });
+}
+
+function startScheduledTasks(io) {
+    // This task checks for classes starting in the next 15 minutes and sends notifications
+    cron.schedule('* * * * *', async () => {
+        console.log('Checking for classes starting in the next 15 minutes...');
+        const now = moment.utc();
+        const fifteenMinutesLater = now.clone().add(15, 'minutes');
+        const dayOfWeek = now.format('dddd');
+
+        const upcomingClasses = await ClassSchedule.find({
+            dayOfWeek: dayOfWeek,
+            notificationSent: false, // Only select classes that haven't had notifications sent
+        }).populate('users');
+
+        upcomingClasses.forEach(async (schedule) => {
+            const classStartTimeMoment = moment.utc(schedule.startTime, 'HH:mm');
+            if (now.isBefore(classStartTimeMoment) && fifteenMinutesLater.isSameOrAfter(classStartTimeMoment)) {
+                const message = `Reminder: Your ${schedule.subject} class starts in 15 minutes.`;
+                schedule.users.forEach(async (user) => {
+                    await sendClassStartNotification(io, user._id, message, schedule._id);
+                });
+
+                // Mark the notification as sent for this class schedule
+                await ClassSchedule.findByIdAndUpdate(schedule._id, { $set: { notificationSent: true } });
+            }
+        });
+    });
+
+    resetNotificationSentFlags(ClassSchedule);
+}
+
+module.exports = startScheduledTasks;
 
 
 ```
@@ -2858,6 +3685,8 @@ Role based login, different features available for students and teachers
 Teachers - all bottom tab features
 Students - no Posting allowed, Drawer- Only assignments and Timetable
 
+notifications 15 mins prior to class, how did i achieve it
+- there was a timezone issue, used moment and then UTC, converted utc to local time for front end, used utc and moment like classchedule and creategrade controllers, createclasses & classschedule component and also in scheduledTasks.js
 
 
 
@@ -2878,3 +3707,8 @@ i want classes to be displayed by date, like for instance
 
 
  once these terms are created i want them to show there in createClass option, when i select term class is created
+
+
+ ClassSchedule
+
+ Display the current day and date as heading

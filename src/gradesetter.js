@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Button, StyleSheet, Alert, Text } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import { Picker } from '@react-native-picker/picker';
+import SearchableDropdown from 'react-native-searchable-dropdown';
 
 const GradeSetter = () => {
   const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedUser, setSelectedUser] = useState({}); // Use an object to keep track of the selected user
   const [grade, setGrade] = useState('');
   const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'];
 
@@ -13,7 +14,12 @@ const GradeSetter = () => {
     const fetchUsers = async () => {
       try {
         const response = await axios.get('/auth/all-users');
-        setUsers(response.data.users);
+        // Map users to format expected by SearchableDropdown
+        const formattedUsers = response.data.users.map(user => ({
+          id: user._id,
+          name: user.name,
+        }));
+        setUsers(formattedUsers);
       } catch (error) {
         Alert.alert('Error', 'Failed to fetch users');
       }
@@ -22,8 +28,12 @@ const GradeSetter = () => {
   }, []);
 
   const handleSubmit = async () => {
+    if (!selectedUser.id || !grade) {
+      Alert.alert('Error', 'Please select both a user and a grade');
+      return;
+    }
     try {
-      await axios.post('/auth/users/setGrade', { userId: selectedUserId, grade });
+      await axios.post('/auth/users/setGrade', { userId: selectedUser.id, grade });
       Alert.alert('Success', 'Grade updated successfully!');
     } catch (error) {
       Alert.alert('Error', 'Failed to set grade');
@@ -33,22 +43,28 @@ const GradeSetter = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Set User Grade</Text>
-      <Picker
-        selectedValue={selectedUserId}
-        onValueChange={(itemValue) => setSelectedUserId(itemValue)}
-        style={styles.picker}
-        itemStyle={styles.pickerItem}
-      >
-        <Picker.Item label="Select a user" value="" />
-        {users.map((user) => (
-          <Picker.Item key={user._id} label={user.name} value={user._id} />
-        ))}
-      </Picker>
+      <SearchableDropdown
+        onItemSelect={(item) => setSelectedUser(item)}
+        containerStyle={styles.searchableContainer}
+        itemStyle={styles.dropdownItemStyle}
+        itemTextStyle={styles.dropdownItemText}
+        itemsContainerStyle={styles.itemsContainerStyle}
+        items={users}
+        defaultIndex={2}
+        resetValue={false}
+        textInputProps={{
+          placeholder: selectedUser.name || "Select a user",
+          underlineColorAndroid: "transparent",
+          style: styles.searchableStyle,
+        }}
+        listProps={{
+          nestedScrollEnabled: true,
+        }}
+      />
       <Picker
         selectedValue={grade}
         onValueChange={(itemValue) => setGrade(itemValue)}
         style={styles.picker}
-        itemStyle={styles.pickerItem}
       >
         <Picker.Item label="Select a grade" value="" />
         {grades.map((g) => (
@@ -67,33 +83,53 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF', // Lighter background for a cleaner look
   },
   title: {
-    fontSize: 24,
+    fontSize: 26, // Slightly larger for emphasis
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
+    color: '#1A1A2E', // Darker color for contrast
+    marginBottom: 30, // Increased spacing
     textAlign: 'center',
   },
   picker: {
-    marginBottom: 20,
+    marginBottom: 25,
     backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#DDD',
     borderRadius: 8,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   pickerItem: {
     fontSize: 18,
   },
   buttonContainer: {
-    marginTop: 10,
+    marginTop: 20,
     borderRadius: 8,
-    overflow: 'hidden',
+  },
+  searchableContainer: {
+    marginBottom: 20,
+    padding: 5,
+  },
+  dropdownItemStyle: {
+    padding: 10,
+    backgroundColor: '#FAFAFA',
+    borderColor: '#CCC',
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  dropdownItemText: {
+    color: '#333',
+  },
+  itemsContainerStyle: {
+    maxHeight: 140,
+  },
+  searchableStyle: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    backgroundColor: '#FFF',
   },
 });
 
 export default GradeSetter;
-
-
