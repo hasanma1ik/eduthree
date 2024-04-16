@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import axios from 'axios';
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { useNotifications } from '../../NotificationContext';
+
 
 const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState([]);
+  const { resetNotificationCount } = useNotifications(); // Use the context
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchNotifications();
+      const resetCount = async () => {
+        await resetNotificationCount(0); // Reset notification count when screen is focused
+      };
+      resetCount();
+      return () => {}; // Optional cleanup actions
+    }, [])
+  );
 
   const fetchNotifications = async () => {
     try {
       const response = await axios.get('/auth/notifications');
-      // Assuming notifications are sorted from the server; otherwise, sort them here
       setNotifications(response.data.notifications);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -36,7 +46,7 @@ const NotificationsScreen = () => {
       <FlatList
         data={notifications}
         keyExtractor={(item) => item._id.toString()}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <TouchableOpacity
             style={[
               styles.notificationItem,

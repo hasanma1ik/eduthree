@@ -463,65 +463,69 @@ const createSubject = async (req, res) => {
 };
 
 
-
 const createGrade = async (req, res) => {
-    const { grade, subject, timeSlot, day, teacher, term } = req.body;
+  const { grade, subject, timeSlot, day, teacher, term } = req.body;
 
-    if (!grade || !subject || !timeSlot || !day || !teacher || !term) {
-        return res.status(400).json({ message: 'Please fill all fields including term.' });
-    }
+  if (!grade || !subject || !timeSlot || !day || !teacher || !term) {
+      return res.status(400).json({ message: 'Please fill all fields including term.' });
+  }
 
-    try {
-        const termExists = await Term.findById(term);
-        if (!termExists) {
-            return res.status(404).json({ message: "Selected term does not exist." });
-        }
+  try {
+      const termExists = await Term.findById(term);
+      if (!termExists) {
+          return res.status(404).json({ message: "Selected term does not exist." });
+      }
 
-        // Convert to 24-hour format and calculate the UTC times
-        const [startTime, endTime] = timeSlot.split(' - ');
-        const startTimeUTC = moment.tz(startTime, 'h:mm A', true, 'UTC');
-        const endTimeUTC = moment.tz(endTime, 'h:mm A', true, 'UTC');
+      const [startTime, endTime] = timeSlot.split(' - ');
+      const startTimeUTC = moment.tz(startTime, 'h:mm A', true, 'UTC');
+      const endTimeUTC = moment.tz(endTime, 'h:mm A', true, 'UTC');
+      let utcDayOfWeek = day;
+      if (startTimeUTC.day() !== moment(startTime, 'h:mm A').day()) {
+          utcDayOfWeek = moment().day(startTimeUTC.day()).format('dddd');
+      }
 
-        // Adjust day of the week if necessary
-        let utcDayOfWeek = day;
-        if (startTimeUTC.day() !== moment(startTime, 'h:mm A').day()) {
-            // If the UTC day is different from the local day, adjust the day of week
-            utcDayOfWeek = moment().day(startTimeUTC.day()).format('dddd');
-        }
+      const newClass = new Class({
+          grade,
+          subject,
+          timeSlot: `${startTimeUTC.format('HH:mm')} - ${endTimeUTC.format('HH:mm')}`,
+          day: utcDayOfWeek,
+          teacher,
+          term
+      });
 
-        const newClass = new Class({
-            grade,
-            subject,
-            timeSlot: `${startTimeUTC.format('HH:mm')} - ${endTimeUTC.format('HH:mm')}`,
-            day: utcDayOfWeek,
-            teacher,
-            term
+      await newClass.save();
+
+      const studentsInGrade = await User.find({ grade }).select('_id');
+      
+      await new ClassSchedule({
+          classId: newClass._id,
+          dayOfWeek: utcDayOfWeek,
+          startTime: startTimeUTC.format('HH:mm'),
+          endTime: endTimeUTC.format('HH:mm'),
+          subject,
+          teacher,
+          users: studentsInGrade,
+          term
+      }).save();
+
+      // Create notifications for each student
+      studentsInGrade.forEach(async (user) => {
+        await Notification.create({
+          user: user._id,
+          message: `Reminder: Your ${subject} class starts in 15 minutes!`,
         });
+      });
 
-        await newClass.save();
-
-        const studentsInGrade = await User.find({ grade }).select('_id');
-        
-        await new ClassSchedule({
-            classId: newClass._id,
-            dayOfWeek: utcDayOfWeek,
-            startTime: startTimeUTC.format('HH:mm'),
-            endTime: endTimeUTC.format('HH:mm'),
-            subject,
-            teacher,
-            users: studentsInGrade,
-            term
-        }).save();
-
-        res.status(201).json({
-            message: 'Grade, class, and class schedule created successfully',
-            class: newClass
-        });
-    } catch (error) {
-        console.error("Failed to create grade/class due to error:", error);
-        res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
-    }
+      res.status(201).json({
+          message: 'Grade, class, and class schedule created successfully',
+          class: newClass
+      });
+  } catch (error) {
+      console.error("Failed to create grade/class due to error:", error);
+      res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
+  }
 };
+
 
 
 
@@ -709,7 +713,7 @@ const addEvent = async (req, res) => {
 
 const createAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, files, grade, subject } = req.body;
+    const { title, description, dueDate, files, grade, subject: subjectId } = req.body;
 
     // Create a new assignment document
     const newAssignment = new Assignment({
@@ -718,23 +722,30 @@ const createAssignment = async (req, res) => {
       dueDate,
       files,
       grade,
-      subject,
+      subject: subjectId,
     });
 
     // Save the assignment to the database
     await newAssignment.save();
 
+    // Fetch the subject name from the database using the subjectId
+    const subject = await Subject.findById(subjectId);
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found" });
+    }
+    const subjectName = subject.name; // Assuming the subject document has a 'name' field
+
     // Find users in the specified grade and enrolled in the specified subject
     const users = await User.find({
       grade: grade,
-      subjects: subject, // Ensure this matches how subjects are stored in your User model (IDs, names, etc.)
+      subjects: subjectId, // Ensure this matches how subjects are stored in your User model (IDs, names, etc.)
     });
 
     // For each user, create a new notification about the assignment
     users.forEach(async (user) => {
       await Notification.create({
         user: user._id,
-        message: `New assignment: ${title}, ${description}, due: ${dueDate}`,
+        message: `Subject: ${subjectName} - New assignment: ${title}, ${description}, due: ${dueDate}`,
         assignmentId: newAssignment._id,
       });
     });
@@ -748,6 +759,8 @@ const createAssignment = async (req, res) => {
     res.status(500).json({ message: 'Failed to create assignment', error: error.message });
   }
 };
+
+
 
 
 

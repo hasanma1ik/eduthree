@@ -1,4 +1,3 @@
-// socketService.js
 import io from "socket.io-client";
 
 let socket;
@@ -14,8 +13,11 @@ export const getSocket = () => {
     return socket;
 };
 
-export const initializeSocket = () => {
-    getSocket(); // Ensures socket is initialized upon app start
+export const onNotificationReceived = (callback) => {
+    socket.on('newNotification', notification => {
+        console.log("Received new notification via socket:", notification);
+        callback(notification);
+    });
 };
 
 export const disconnectSocket = () => {

@@ -5,6 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import moment from 'moment-timezone'; // Import moment-timezone
 
 
+
 const CreateClasses = () => {
 
 
@@ -20,7 +21,7 @@ const CreateClasses = () => {
 
   const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
   const subjects = ['Math', 'Science', 'Islamiat', 'History', 'English Language', 'English Literature', 'Urdu'];
- const timeSlots = ['10:05 AM - 11:05 AM','8:00 AM - 9:00 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM', '9:00 PM - 10:00 PM', '11:23 PM - 12:23 AM' ];
+ const timeSlots = ['6:59 AM - 7:59 AM', '8:00 AM - 9:00 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM', '9:00 PM - 10:00 PM', '10:30 PM - 11:30 PM' ];
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   useEffect(() => {

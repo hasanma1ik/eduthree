@@ -3534,6 +3534,298 @@ function startScheduledTasks(io) {
 module.exports = startScheduledTasks;
 
 
+
+
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import axios from 'axios';
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { Ionicons } from '@expo/vector-icons'; // Or wherever you import Ionicons from
+import { useNotifications } from '../NotificationContext';
+
+const NotificationIcon = ({ navigation }) => {
+  
+  const { notificationCount, updateNotificationCount } = useNotifications();
+  
+
+  const fetchNotificationCount = useCallback(async () => {
+    try {
+      const response = await axios.get('/auth/notifications/unread-count');
+      updateNotificationCount(response.data.unreadCount);
+    } catch (error) {
+      console.log('Error fetching unread notifications count:', error);
+    }
+  }, []);
+
+  // Use useFocusEffect to refetch unread count when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotificationCount();
+    }, [fetchNotificationCount])
+  );
+
+  return (
+    <TouchableOpacity onPress={() => {
+      navigation.navigate('Notifications');
+      // resetNotificationCount(); // Optionally reset the count when navigating to notifications
+    }} style={styles.iconContainer}>
+      <Ionicons name="notifications" size={24} color="black" />
+      {notificationCount > 0 && (
+        <View style={styles.badge}>
+        <Text style={styles.badgeText}>{notificationCount}</Text>
+      </View>
+      )}
+      <Text>Notifications</Text>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    right: 20,
+    top: 0,
+    backgroundColor: '#AA0000',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    padding: 1,
+    textAlign: 'center',
+  },
+});
+
+export default NotificationIcon;
+
+
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import axios from 'axios';
+
+const NotificationsScreen = () => {
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await axios.get('/auth/notifications');
+      // Assuming notifications are sorted from the server; otherwise, sort them here
+      setNotifications(response.data.notifications);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await axios.post(`/auth/notifications/${notificationId}/mark-read`);
+      const updatedNotifications = notifications.map(notification =>
+        notification._id === notificationId ? { ...notification, read: true } : notification
+      );
+      setNotifications(updatedNotifications);
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={notifications}
+        keyExtractor={(item) => item._id.toString()}
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            style={[
+              styles.notificationItem,
+              !item.read ? styles.unreadNotification : {},
+            ]}
+            onPress={() => markNotificationAsRead(item._id)}
+          >
+            <View style={styles.notificationContent}>
+              <Text style={styles.notificationMessage}>{item.message}</Text>
+              {!item.read && <View style={styles.unreadIndicator} />}
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f5', // Light gray background for the whole screen
+  },
+  notificationItem: {
+    backgroundColor: '#ffffff', // White background for each item
+    padding: 15,
+    borderRadius: 10, // Rounded corners for each notification
+    marginVertical: 5,
+    marginHorizontal: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000', // Shadow for depth
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  unreadNotification: {
+    backgroundColor: '#eef2ff', // Slightly different background for unread notifications
+  },
+  notificationContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationMessage: {
+    fontSize: 16,
+    color: '#333',
+    flexShrink: 1, // Ensure text does not push other elements out of view
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6347', // Tomate color for a noticeable indicator
+    marginLeft: 10,
+  },
+});
+
+export default NotificationsScreen;
+
+
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import axios from 'axios';
+import { useNotifications } from '../../NotificationContext';
+
+const NotificationsScreen = () => {
+  const [notifications, setNotifications] = useState([]);
+  const { resetNotificationCount } = useNotifications();
+
+  useEffect(() => {
+  fetchNotifications();
+}, []);
+
+const fetchNotifications = async () => {
+  try {
+    const response = await axios.get('/auth/notifications');
+    console.log("Fetched notifications:", response.data.notifications);  // Log fetched data
+    setNotifications(response.data.notifications);
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error);
+  }
+};
+
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await axios.post(`/auth/notifications/${notificationId}/mark-read`);
+      const updatedNotifications = notifications.map(notification =>
+        notification._id === notificationId ? { ...notification, read: true } : notification
+      );
+      setNotifications(updatedNotifications);
+      resetNotificationCount(); // Reset the notification count here after reading
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={notifications}
+        keyExtractor={(item) => item._id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.notificationItem,
+              !item.read ? styles.unreadNotification : {},
+            ]}
+            onPress={() => markNotificationAsRead(item._id)}
+          >
+            <View style={styles.notificationContent}>
+              <Text style={styles.notificationMessage}>{item.message}</Text>
+              {!item.read && <View style={styles.unreadIndicator} />}
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f5',
+  },
+  notificationItem: {
+    backgroundColor: '#ffffff',
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 5,
+    marginHorizontal: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  unreadNotification: {
+    backgroundColor: '#eef2ff',
+    borderColor: 'red', // Temporary for debugging
+    borderWidth: 2, // Temporary for debugging
+  },
+  notificationContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationMessage: {
+    fontSize: 16,
+    color: '#333',
+    flexShrink: 1,
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6347',
+    marginLeft: 10,
+  },
+});
+
+export default NotificationsScreen;
+
+
 ```
 
 select a grade displays users in that particular grade

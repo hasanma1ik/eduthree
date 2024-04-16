@@ -5,6 +5,7 @@ import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { UserContext } from './screen/context/userContext';
+import { useNotifications } from '../NotificationContext';
 
 const CreateAssignment = () => {
 
@@ -44,6 +45,9 @@ const CreateAssignment = () => {
     fetchSubjects();
   }, []);
 
+
+  const { updateNotificationCount, notificationCount } = useNotifications();
+
   const handleCreate = async () => {
     try {
       const formattedDueDate = `${dueDate.getFullYear()}-${('0' + (dueDate.getMonth() + 1)).slice(-2)}-${('0' + dueDate.getDate()).slice(-2)}`;
@@ -55,6 +59,7 @@ const CreateAssignment = () => {
         subject,
       });
       Alert.alert("Success", "Assignment created successfully");
+      updateNotificationCount(notificationCount + 1)
       // Reset state to initial after successful creation
       setTitle(initialState.title);
       setDescription(initialState.description);

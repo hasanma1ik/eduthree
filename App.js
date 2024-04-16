@@ -10,7 +10,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './src/navigations/TabNavigation';
 import RootNavigation from './Navigation';
 import { UserProvider } from './src/screen/context/userContext';
-import { initializeSocket, disconnectSocket } from './socketservice';
+// import { initializeSocket, disconnectSocket } from './socketservice';
 import { NotificationProvider } from './NotificationContext';
 
 
@@ -56,13 +56,13 @@ const SignOut = () => {
 
 export default function App() {
 
-  useEffect(() => {
-     initializeSocket();
+  // useEffect(() => {
+  //    initializeSocket();
 
-    return () => {
-      disconnectSocket();
-    };
-  }, []);
+  //   return () => {
+  //     disconnectSocket();
+  //   };
+  // }, []);
 
 
   const [fontsLoaded] = useFonts({
