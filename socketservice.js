@@ -4,7 +4,7 @@ let socket;
 
 export const getSocket = () => {
     if (!socket) {
-        socket = io("http://192.168.0.101:8080", { transports: ["websocket"] });
+        socket = io("http://192.168.0.102:8080", { transports: ["websocket"] });
         console.log("Socket initialized");
         
         // Example global event listener

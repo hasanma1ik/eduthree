@@ -126,7 +126,7 @@ const CreateAssignment = () => {
       )}
       <Text style={styles.dueDateText}>Due Date: {dueDate.toISOString().split('T')[0]}</Text>
       <View style={styles.buttonContainer}>
-        <Button title="Create Assignment" onPress={handleCreate} color="#4CAF50" />
+        <Button title="Create Assignment" onPress={handleCreate} color="black" />
       </View>
     </KeyboardAwareScrollView>
   );

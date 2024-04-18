@@ -23,17 +23,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5', // Light grey background
+    backgroundColor: '#F5F5F5',
   },
   button: {
-    width: '80%',
-    padding: 15,
-    borderRadius: 25,
-    margin: 10,
+    paddingVertical: 15, // Increased vertical padding
+    paddingHorizontal: 25, // Increased horizontal padding to make the button wider
+    borderRadius: 2,
+    width: 250, // Increased width
+    marginHorizontal: 50, // Adjusted horizontal margin if needed
+    marginVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3, // Adds shadow for Android
-    // Shadows for iOS
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -43,13 +44,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   takeAttendanceButton: {
-    backgroundColor: '#4CAF50', // Green background
+    backgroundColor: 'black', // Red background
   },
   seeAttendanceButton: {
-    backgroundColor: '#2196F3', // Blue background
+    backgroundColor: 'black', // Blue background
   },
   buttonText: {
-    color: '#FFFFFF', // White text
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },

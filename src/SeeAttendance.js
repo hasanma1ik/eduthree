@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
 
 const SeeAttendance = () => {
@@ -11,7 +11,6 @@ const SeeAttendance = () => {
   const [attendanceDates, setAttendanceDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [attendanceData, setAttendanceData] = useState([]);
-  const [displayDate, setDisplayDate] = useState(''); 
 
   useEffect(() => {
     fetchSubjects();
@@ -32,7 +31,7 @@ const SeeAttendance = () => {
   const fetchSubjects = async () => {
     try {
       const response = await axios.get('/auth/subjects');
-      setSubjects(response.data.subjects);
+      setSubjects(response.data.subjects.map(subject => ({ label: subject.name, value: subject._id })));
     } catch (error) {
       console.error('Failed to fetch subjects:', error);
       Alert.alert("Error", "Failed to fetch subjects");
@@ -42,7 +41,7 @@ const SeeAttendance = () => {
   const fetchAttendanceDates = async () => {
     try {
       const response = await axios.get(`/auth/attendance/${selectedGrade}/${selectedSubject}/dates`);
-      setAttendanceDates(response.data.dates);
+      setAttendanceDates(response.data.dates.map(date => ({ label: date, value: date })));
     } catch (error) {
       console.error('Failed to fetch attendance dates:', error);
       Alert.alert("Error", "Failed to fetch attendance dates");
@@ -52,66 +51,36 @@ const SeeAttendance = () => {
   const fetchAttendanceData = async () => {
     try {
       const response = await axios.get(`/auth/attendance/${selectedGrade}/${selectedSubject}/${selectedDate}`);
-      console.log(response.data.attendance); // Add this line to inspect the structure
       setAttendanceData(response.data.attendance || []);
     } catch (error) {
       console.error('Failed to fetch attendance data:', error);
       Alert.alert("Error", "Failed to fetch attendance data");
     }
   };
-  const handleGradeChange = (grade) => {
-    setSelectedGrade(grade);
-    setSelectedSubject('');
-    setSelectedDate('');
-    setAttendanceData([]); // Clear previous attendance data
-  };
-
-  const handleSubjectChange = (subject) => {
-    setSelectedSubject(subject);
-    setSelectedDate('');
-    setAttendanceData([]); // Clear previous attendance data
-  };
-
-  const handleDateChange = (itemValue) => {
-    // Directly use the formatted date if itemValue is already in "YYYY-MM-DD" format
-    setSelectedDate(itemValue);
-};
-
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>See Attendance</Text>
-      <Picker
-        selectedValue={selectedGrade}
-        onValueChange={handleGradeChange}
-        style={styles.picker}>
-        <Picker.Item label="Select a grade" value="" />
-        {grades.map((grade, index) => (
-          <Picker.Item key={index} label={grade} value={grade} />
-        ))}
-      </Picker>
+      <RNPickerSelect
+        onValueChange={value => setSelectedGrade(value)}
+        items={grades.map(grade => ({ label: grade, value: grade }))}
+        placeholder={{ label: "Select a grade", value: null }}
+        style={pickerSelectStyles}
+      />
 
-      <Picker
-        selectedValue={selectedSubject}
-        onValueChange={handleSubjectChange}
-        style={styles.picker}>
-        <Picker.Item label="Select a subject" value="" />
-        {subjects.map((subject, index) => (
-          <Picker.Item key={index} label={subject.name} value={subject._id} />
-        ))}
-      </Picker>
+      <RNPickerSelect
+        onValueChange={value => setSelectedSubject(value)}
+        items={subjects}
+        placeholder={{ label: "Select a subject", value: null }}
+        style={pickerSelectStyles}
+      />
 
-      <Picker
-        selectedValue={selectedDate}
-        onValueChange={handleDateChange}
-        style={styles.picker}>
-        <Picker.Item label="Select a date" value="" />
-        {attendanceDates.map((date, index) => (
-          
-          <Picker.Item key={index} label={date} value={date} />
-        ))}
-      </Picker>
-      
+      <RNPickerSelect
+        onValueChange={value => setSelectedDate(value)}
+        items={attendanceDates}
+        placeholder={{ label: "Select a date", value: null }}
+        style={pickerSelectStyles}
+      />
      
 
       <ScrollView style={styles.attendanceContainer}>
@@ -149,8 +118,6 @@ const SeeAttendance = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
     backgroundColor: '#f5f5f5', // Light background color for the entire page
   },
@@ -159,6 +126,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333', // Dark text for better contrast
+    textAlign: 'center',
   },
   pickerContainer: {
     borderWidth: 1,
@@ -240,10 +208,32 @@ const styles = StyleSheet.create({
 });
 
 
-export default SeeAttendance;
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 4,
+    color: 'black',
+    backgroundColor: 'white',
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 4,
+    color: 'black',
+    backgroundColor: 'white',
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+});
 
-
-
+export default SeeAttendance
 
 
 

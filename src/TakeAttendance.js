@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Button, StyleSheet, Alert, Text, ScrollView, Platform } from 'react-native';
+import { View, Button, StyleSheet, Alert, Text, ScrollView, Platform, TouchableOpacity} from 'react-native';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
@@ -85,7 +85,9 @@ const TakeAttendance= () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.datePickerContainer}>
-          <Button onPress={showDatepicker} title="Select Date" />
+          <TouchableOpacity onPress={showDatepicker} style={styles.button}>
+            <Text style={styles.buttonText}>Select Date</Text>
+          </TouchableOpacity>
           <Text style={styles.dateText}>Selected Date: {formatDate(date)}</Text>
           {showDatePicker && (
             <DateTimePicker
@@ -144,11 +146,9 @@ const TakeAttendance= () => {
         ))}
       </ScrollView>
 
-      <Button
-        title="Submit Attendance"
-        onPress={submitAttendance}
-        color="#4CAF50"
-      />
+      <TouchableOpacity onPress={submitAttendance} style={styles.button}>
+        <Text style={styles.buttonText}>Submit Attendance</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -168,6 +168,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: '90%',
     backgroundColor: '#fafafa',
+  },
+
+  button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 4,
+    elevation: 3,
+    backgroundColor: 'black',
+  },
+
+  buttonText: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: 'bold',
+    letterSpacing: 0.25,
+    color: 'white',
   },
   picker: {
     width: '100%',
