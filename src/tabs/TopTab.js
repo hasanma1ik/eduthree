@@ -19,7 +19,7 @@ const TopTab = () => {
   return (
     <View>
       <TouchableOpacity onPress={handleLogOut}>
-      <FontAwesome5 name="sign-out-alt" color={"maroon"} style={styles.iconStyle}/>
+      {/* <FontAwesome5 name="sign-out-alt" color={"maroon"} style={styles.iconStyle}/> */}
 
       </TouchableOpacity>
     </View>
