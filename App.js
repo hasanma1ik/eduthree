@@ -1,18 +1,18 @@
+// App.js
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from "react";
-import { StyleSheet, Text, View, Button} from 'react-native';
-import { useFonts} from 'expo-font'
+import React, { useEffect, useCallback } from "react";
+import { StyleSheet, View, Button } from 'react-native';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { ClerkProvider, SignedIn, SignedOut, useAuth  } from "@clerk/clerk-expo";
-import { useCallback } from 'react';
+import { ClerkProvider, SignedIn, SignedOut, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import { NavigationContainer } from '@react-navigation/native';
+import { Provider as PaperProvider } from 'react-native-paper';
 import TabNavigation from './src/navigations/TabNavigation';
 import RootNavigation from './Navigation';
 import { UserProvider } from './src/screen/context/userContext';
-// import { initializeSocket, disconnectSocket } from './socketservice';
 import { NotificationProvider } from './NotificationContext';
-
+import { theme } from './src/theme';
 
 SplashScreen.preventAutoHideAsync();
 const tokenCache = {
@@ -23,7 +23,7 @@ const tokenCache = {
       return null;
     }
   },
-  async saveToken(key,value) {
+  async saveToken(key, value) {
     try {
       return SecureStore.setItemAsync(key, value);
     } catch (err) {
@@ -31,6 +31,7 @@ const tokenCache = {
     }
   },
 };
+
 const SignOut = () => {
   const { isLoaded, signOut } = useAuth();
   if (!isLoaded) {
@@ -52,25 +53,11 @@ const SignOut = () => {
   );
 };
 
-
-
 export default function App() {
-
-  // useEffect(() => {
-  //    initializeSocket();
-
-  //   return () => {
-  //     disconnectSocket();
-  //   };
-  // }, []);
-
-
   const [fontsLoaded] = useFonts({
     'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
     'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
     'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
-    
-   
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -82,39 +69,38 @@ export default function App() {
   if (!fontsLoaded) {
     return null;
   }
-  
+
   return (
     <NotificationProvider>
-    <UserProvider>
-      <ClerkProvider
-        tokenCache={tokenCache}
-        publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}
-      >
-        <NavigationContainer>
-          <View style={styles.container} onLayout={onLayoutRootView}>
-            <SignedIn>
-              {/* It sees like you intended to use a navigation stack/container here,
-                  but you've used a non-existent <stackContainer> component.
-                  Ensure you correctly implement your navigation structure here. */}
-              <TabNavigation />
-              <SignOut />
-            </SignedIn>
-            <SignedOut>
-              <RootNavigation />
-            </SignedOut>
-            <StatusBar style="auto" />
-          </View>
-        </NavigationContainer>
-      </ClerkProvider>
-    </UserProvider>
+      <UserProvider>
+        <ClerkProvider
+          tokenCache={tokenCache}
+          publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}
+        >
+          <PaperProvider theme={theme}>
+            <NavigationContainer>
+              <View style={styles.container} onLayout={onLayoutRootView}>
+                <SignedIn>
+                  <TabNavigation />
+                  <SignOut />
+                </SignedIn>
+                <SignedOut>
+                  <RootNavigation />
+                </SignedOut>
+                <StatusBar style="auto" />
+              </View>
+            </NavigationContainer>
+          </PaperProvider>
+        </ClerkProvider>
+      </UserProvider>
     </NotificationProvider>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
-   flex: 1
+    flex: 1,
+    backgroundColor: theme.colors.background, // Apply the theme background color
   },
   signOutContainer: {
     position: 'absolute',

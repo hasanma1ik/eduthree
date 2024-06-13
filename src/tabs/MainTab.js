@@ -28,6 +28,8 @@ import SeeAttendanceScreen from '../SeeAttendance';
 import NotificationsScreen from '../screen/Notifications';
 import ClassSchedule from '../ClassSchedule';
 import AddTermScreen from '../TermScreen';
+import PostDetail from '../PostDetail';
+import { Image } from 'react-native'
 
 
 
@@ -42,8 +44,21 @@ const Drawer = createDrawerNavigator();
   const TeacherStackNavigator = () => (
       <Stack.Navigator initialRouteName="Home">
           {/* Teacher specific screens */}
-          <Stack.Screen name="Home" component={Home} options={{title: "Learn Academy",
-     headerRight:()=> <TopTab />}} />
+          <Stack.Screen
+      name="Home"
+      component={Home}
+      options={{
+        headerTitle: () => (
+          <Image
+            source={require('./../../assets/lalogo.jpg')} // Adjust the path to your logo
+            style={{ width :80, height: 40 }} // Adjust the size as needed
+            resizeMode="contain"
+          />
+        ),
+        headerTitleStyle: { color: '#228B22' },
+        headerRight: () => <TopTab />,
+      }}
+    />
     <Stack.Screen name="Post" component={Post} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="About" component={About} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
@@ -73,7 +88,22 @@ const Drawer = createDrawerNavigator();
   const StudentStackNavigator = () => (
       <Stack.Navigator initialRouteName="Home">
           {/* Student specific screens */}
-          <Stack.Screen name="Home" component={Home} options={{title: "Learn Academy", headerRight:()=> <TopTab />}} />
+          <Stack.Screen
+      name="Home"
+      component={Home}
+      options={{
+        headerTitle: () => (
+          <Image
+            source={require('./../../assets/lalogo.jpg')} // Adjust the path to your logo
+            style={{ width :80, height: 40 }} // Adjust the size as needed
+            resizeMode="contain"
+          />
+        ),
+        headerTitleStyle: { color: '#228B22' },
+        headerRight: () => <TopTab />,
+      }}
+    />
+          <Stack.Screen name="PostDetail" component={PostDetail} options={{ title: 'Post Detail' }} />
           <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
@@ -90,11 +120,28 @@ const Drawer = createDrawerNavigator();
   const AdminStackNavigator = () => (
     <Stack.Navigator initialRouteName="Home">
         {/* Student specific screens */}
-        <Stack.Screen name="Home" component={Home} options={{title: "Learn Academy", headerRight:()=> <TopTab />}} />
+        <Stack.Screen
+      name="Home"
+      component={Home}
+      options={{
+        headerTitle: () => (
+          <Image
+            source={require('./../../assets/lalogo.jpg')} // Adjust the path to your logo
+            style={{ width :80, height: 40 }} // Adjust the size as needed
+            resizeMode="contain"
+          />
+        ),
+        headerTitleStyle: { color: '#228B22' },
+        headerRight: () => <TopTab />,
+      }}
+    />
         <Stack.Screen name="Post" component={Post} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
         <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
   <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
   <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
+
+  <Stack.Screen name="PostDetail" component={PostDetail} options={{ title: 'Post Detail' }} />
+
 
   <Stack.Screen name="MyPosts" component={MyPosts} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
   <Stack.Screen name="CreateClasses" component={CreateClasses} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
@@ -131,7 +178,17 @@ const Drawer = createDrawerNavigator();
           ) : userRole === 'admin' ? (
             <Drawer.Screen name="Admin Portal" component={AdminStackNavigator} />
           ) :  ( 
-            <Drawer.Screen name="Student Portal" component={StudentStackNavigator} />
+            <Drawer.Screen 
+            name="Student Portal" 
+            component={StudentStackNavigator} 
+            options={{
+              title: "Student Portal",
+              headerTitleStyle: {
+                color: '#228B22',
+                fontWeight: 'bold',
+              },
+            }} 
+          />
           )}
         </Drawer.Navigator>
         

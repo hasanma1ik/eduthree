@@ -1,125 +1,105 @@
-import {View, Text, StyleSheet, Alert} from 'react-native'
 import React, { useState } from "react";
-import moment from "moment";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import moment from 'moment';
 import axios from 'axios';
-import FontAwesome5  from 'react-native-vector-icons/FontAwesome5'
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { useNavigation } from "@react-navigation/native";
-import EditModal from './EditModal';
 
-const PostCard = ({ posts, myPostScreen}) =>{
+const PostCard = ({ post, myPostScreen }) => {
+ 
+  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
-    const [loading, setLoading] = useState(false)
-    const [modalVisible, setModalVisible] = useState(false);
-    const [post, setPost] = useState({})
+  const handleDeletePrompt = (id) => {
+    Alert.alert(
+      "Attention!",
+      "Are you sure you want to delete this post?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", onPress: () => handleDeletePost(id) }
+      ]
+    );
+  };
 
-    const navigation = useNavigation()
+  const handleDeletePost = async (id) => {
+    try {
+      setLoading(true);
+      const { data } = await axios.delete(`/post/delete-post/${id}`);
+      setLoading(false);
+      alert(data?.message);
+      navigation.push('Home')
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+      alert(error);
+    }
+  };
 
-
-    // Delete Prompt Functionality
-    const handleDeletePrompt = (id) => {
-        Alert.alert("Attention!", "Are You Sure Want to delete this post?", [
-          {
-            text: "Cancel",
-            onPress: () => {
-              console.log("cancel press");
-            },
-          },
-          {
-            text: "Delete",
-            onPress: () => handleDeletePost(id),
-          },
-        ]);
-      };
-      // delete post data
-      const handleDeletePost = async (id) =>{
-        try {
-            setLoading(true)
-            const {data} = await axios.delete(`/post/delete-post/${id}`)
-            setLoading(false)
-            alert(data?.message)
-            navigation.push('MyPosts')
-        } catch (error) {
-            setLoading(false)
-            console.log(error)
-            alert(error)
-        }
-      }
-return (
-    <View>
-        <Text style={styles.heading}>Total Posts {posts?.length}</Text>
-        {myPostScreen && <EditModal modalVisible={modalVisible} setModalVisible={setModalVisible} post={post} />}
-
-        {posts?.map((post, i)=>(
-        <View style={styles.card} key={i}>
-            {myPostScreen && (
-                    <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-
-                 <Text style={{marginHorizontal: 20 }}>
-                <FontAwesome5 name="pen" size={16} color={"darkblue"} onPress={() => {setPost(post), setModalVisible(true)}} />
-                </Text>
-
-                <Text style={{textAlign: "right" }}>
-                <FontAwesome5 name="trash" size={16} color={"red"} onPress={() => handleDeletePrompt(post?._id)} />
-                </Text>
-            </View>
-             )}
-            <Text style={styles.title}>Title : {post?.title}</Text>
-            <Text style={styles.desc}>{post?.description}</Text>
-            <View style={styles.footer}>
-   
-               {post?.postedBy?.name && (
-                            <Text> 
-                            { " "}
-                <FontAwesome5 name="user" color={"orange"} /> {" "}
-
-                    {post?.postedBy?.name}
-                        </Text>
-               )} 
-               
-    <Text> 
-        {" "}
-        <FontAwesome5 name="clock" color={"orange"} /> {" "} {moment(post?.createdAt).format("DD:MM:YYYY")}</Text>
-
-            </View>
+  return (
+    <View style={styles.card}>
+      <View style={styles.content}>
+        <Image
+          source={{ uri: post?.postedBy?.profilePicture || 'https://blog-uploads.imgix.net/2021/08/what-is-sample-size-Sonarworks-blog.jpg?auto=compress%2Cformat' }}
+          style={styles.profilePicture}
+        />
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{post?.postedBy?.name}</Text>
+          <Text style={styles.postDate}>{moment(post?.createdAt).format('DD:MM:YYYY')}</Text>
+          <Text style={styles.desc}>{post?.description}</Text>
         </View>
-
-        ))}
+        <TouchableOpacity onPress={() => handleDeletePrompt(post?._id)}>
+          <FontAwesome5 name="trash" size={16} color={"red"} />
+        </TouchableOpacity>
+      </View>
     </View>
-)
-}
-
-
+  );
+};
 
 const styles = StyleSheet.create({
-    heading: {
-        color: 'green',
-        textAlign: "center"
-    },
-    card:{
-        width: "100%",
-        backgroundColor: "#ffffff",
-        borderWidth: 0.2,
-        borderColor: "gray",
-        padding: 20,
-        borderRadius: 5,
-        marginBottom: 10,
-        marginVertical: 10,
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 0,
+  },
+  content: {
+    flexDirection: 'row',
+  },
+  profilePicture: {
+    width: 70,
+    height: 100,
+    borderRadius: 15,
+    marginRight: 15,
+  },
+  userInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  userName: {
+    fontWeight: 'bold',
+    color: '#228B22',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  postDate: {
+    color: 'gray',
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  desc: {
+    fontSize: 14,
+    color: '#333',
+  },
+});
 
-    },
-    footer:{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 20,
-    },
-    title:{
-        fontWeight: 'bold',
-        paddingBottom: 10,
-        borderBottomWidth : 0.3,
-
-       
-    },
-  desc:{
-    marginTop: 10,
-  }
-})
 export default PostCard;
+
+
+
+
+

@@ -21,7 +21,7 @@ const CreateClasses = () => {
 
   const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
   const subjects = ['Math', 'Science', 'Islamiat', 'History', 'English Language', 'English Literature', 'Urdu'];
- const timeSlots = ['4:50 AM - 5:50 AM', '8:00 AM - 9:00 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM', '9:00 PM - 10:00 PM', '10:30 PM - 11:30 PM' ];
+ const timeSlots = ['5:41 PM - 6:46 PM', '8:00 AM - 9:00 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM', '9:00 PM - 10:00 PM', '10:30 PM - 11:30 PM' ];
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   useEffect(() => {
@@ -169,7 +169,7 @@ const createGrade = async () => {
         ))}
       </Picker>
 
-      <Button title="Create Class" onPress={createGrade} />
+      <Button title="Create Class" onPress={createGrade} color="#007BFF" />
       {selectedTimeSlot && (
   <Text>{displayLocalTimeSlot(selectedTimeSlot)}</Text>
 )}
@@ -177,6 +177,8 @@ const createGrade = async () => {
     </ScrollView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -188,7 +190,7 @@ const styles = StyleSheet.create({
   picker: {
     marginBottom: 20,
     borderRadius: 8,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#FFF',
   },
   title: {
     fontSize: 24,
