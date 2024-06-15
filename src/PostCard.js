@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import moment from 'moment';
 import axios from 'axios';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { useNavigation } from "@react-navigation/native";
+import { AuthContext } from "./screen/context/authContext";
 
 const PostCard = ({ post, myPostScreen }) => {
  
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
+  const [state] = useContext(AuthContext)
+  const { user } = state;
 
   const handleDeletePrompt = (id) => {
     Alert.alert(
@@ -35,6 +38,12 @@ const PostCard = ({ post, myPostScreen }) => {
     }
   };
 
+  const canDelete = () =>{
+    if (user.role === 'admin') return true;
+    if(user.role === 'teacher' && post?.postedBy?._id === user._id) return true;
+    return false;
+  }
+
   return (
     <View style={styles.card}>
       <View style={styles.content}>
@@ -47,13 +56,17 @@ const PostCard = ({ post, myPostScreen }) => {
           <Text style={styles.postDate}>{moment(post?.createdAt).format('DD:MM:YYYY')}</Text>
           <Text style={styles.desc}>{post?.description}</Text>
         </View>
+        {canDelete() && (
         <TouchableOpacity onPress={() => handleDeletePrompt(post?._id)}>
           <FontAwesome5 name="trash" size={16} color={"red"} />
         </TouchableOpacity>
+        )}
       </View>
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   card: {

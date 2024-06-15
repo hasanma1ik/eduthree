@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
     enum: ['student', 'teacher', 'admin'], // Added 'admin' to the list of valid roles
     required: true
   },
+  profilePicture: { type: String, default: '' },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 }, { timestamps: true });

@@ -376,45 +376,55 @@ return res.status(500).send({
 
 
 //Update User
-const updateUserController = async (req, res) =>{
-            try {
-              const {name, password, email} = req.body
-              
-              //User Find
-              const user = await userModel.findOne({email})
+const updateUserController = async (req, res) => {
+  try {
+    const { name, password, email, profilePicture } = req.body;
 
-              //password validatation
-              if(password && password.length < 6){
-                return res.status(400).send({
-                  success: false,
-                  message: "Password required and must be atleast 6 characters"
-                })
-              }
+    const user = await userModel.findOne({ email });
 
-             const hashedPassword = password ? await hashPassword(password): undefined;
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-             // updated user
-             const updatedUser = await userModel.findOneAndUpdate({email}, {
-              name : name || user.name,
-              password: hashedPassword || user.password,
-             }, {new: true})
+    if (password && password.length < 6) {
+      return res.status(400).send({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
 
-             updatedUser.password = undefined;
+    const hashedPassword = password ? await hashPassword(password) : undefined;
 
-             res.status(200).send({
-              success: true,
-              message: 'Profile updated, Please Login',
-              updatedUser,
-             })
+    const updatedUser = await userModel.findOneAndUpdate(
+      { email },
+      {
+        name: name || user.name,
+        password: hashedPassword || user.password,
+        profilePicture: profilePicture || user.profilePicture,
+      },
+      { new: true }
+    );
 
-            } catch (error) {
-              console.log(error)
-              res.status(500).send({
-                success: false,
-                message: 'Error in User Update API'
-              })
-            }
-}
+    updatedUser.password = undefined;
+
+    res.status(200).send({
+      success: true,
+      message: 'Profile updated',
+      updatedUser,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: 'Error in User Update API',
+      error,
+    });
+  }
+};
+
 
 const deleteConversation = async (req, res) => {
   try {

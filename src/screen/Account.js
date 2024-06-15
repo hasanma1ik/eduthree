@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from './context/authContext';
 import BottomTab from '../tabs/bottomTab';
 import axios from 'axios';
-import * as ImagePicker from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Account = () => {
   // Global State
@@ -11,10 +12,59 @@ const Account = () => {
   // Local state
   const { user, token } = state;
   const [name, setName] = useState(user?.name);
-  const [password, setPassword] = useState(user?.password);
+  const [password, setPassword] = useState('');
   const [email] = useState(user?.email);
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState(user?.profilePicture);
+
+  useEffect(()=> {
+    setImageUri(user?.profilePicture)}, [user]);
+
+
+
+
+  const updateProfilePicture = async (uri) => {
+    try {
+      setLoading(true);
+      const { data } = await axios.put('/auth/update-user', {
+        name,
+        email,
+        profilePicture: uri,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setLoading(false);
+      setState({ ...state, user: data.updatedUser });
+      
+    } catch (error) {
+      console.log("Error updating profile picture:", error);
+      setLoading(false);
+      alert(error.response.data.message || error.message);
+    }
+  };
+
+  const selectImage = async () => {
+    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      const asset = pickerResult.assets[0];
+      setImageUri(asset.uri);
+      await updateProfilePicture(asset.uri);
+    }
+  };
 
   const handleUpdate = async () => {
     try {
@@ -24,6 +74,8 @@ const Account = () => {
         password,
         email,
         profilePicture: imageUri,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       setLoading(false);
@@ -34,22 +86,6 @@ const Account = () => {
       setLoading(false);
       console.log(error);
     }
-  };
-
-  const selectImage = () => {
-    ImagePicker.launchImageLibrary(
-      { mediaType: 'photo', includeBase64: false },
-      (response) => {
-        if (response.didCancel) {
-          console.log('User cancelled image picker');
-        } else if (response.error) {
-          console.log('ImagePicker Error: ', response.error);
-        } else {
-          const uri = response.assets[0].uri;
-          setImageUri(uri);
-        }
-      },
-    );
   };
 
   return (
@@ -84,6 +120,7 @@ const Account = () => {
             value={password}
             onChangeText={(text) => setPassword(text)}
             secureTextEntry={true}
+            placeholder="Enter new password (if changing)"
           />
         </View>
 

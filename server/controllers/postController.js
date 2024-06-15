@@ -10,6 +10,9 @@ const createPostController = async (req, res) =>{
                 message:'Please Provide All fields',
             })
         }
+      
+
+
             const post = await postModel({
                 title,
                 description,
@@ -34,25 +37,25 @@ const createPostController = async (req, res) =>{
 }
 //get all posts
 const getAllPostsController = async (req, res) => {
-    try {
-      const posts = await postModel
-        .find()
-        .populate("postedBy", "_id name")
-        .sort({ createdAt: -1 });
-      res.status(200).send({
-        success: true,
-        message: "All Posts Data",
-        posts,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(500).send({
-        success: false,
-        message: "Error In GETALLPOSTS API",
-        error,
-      });
-    }
-  };
+  try {
+    const posts = await postModel
+      .find()
+      .populate("postedBy", "_id name profilePicture")
+      .sort({ createdAt: -1 });
+    res.status(200).send({
+      success: true,
+      message: "All Posts Data",
+      posts,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error In GETALLPOSTS API",
+      error,
+    });
+  }
+};
   //get user posts
   const getUserPostsController = async (req, res) => {
     try {
