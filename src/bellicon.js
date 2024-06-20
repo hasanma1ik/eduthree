@@ -5,32 +5,55 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Ensure this import is added
 import { useNotifications } from '../NotificationContext';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 const NotificationIcon = ({ navigation }) => {
   const { notificationCount, resetNotificationCount } = useNotifications(); // Assuming resetNotificationCount correctly resets the count
 
-  const fetchNotificationCount = useCallback(async () => {
-    try {
-      const response = await axios.get('/auth/notifications/unread-count');
-      const notificationsViewed = await AsyncStorage.getItem('notificationsViewed');
-      if (notificationsViewed !== 'true') {
-        resetNotificationCount(response.data.unreadCount); // Use the correct context function here
-      }
-    } catch (error) {
-      console.log('Error fetching unread notifications count:', error);
-    }
-  }, [resetNotificationCount]);
+  const [fontsLoaded] = useFonts({
+    'BebasNeue': require('../assets/fonts/BebasNeue-Regular.ttf'),
+    'kanitregular': require('../assets/fonts/Kanit-Regular.ttf'),
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchNotificationCount = async () => {
+        try {
+          const response = await axios.get('/auth/notifications/unread-count');
+          const notificationsViewed = await AsyncStorage.getItem('notificationsViewed');
+          if (notificationsViewed !== 'true') {
+            resetNotificationCount(response.data.unreadCount); // Use the correct context function here
+          }
+        } catch (error) {
+          console.log('Error fetching unread notifications count:', error);
+        }
+      };
+
+      fetchNotificationCount();
+    }, [resetNotificationCount])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const onLayoutRootView = async () => {
+        if (fontsLoaded) {
+          await SplashScreen.hideAsync();
+        }
+      };
+      
+      onLayoutRootView();
+    }, [fontsLoaded])
+  );
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   const handlePress = async () => {
     await AsyncStorage.setItem('notificationsViewed', 'true');
     navigation.navigate('Notifications');
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchNotificationCount();
-    }, [fetchNotificationCount])
-  );
 
   return (
     <TouchableOpacity onPress={handlePress} style={styles.iconContainer}>
@@ -40,7 +63,7 @@ const NotificationIcon = ({ navigation }) => {
           <Text style={styles.badgeText}>{notificationCount}</Text>
         </View>
       )}
-      <Text>Notifications</Text>
+      <Text style={styles.notificationText}>Notifications</Text>
     </TouchableOpacity>
   );
 };
@@ -70,9 +93,15 @@ const styles = StyleSheet.create({
     padding: 1,
     textAlign: 'center',
   },
+  notificationText: {
+    fontFamily: 'kanitregular', // Apply BebasNeue font
+    fontSize: 14, // Adjust the size as needed
+  },
 });
 
 export default NotificationIcon;
+
+
 
 
 

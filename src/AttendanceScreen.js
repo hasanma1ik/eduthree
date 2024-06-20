@@ -1,9 +1,31 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
 
 const AttendanceScreen = ({ navigation }) => {
+
+  const [fontsLoaded] = useFonts({
+    'kanitregular': require('../assets/fonts/Kanit-Medium.ttf'),
+    'kanitmedium': require('../assets/fonts/Kanit-Regular.ttf'),
+  });
+  
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+  
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  
   return (
-    <View style={styles.container}>
+    
+    <View style={styles.container} onLayout={onLayoutRootView}>
+      <Text style={styles.header}>Attendance</Text>
       <TouchableOpacity
         style={[styles.button, styles.takeAttendanceButton]}
         onPress={() => navigation.navigate('TakeAttendance')}>
@@ -18,12 +40,22 @@ const AttendanceScreen = ({ navigation }) => {
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
+  },
+  header: {
+    fontSize: 24,
+    fontFamily: 'kanitmedium', // Use Kanit Regular font for the heading
+    color: 'black',
+    marginLeft: 20,
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   button: {
     paddingVertical: 15, // Increased vertical padding

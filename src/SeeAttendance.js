@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 const SeeAttendance = () => {
   const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
@@ -11,6 +13,16 @@ const SeeAttendance = () => {
   const [attendanceDates, setAttendanceDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [attendanceData, setAttendanceData] = useState([]);
+
+  const [fontsLoaded] = useFonts({
+    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   useEffect(() => {
     fetchSubjects();
@@ -58,119 +70,123 @@ const SeeAttendance = () => {
     }
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onLayoutRootView}>
       <Text style={styles.header}>See Attendance</Text>
-      <RNPickerSelect
-        onValueChange={value => setSelectedGrade(value)}
-        items={grades.map(grade => ({ label: grade, value: grade }))}
-        placeholder={{ label: "Select a grade", value: null }}
-        style={pickerSelectStyles}
-      />
+      <ScrollView style={styles.formContainer}>
+        <View style={styles.pickerContainer}>
+          <RNPickerSelect
+            onValueChange={value => setSelectedGrade(value)}
+            items={grades.map(grade => ({ label: grade, value: grade }))}
+            placeholder={{ label: "Select a grade", value: null }}
+            style={pickerSelectStyles}
+          />
+        </View>
 
-      <RNPickerSelect
-        onValueChange={value => setSelectedSubject(value)}
-        items={subjects}
-        placeholder={{ label: "Select a subject", value: null }}
-        style={pickerSelectStyles}
-      />
+        <View style={styles.pickerContainer}>
+          <RNPickerSelect
+            onValueChange={value => setSelectedSubject(value)}
+            items={subjects}
+            placeholder={{ label: "Select a subject", value: null }}
+            style={pickerSelectStyles}
+          />
+        </View>
 
-      <RNPickerSelect
-        onValueChange={value => setSelectedDate(value)}
-        items={attendanceDates}
-        placeholder={{ label: "Select a date", value: null }}
-        style={pickerSelectStyles}
-      />
-     
+        <View style={styles.pickerContainer}>
+          <RNPickerSelect
+            onValueChange={value => setSelectedDate(value)}
+            items={attendanceDates}
+            placeholder={{ label: "Select a date", value: null }}
+            style={pickerSelectStyles}
+          />
+        </View>
 
-      <ScrollView style={styles.attendanceContainer}>
-  {attendanceData.map((record, index) => (
-    record.attendance.map((entry, subIndex) => (
-      <View key={`${index}-${subIndex}`} style={styles.attendanceItem}>
-        <Text style={styles.userNameText}>{entry.userId.name || 'Unknown'}</Text>
-        {/* Custom rendering for Present, Absent, and Late statuses */}
-        {entry.status === 'Present' ? (
-          <View style={styles.statusPresent}>
-            <Text style={styles.statusText}>P</Text>
-          </View>
-        ) : entry.status === 'Absent' ? (
-          <View style={styles.statusAbsent}>
-            <Text style={styles.statusText}>A</Text>
-          </View>
-        ) : entry.status === 'Late' ? (
-          <View style={styles.statusLate}>
-            <Text style={styles.statusText}>L</Text>
-          </View>
-        ) : (
-          <Text>{entry.status}</Text> // Default text display for any other statuses
-        )}
-      </View>
-    ))
-  ))}
-</ScrollView>
-
-
+        <ScrollView style={styles.attendanceContainer}>
+          {attendanceData.map((record, index) => (
+            record.attendance.map((entry, subIndex) => (
+              <View key={`${index}-${subIndex}`} style={styles.attendanceItem}>
+                <Text style={styles.userNameText}>{entry.userId.name || 'Unknown'}</Text>
+                {entry.status === 'Present' ? (
+                  <View style={styles.statusPresent}>
+                    <Text style={styles.statusText}>P</Text>
+                  </View>
+                ) : entry.status === 'Absent' ? (
+                  <View style={styles.statusAbsent}>
+                    <Text style={styles.statusText}>A</Text>
+                  </View>
+                ) : entry.status === 'Late' ? (
+                  <View style={styles.statusLate}>
+                    <Text style={styles.statusText}>L</Text>
+                  </View>
+                ) : (
+                  <Text>{entry.status}</Text>
+                )}
+              </View>
+            ))
+          ))}
+        </ScrollView>
+      </ScrollView>
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5f5', // Light background color for the entire page
+    backgroundColor: '#f5f5f5',
   },
   header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333', // Dark text for better contrast
-    textAlign: 'center',
+    fontSize: 24,
+    fontFamily: 'kanitmedium',
+    color: 'black',
+    marginBottom: 10,
+    marginTop: -20,
+  },
+  formContainer: {
+    marginTop: 10, // Add marginTop to move the form down
   },
   pickerContainer: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 10,
-    marginBottom: 20,
-    width: '90%',
-    backgroundColor: '#fff', // White background for picker containers
-    shadowColor: '#000', // Adding shadow for depth
+    marginBottom: 10,
+    width: '100%',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  picker: {
-    width: '100%',
-    backgroundColor: 'transparent',
   },
   attendanceContainer: {
     marginTop: 20,
     width: '100%',
   },
   attendanceItem: {
-    borderWidth: 0, // Remove border for a cleaner look
-    backgroundColor: '#fff', // White background for cards
+    borderWidth: 0,
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
-    shadowColor: '#000', // Shadow for cards
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems : 'center'
+    alignItems: 'center',
   },
-
-  userNameText : {
+  userNameText: {
     fontWeight: 'bold',
     fontSize: 16,
-    // color: '#4A4E69',
+    fontFamily: 'kanitmedium',
   },
-
   statusPresent: {
     width: 30,
     height: 30,
@@ -181,7 +197,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: '#FFFFFF',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   statusAbsent: {
     width: 30,
@@ -191,22 +207,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 4,
   },
-  statusLate:{
+  statusLate: {
     width: 30,
     height: 30,
     backgroundColor: '#343A40',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
-
   },
   dateText: {
     fontSize: 16,
-    color: '#666', // Subtle text for the selected date
-    marginBottom: 20, // Add some space before the list starts
+    color: '#666',
+    marginBottom: 20,
   },
 });
-
 
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
@@ -218,7 +232,7 @@ const pickerSelectStyles = StyleSheet.create({
     borderRadius: 4,
     color: 'black',
     backgroundColor: 'white',
-    paddingRight: 30, // to ensure the text is never behind the icon
+    paddingRight: 30,
   },
   inputAndroid: {
     fontSize: 16,
@@ -229,14 +243,11 @@ const pickerSelectStyles = StyleSheet.create({
     borderRadius: 4,
     color: 'black',
     backgroundColor: 'white',
-    paddingRight: 30, // to ensure the text is never behind the icon
+    paddingRight: 30,
   },
 });
 
-export default SeeAttendance
-
-
-
+export default SeeAttendance;
 
 
 

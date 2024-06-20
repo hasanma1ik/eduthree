@@ -58,6 +58,10 @@ export default function App() {
     'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
     'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
     'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
+    'merriweather-sans-bold': require('./assets/fonts/MerriweatherSans-Italic-VariableFont_wght.ttf'), 
+    'merriweather-sans-bold': require('./assets/fonts/MerriweatherSans-VariableFont_wght.ttf'), 
+    'BebasNeue': require('./assets/fonts/BebasNeue-Regular.ttf')
+
   });
 
   const onLayoutRootView = useCallback(async () => {

@@ -2,19 +2,18 @@ const postModel = require("../models/postModel")
 
 const createPostController = async (req, res) =>{
     try{
-        const {title, description} = req.body;
+        const { description} = req.body;
         //validate
-        if(!title || !description){
+        if( !description){
             return res.status(500).send({
                 success: false,
-                message:'Please Provide All fields',
+                message:'Please provide post description',
             })
         }
       
 
 
             const post = await postModel({
-                title,
                 description,
                 postedBy: req.auth._id,
             }).save()
@@ -59,7 +58,8 @@ const getAllPostsController = async (req, res) => {
   //get user posts
   const getUserPostsController = async (req, res) => {
     try {
-      const userPosts = await postModel.find({ postedBy: req.auth._id });
+      const userPosts = await postModel.find({ postedBy: req.auth._id })
+      .populate('postedBy', '_id name profilePicture');
       res.status(200).send({
         success: true,
         message: "user posts",
@@ -97,11 +97,11 @@ try {
 // Update Post
 const updatePostController = async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { description } = req.body;
     //post find
     const post = await postModel.findById({ _id: req.params.id });
     //validation
-    if (!title || !description) {
+    if (!description) {
       return res.status(500).send({
         success: false,
         message: "Please Provide post title or description",
@@ -110,7 +110,7 @@ const updatePostController = async (req, res) => {
     const updatedPost = await postModel.findByIdAndUpdate(
       { _id: req.params.id },
       {
-        title: title || post?.title,
+       
         description: description || post?.description,
       },
       { new: true }

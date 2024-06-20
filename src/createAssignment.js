@@ -1,20 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert, Text, Platform } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Alert, Text, Platform, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { UserContext } from './screen/context/userContext';
 import { useNotifications } from '../NotificationContext';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 const CreateAssignment = () => {
-
   const { currentUser } = useContext(UserContext);
-  
-  // Early return if not a teacher
-  // if (currentUser.role !== 'teacher') {
-  //   return <Text>You must be a teacher to create assignments.</Text>;
-  // }
+
   const initialState = {
     title: '',
     description: '',
@@ -32,6 +29,16 @@ const CreateAssignment = () => {
   const [subjects, setSubjects] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const [fontsLoaded] = useFonts({
+    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = React.useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
@@ -44,7 +51,6 @@ const CreateAssignment = () => {
     };
     fetchSubjects();
   }, []);
-
 
   const { updateNotificationCount, notificationCount } = useNotifications();
 
@@ -59,8 +65,7 @@ const CreateAssignment = () => {
         subject,
       });
       Alert.alert("Success", "Assignment created successfully");
-      updateNotificationCount(notificationCount + 1)
-      // Reset state to initial after successful creation
+      updateNotificationCount(notificationCount + 1);
       setTitle(initialState.title);
       setDescription(initialState.description);
       setDueDate(initialState.dueDate);
@@ -74,14 +79,19 @@ const CreateAssignment = () => {
 
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(Platform.OS === 'ios');
-    const currentDate = selectedDate || dueDate; // Fallback to dueDate if selectedDate is undefined
+    const currentDate = selectedDate || dueDate;
     setDueDate(currentDate);
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
-    <KeyboardAwareScrollView style={{ backgroundColor: '#EAEAEA' }} resetScrollToCoords={{ x: 0, y: 0 }} contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Create New Assignment</Text>
+    <KeyboardAwareScrollView style={{ backgroundColor: '#F7F7F7' }} resetScrollToCoords={{ x: 0, y: 0 }} contentContainerStyle={styles.container}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Create Assignment</Text>
+      </View>
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Grade:</Text>
         <View style={styles.pickerContainer}>
@@ -113,9 +123,9 @@ const CreateAssignment = () => {
         style={[styles.input, styles.textArea]}
         multiline={true}
       />
-      <View style={styles.datePickerButton}>
-        <Button title="Select Due Date" onPress={() => setShowDatePicker(true)} color="#007AFF" />
-      </View>
+      <TouchableOpacity style={[styles.datePickerButton, styles.blackButton]} onPress={() => setShowDatePicker(true)}>
+        <Text style={styles.datePickerButtonText}>Select Due Date</Text>
+      </TouchableOpacity>
       {showDatePicker && (
         <DateTimePicker
           value={dueDate}
@@ -126,7 +136,9 @@ const CreateAssignment = () => {
       )}
       <Text style={styles.dueDateText}>Due Date: {dueDate.toISOString().split('T')[0]}</Text>
       <View style={styles.buttonContainer}>
-        <Button title="Create Assignment" onPress={handleCreate} color="black" />
+        <TouchableOpacity style={[styles.createButton, styles.blackButton]} onPress={handleCreate}>
+          <Text style={styles.createButtonText}>Create Assignment</Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAwareScrollView>
   );
@@ -137,14 +149,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#EAEAEA',
+    backgroundColor: '#F7F7F7',
+  },
+  headerContainer: {
+    alignItems: 'flex-start',
   },
   header: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'kanitmedium',
+    color: 'black',
     marginBottom: 20,
-    textAlign: 'center',
-    color: '#333',
+    marginTop: -20,
   },
   inputContainer: {
     marginBottom: 15,
@@ -157,11 +172,16 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#cccccc',
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
     fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   textArea: {
     minHeight: 100,
@@ -169,23 +189,76 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#cccccc',
+    borderColor: '#ddd',
     borderRadius: 8,
     marginBottom: 10,
     overflow: 'hidden',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   picker: {
     backgroundColor: '#fff',
   },
   datePickerButton: {
-    marginBottom: 10,
+    paddingVertical: 15, // Increased vertical padding
+    paddingHorizontal: 25, // Increased horizontal padding to make the button wider
+    borderRadius: 2,
+    width: '100%', // Increased width
+    
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  blackButton: {
+    backgroundColor: 'maroon',
+  },
+  datePickerButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   dueDateText: {
     fontSize: 16,
     marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
   },
   buttonContainer: {
     marginTop: 10,
+  },
+  createButton: {
+      paddingVertical: 15, // Increased vertical padding
+    paddingHorizontal: 25, // Increased horizontal padding to make the button wider
+    borderRadius: 2,
+    width: '100%', // Set to 100% width
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

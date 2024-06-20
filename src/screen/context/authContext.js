@@ -1,43 +1,49 @@
-import React,{createContext, useState, useEffect} from 'react'
+import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-
 import axios from 'axios';
-//context
-const AuthContext = createContext()
 
-//provider
-const AuthProvider = ({ children })=> {
-    //global state
-        const [state, setState] = useState({
-            user:null,
-            token: "",
-        })
+const AuthContext = createContext();
 
-        // initial local storage data
-        useEffect(()=>{
-            const loadLocalStorageData = async () =>{
-                    let data = await AsyncStorage.getItem('@auth')
-                    let loginData = JSON.parse(data)
-                    setState({...state, user:loginData?.user, token : loginData?.token})  //loginData - it will redirect us to homepage
-            }
-            loadLocalStorageData()
-        }, [])
+const AuthProvider = ({ children }) => {
+  // Global state
+  const [state, setState] = useState({
+    user: null,
+    token: '',
+  });
 
-        
+  // Load initial local storage data
+  useEffect(() => {
+    const loadLocalStorageData = async () => {
+      let data = await AsyncStorage.getItem('@auth');
+      let loginData = JSON.parse(data);
+      if (loginData) {
+        setState({ user: loginData.user, token: loginData.token });
+      }
+    };
+    loadLocalStorageData();
+  }, []);
 
-let token = state && state.token
-       
- //default axios setting
- axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
- axios.defaults.baseURL = 'http:///192.168.194.115:8080/api/v1/';
+  // Persist state changes to AsyncStorage
+  useEffect(() => {
+    const saveStateToAsyncStorage = async () => {
+      if (state.user && state.token) {
+        await AsyncStorage.setItem('@auth', JSON.stringify(state));
+      } else {
+        await AsyncStorage.removeItem('@auth');
+      }
+    };
+    saveStateToAsyncStorage();
+  }, [state]);
 
+  // Set axios default settings
+  axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+  axios.defaults.baseURL = 'http://192.168.216.115:8080/api/v1/';
 
-        return (
-            <AuthContext.Provider value={[state, setState]}>
-                {children}
-              
-            </AuthContext.Provider>
-        )
-}
-export { AuthContext, AuthProvider}
+  return (
+    <AuthContext.Provider value={[state, setState]}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export { AuthContext, AuthProvider };

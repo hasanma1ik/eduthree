@@ -6,11 +6,11 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "./screen/context/authContext";
 
+
 const PostCard = ({ post, myPostScreen }) => {
- 
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-  const [state] = useContext(AuthContext)
+  const [state] = useContext(AuthContext);
   const { user } = state;
 
   const handleDeletePrompt = (id) => {
@@ -30,7 +30,7 @@ const PostCard = ({ post, myPostScreen }) => {
       const { data } = await axios.delete(`/post/delete-post/${id}`);
       setLoading(false);
       alert(data?.message);
-      navigation.push('Home')
+      navigation.push('Home');
     } catch (error) {
       setLoading(false);
       console.log(error);
@@ -38,11 +38,11 @@ const PostCard = ({ post, myPostScreen }) => {
     }
   };
 
-  const canDelete = () =>{
+  const canDelete = () => {
     if (user.role === 'admin') return true;
-    if(user.role === 'teacher' && post?.postedBy?._id === user._id) return true;
+    if (user.role === 'teacher' && post?.postedBy?._id === user._id) return true;
     return false;
-  }
+  };
 
   return (
     <View style={styles.card}>
@@ -56,17 +56,15 @@ const PostCard = ({ post, myPostScreen }) => {
           <Text style={styles.postDate}>{moment(post?.createdAt).format('DD:MM:YYYY')}</Text>
           <Text style={styles.desc}>{post?.description}</Text>
         </View>
-        {canDelete() && (
-        <TouchableOpacity onPress={() => handleDeletePrompt(post?._id)}>
-          <FontAwesome5 name="trash" size={16} color={"red"} />
-        </TouchableOpacity>
+        {(canDelete() || myPostScreen) && (
+          <TouchableOpacity onPress={() => handleDeletePrompt(post?._id)}>
+            <FontAwesome5 name="trash" size={16} color={"red"} />
+          </TouchableOpacity>
         )}
       </View>
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   card: {
@@ -111,8 +109,3 @@ const styles = StyleSheet.create({
 });
 
 export default PostCard;
-
-
-
-
-

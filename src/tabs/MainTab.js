@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native'
-import React,{useContext} from 'react'
+import React, { useContext, useCallback } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import Home from '../screen/Home';
@@ -30,6 +30,7 @@ import ClassSchedule from '../ClassSchedule';
 import AddTermScreen from '../TermScreen';
 import PostDetail from '../PostDetail';
 import { Image } from 'react-native'
+import { useFonts } from 'expo-font';
 
 
 
@@ -40,6 +41,23 @@ const MainTab = () => {
 
   const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
+
+const [fontsLoaded] = useFonts({
+  'merriweather-sans': require('../../assets/fonts/MerriweatherSans-VariableFont_wght.ttf'),
+  'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf')
+});
+
+const onLayoutRootView = useCallback(async () => {
+  if (fontsLoaded) {
+    await SplashScreen.hideAsync();
+  }
+}, [fontsLoaded]);
+
+if (!fontsLoaded) {
+  return null;
+}
+
+
 
   const TeacherStackNavigator = () => (
       <Stack.Navigator initialRouteName="Home">
@@ -55,7 +73,7 @@ const Drawer = createDrawerNavigator();
             resizeMode="contain"
           />
         ),
-        headerTitleStyle: { color: '#228B22' },
+        headerTitleStyle: { color: '#228B22'},
         headerRight: () => <TopTab />,
       }}
     />
@@ -64,6 +82,8 @@ const Drawer = createDrawerNavigator();
     <Stack.Screen name="About" component={About} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Account" component={Account} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
+
+    <Stack.Screen name="PostDetail" component={PostDetail} options={{ title: 'Post Detail' }} />
 
     <Stack.Screen name="MyPosts" component={MyPosts} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} /> 
@@ -99,7 +119,7 @@ const Drawer = createDrawerNavigator();
             resizeMode="contain"
           />
         ),
-        headerTitleStyle: { color: '#228B22' },
+        headerTitleStyle: { color: '#228B22'},
         headerRight: () => <TopTab />,
       }}
     />
@@ -174,24 +194,42 @@ const Drawer = createDrawerNavigator();
       {authenticatedUser ? (
         <Drawer.Navigator drawerContent={(props) => <DrawerContent {...props} />}>
           {userRole === 'teacher' ? (
-            <Drawer.Screen name="Faculty Portal" component={TeacherStackNavigator} />
+            <Drawer.Screen
+              name="Faculty Portal"
+              component={TeacherStackNavigator}
+              options={{
+                title: "Faculty Portal",
+                headerTitleStyle: {
+                  fontFamily: 'merriweather-sans',
+                },
+              }}
+            />
           ) : userRole === 'admin' ? (
-            <Drawer.Screen name="Admin Portal" component={AdminStackNavigator} />
-          ) :  ( 
-            <Drawer.Screen 
-            name="Student Portal" 
-            component={StudentStackNavigator} 
-            options={{
-              title: "Student Portal",
-              headerTitleStyle: {
-                color: '#228B22',
-                fontWeight: 'bold',
-              },
-            }} 
-          />
+            <Drawer.Screen
+              name="Admin Portal"
+              component={AdminStackNavigator}
+              options={{
+                title: "Admin Portal",
+                headerTitleStyle: {
+                  fontFamily: 'merriweather-sans',
+                },
+              }}
+            />
+          ) : (
+            <Drawer.Screen
+              name="Student Portal"
+              component={StudentStackNavigator}
+              options={{
+                title: "Student Portal",
+                headerTitleStyle: {
+                  color: '#228B22',
+                  fontWeight: 'bold',
+                  fontFamily: 'merriweather-sans',
+                },
+              }}
+            />
           )}
         </Drawer.Navigator>
-        
       ) : (
         <AuthenticationStackNavigator />
       )}
