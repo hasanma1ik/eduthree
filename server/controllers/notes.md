@@ -4475,6 +4475,178 @@ const MainTab = () => {
 
 export default MainTab;
 
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import axios from 'axios';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Picker } from '@react-native-picker/picker';
+
+const Assignments = () => {
+  const [assignments, setAssignments] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [fontsLoaded] = useFonts({
+    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'), // Adjust the path as necessary
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const response = await axios.get('/auth/subjects'); // Adjust URL as needed
+        setSubjects(response.data.subjects);
+      } catch (error) {
+        console.error('Failed to fetch subjects:', error);
+        Alert.alert("Error", "Failed to fetch subjects");
+      }
+    };
+
+    fetchSubjects();
+  }, []);
+
+  const fetchAssignments = async (subjectId) => {
+    try {
+      const response = await axios.get(`/auth/assignments?subject=${subjectId}`); // Adjust URL as needed
+      setAssignments(response.data);
+    } catch (error) {
+      console.error('Failed to fetch assignments:', error);
+      Alert.alert("Error", "Failed to fetch assignments");
+    }
+  };
+
+  const handleSubjectChange = (subjectId) => {
+    setSelectedSubject(subjectId);
+    fetchAssignments(subjectId);
+  };
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <ScrollView style={styles.container} onLayout={onLayoutRootView}>
+      <Text style={styles.header}>Your Assignments</Text>
+      <Picker
+        selectedValue={selectedSubject}
+        style={styles.picker}
+        onValueChange={(itemValue) => handleSubjectChange(itemValue)}
+      >
+        <Picker.Item label="Select a subject" value="" />
+        {subjects.map((subject) => (
+          <Picker.Item key={subject._id} label={subject.name} value={subject._id} />
+        ))}
+      </Picker>
+      {assignments.length > 0 ? (
+        assignments.map((assignment, index) => (
+          <View key={index} style={styles.assignmentItem}>
+            <Text style={styles.assignmentTitle}>{assignment.title}</Text>
+            <Text style={styles.assignmentDescription}>{assignment.description}</Text>
+            <View style={styles.assignmentMeta}>
+              <Text style={styles.assignmentMetaText}>Due Date: {assignment.dueDate}</Text>
+              <Text style={styles.assignmentMetaText}>Grade: {assignment.grade}</Text>
+              <Text style={styles.assignmentMetaText}>Teacher: {assignment.createdBy.name}</Text>
+            </View>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noAssignmentsText}>No assignments found for the selected subject.</Text>
+      )}
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+  },
+  header: {
+    fontSize: 26,
+    fontFamily: 'Kanit-Medium', // Apply the Kanit-Medium font
+    marginVertical: 20,
+    textAlign: 'center',
+    color: '#333',
+  },
+  picker: {
+    height: 50,
+    width: '90%',
+    alignSelf: 'center',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  assignmentItem: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  assignmentTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  assignmentDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 10,
+  },
+  assignmentMeta: {
+    marginTop: 10,
+  },
+  assignmentMetaText: {
+    fontSize: 14,
+    color: '#888',
+  },
+  noAssignmentsText: {
+    textAlign: 'center',
+    color: '#888',
+    fontSize: 16,
+    marginTop: 20,
+  },
+});
+
+export default Assignments;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// header: {
+//     fontSize: 24,
+//     fontFamily: 'Kanit-Medium', // Apply the Kanit-Medium font
+//     marginBottom: 20,
+//   },
+
+
+
 
 
 
@@ -4664,3 +4836,50 @@ i want classes to be displayed by date, like for instance
 
 - delete on real time without refresh
 -user upload profile picture
+
+
+more functions to add
+1- student already enrolled for ${subject name}
+2- Assignment should appear for teacher as well that they have created
+3-
+
+
+Learn Academy notes
+
+1-Faculty Role 
+- Take Attendance
+- See Attendance
+- Create Assignment
+- Post on home page
+
+to Add:
+- Assignments teacher has created should also appear on his assignments tab
+- only those subjects option should appear that the teacher teaches
+- Download Attendance history for the semester
+
+2-Admin Role
+- Create Class, assign subject, timeslot, day, teacher, select term
+- Grade setter - assign students to specific grades
+- Student Form - Enroll Students for certain subjects
+- Create Term - Select semester and dates 
+
+3- Student Role
+
+- Check Class schedule
+- Check assignment 
+- Get notification on assignment submission
+
+to add
+- you were marked present, late absent for todays class
+- You have been absent 3 times for this subject, another absence will result in an F grade?
+
+
+
+
+
+lets say a teacher Eddie Jackson teaches grade 3 and grade 4 and subjects of Science and Islamiat, what i want is that when he is creating an assignment, only grade options that should appear when Eddie Jackson is logged in should be grade 3 and 4 and subject options that should appear are Science and Islamiat. 
+
+So basically when class is created i want the teacher to be associated with those classes and subjects only that were created and assigned to them, so when teacher is creating assignment and taking attendance, only those classes and subjects should appear that they were assigned when classes were created.
+
+
+there should be a dropdown input for teachers in assginments, dropdown showing list of subjects that list assignments via subject

@@ -37,8 +37,6 @@ const {
      getAllClasses,
      getUsersByClass,
      getSubjectsByClass,
-    
-     createClassAndSubject,
      addOrUpdateStudent,
      getStudentsByClass,
      createSubject,
@@ -50,7 +48,10 @@ const {
      getClassSchedulesForLoggedInUser,
      createTerms,
      getTerms,
-    
+     deleteAssignment,
+     getTeacherData,
+     logUser,
+   
     
     
     
@@ -121,7 +122,7 @@ router.post('/submission', (req, res) => {
 
 
 // Route for creating a new assignment
-router.post('/create-assignments', createAssignment);
+router.post('/create-assignments',  requireSignIn, logUser, createAssignment);
 
 // In your routes file
 router.get('/assignments/:id', getAssignmentById)
@@ -181,8 +182,17 @@ router.get('/class-schedules/logged-in-user', requireSignIn, getClassSchedulesFo
 
 router.get('/teachers', getAllTeachers);
 
+
 router.post('/terms', createTerms)
 router.get('/terms', getTerms)
+// Add this new route to userRoutes.js
+router.get('/teacher/:id/data', requireSignIn, getTeacherData);
+
+
+router.delete('/assignments/:assignmentId', requireSignIn, deleteAssignment);
+
+
+
 
 
 //export p

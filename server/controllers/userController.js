@@ -27,6 +27,11 @@ const requireSignIn = jwt({
   userProperty: 'auth'  // Now attaches decoded token payload to req.auth
 });
 
+const logUser = (req, res, next) => {
+  console.log('Authenticated user:', req.auth);
+  next();
+};
+
 
 // Middleware to log the user object after JWT middleware
 
@@ -723,7 +728,20 @@ const addEvent = async (req, res) => {
 
 const createAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, files, grade, subject: subjectId } = req.body;
+    const { title, description, dueDate, files, grade, subject } = req.body;
+
+    // Debug: Log the received request body
+    console.log('Received request body:', req.body);
+
+    // Find the subject ObjectId using the subject name
+    const subjectDoc = await Subject.findOne({ name: subject });
+
+    // Debug: Log the found subject document
+    console.log('Found subjectDoc:', subjectDoc);
+
+    if (!subjectDoc) {
+      return res.status(404).json({ message: "Subject not found" });
+    }
 
     // Create a new assignment document
     const newAssignment = new Assignment({
@@ -732,32 +750,40 @@ const createAssignment = async (req, res) => {
       dueDate,
       files,
       grade,
-      subject: subjectId,
+      subject: subjectDoc._id, // Save ObjectId
+      createdBy: req.auth._id, // Ensure this is correctly set
     });
+
+    // Debug: Log the new assignment before saving
+    console.log('New Assignment to be saved:', newAssignment);
 
     // Save the assignment to the database
     await newAssignment.save();
 
-    // Fetch the subject name from the database using the subjectId
-    const subject = await Subject.findById(subjectId);
-    if (!subject) {
-      return res.status(404).json({ message: "Subject not found" });
-    }
-    const subjectName = subject.name; // Assuming the subject document has a 'name' field
+    // Debug: Log after saving the assignment
+    console.log('Assignment saved successfully');
 
     // Find users in the specified grade and enrolled in the specified subject
     const users = await User.find({
-      grade: grade,
-      subjects: subjectId, // Ensure this matches how subjects are stored in your User model (IDs, names, etc.)
+      $or: [
+        { grade: grade, subjects: subjectDoc._id }, // Match students
+        { _id: req.auth._id } // Include the teacher who created the assignment
+      ]
     });
+
+    // Debug: Log the found users
+    console.log('Found users for notifications:', users);
 
     // For each user, create a new notification about the assignment
     users.forEach(async (user) => {
       await Notification.create({
         user: user._id,
-        message: `Subject: ${subjectName} - New assignment: ${title}, ${description}, due: ${dueDate}`,
+        message: `Subject: ${subject} - New assignment: ${title}, ${description}, due: ${dueDate}`,
         assignmentId: newAssignment._id,
       });
+
+      // Debug: Log notification creation
+      console.log(`Notification created for user: ${user._id}`);
     });
 
     res.status(201).json({
@@ -879,30 +905,37 @@ const getSubjects = async (req, res) => {
   }
 };
 
-// Assuming you have a middleware that authenticates the user and sets req.user
+// Assuming you have a middleware that authenticates the user and sets req.auth
 const getAssignmentsForLoggedInUser = async (req, res) => {
   try {
-    // Fetch user details from the database using the ID from req.auth
-    const user = await User.findById(req.auth._id).populate('subjects');
+    const subjectId = req.query.subject; // Get subject ID from query parameters
 
-    // Check if the user was found
+    // Fetch user details from the database using the ID from req.auth
+    const user = await User.findById(req.auth._id);
+
     if (!user) {
       return res.status(404).send('User not found');
     }
 
-    // Fetch assignments that match the user's grade and subjects
-    const assignments = await Assignment.find({
-      grade: user.grade,
-      subject: { $in: user.subjects.map(subject => subject._id) }, // Assuming subjects is populated
-    }).populate('subject'); // Populate subject details for each assignment
+    const query = {
+      subject: subjectId,
+      $or: [
+        { grade: user.grade }, // Filter by user's grade
+        { createdBy: req.auth._id } // Assignments created by the teacher
+      ]
+    };
 
-    // Send the fetched assignments as the response
+    const assignments = await Assignment.find(query)
+      .populate('subject', 'name') // Populate subject name
+      .populate('createdBy', 'name'); // Populate teacher name
+
     res.json(assignments);
   } catch (error) {
     console.error(error);
     res.status(500).send('Server Error');
   }
 };
+
 
 
 const getAttendanceDates = async (req, res) => {
@@ -1048,8 +1081,56 @@ const getTerms = async (req, res) => {
   }
 };
 
+const getTeacherData = async (req, res) => {
+  try {
+    const teacherId = req.params.id;
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getSubjects, getClassIdByGrade, registerUserForSubject, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms }
+    // Fetch the classes and subjects assigned to the teacher
+    const classes = await Class.find({ teacher: teacherId }).populate('subject');
+    
+    // Extract unique grades and subjects from the classes
+    const grades = [...new Set(classes.map(cls => cls.grade))];
+    const subjects = [...new Set(classes.map(cls => JSON.stringify(cls.subject)))].map(JSON.parse);
+
+    res.json({ grades, subjects });
+  } catch (error) {
+    console.error('Failed to fetch teacher data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const deleteAssignment = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+
+    // Retrieve the assignment to check if it exists and who created it
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // Check if the current user is the creator of the assignment or an admin
+    if (req.auth._id.toString() !== assignment.createdBy.toString() && req.auth.role !== 'admin') {
+      return res.status(403).json({ message: 'You do not have permission to delete this assignment' });
+    }
+
+    // Delete the assignment
+    await Assignment.deleteOne({ _id: assignmentId });
+    res.status(200).json({ message: 'Assignment deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete assignment:', error);
+    res.status(500).json({ message: 'Failed to delete assignment', error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment  }
 
 
 

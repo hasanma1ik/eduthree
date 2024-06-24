@@ -1,33 +1,39 @@
 require('dotenv').config();
-
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const Class = require('../server/models/classmodel');
+const Subject = require('../server/models/subjectmodel');
 
-const updateClassIndexes = async () => {
+const updateClassSubjects = async () => {
   try {
     await connectDB();
 
-    // Optionally, list current indexes to identify the one you want to drop
-    const currentIndexes = await Class.listIndexes();
-    console.log("Current Indexes:", currentIndexes);
+    // Fetch all classes
+    const classes = await Class.find();
 
-    // Dropping the old index if it exists
-    console.log("Dropping old indexes if they exist...");
-    await Class.collection.dropIndex('grade_1_day_1_timeSlot_1').catch(e => console.log("Index not found, skipping..."));
+    for (const cls of classes) {
+      // Log the current class being processed
+      console.log(`Processing class: ${cls.grade}, Subject: ${cls.subject}`);
 
-    // MongoDB should automatically create the new indexes based on your schema
-    // when the application starts. But if you want to explicitly ensure indexes:
-    console.log("Ensuring new indexes based on the updated schema...");
-    await Class.ensureIndexes();
+      // Find the subject document that matches the subject name
+      const subject = await Subject.findOne({ name: cls.subject });
 
-    console.log("Index update complete.");
+      if (subject) {
+        // Update the subject field to be the ObjectId reference
+        cls.subject = subject._id;
+        await cls.save();
+        console.log(`Updated class with grade ${cls.grade} and subject ${subject.name}`);
+      } else {
+        console.log(`Subject not found for class with grade ${cls.grade} and subject ${cls.subject}`);
+      }
+    }
+
+    console.log('Class subject update complete.');
   } catch (error) {
-    console.error("Error updating indexes:", error);
+    console.error('Error updating class subjects:', error);
   } finally {
     await mongoose.disconnect();
   }
 };
 
-updateClassIndexes();
-
+updateClassSubjects();

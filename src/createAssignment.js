@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert, Text, Platform, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { View, TextInput, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -10,6 +10,8 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
 const CreateAssignment = () => {
+
+  //currentUser is obtained from UserContext, which holds the currently logged-in user's information.
   const { currentUser } = useContext(UserContext);
 
   const initialState = {
@@ -25,35 +27,33 @@ const CreateAssignment = () => {
   const [dueDate, setDueDate] = useState(initialState.dueDate);
   const [grade, setGrade] = useState(initialState.grade);
   const [subject, setSubject] = useState(initialState.subject);
-  const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
+  const [grades, setGrades] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const [fontsLoaded] = useFonts({
-    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
-  });
-
-  const onLayoutRootView = React.useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
+ 
+//Fetching Teacher Data
   useEffect(() => {
-    const fetchSubjects = async () => {
+    const fetchTeacherData = async () => {
       try {
-        const response = await axios.get('/auth/subjects');
+        const response = await axios.get(`/auth/teacher/${currentUser._id}/data`);
+        console.log(response.data); // Log the response data
+        setGrades(response.data.grades);
         setSubjects(response.data.subjects);
       } catch (error) {
-        console.error('Failed to fetch subjects:', error);
-        Alert.alert("Error", "Failed to fetch subjects");
+        console.error('Failed to fetch teacher data:', error);
+        Alert.alert("Error", "Failed to fetch teacher data");
       }
     };
-    fetchSubjects();
-  }, []);
+    fetchTeacherData();
+  }, [currentUser]);
+
+  //updates notification count upon assignment creation
 
   const { updateNotificationCount, notificationCount } = useNotifications();
 
+
+  //Assignment creation
   const handleCreate = async () => {
     try {
       const formattedDueDate = `${dueDate.getFullYear()}-${('0' + (dueDate.getMonth() + 1)).slice(-2)}-${('0' + dueDate.getDate()).slice(-2)}`;
@@ -77,11 +77,23 @@ const CreateAssignment = () => {
     }
   };
 
+  //Handling Date Change:
+
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(Platform.OS === 'ios');
     const currentDate = selectedDate || dueDate;
     setDueDate(currentDate);
   };
+
+  const [fontsLoaded] = useFonts({
+    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return null;
@@ -95,18 +107,30 @@ const CreateAssignment = () => {
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Grade:</Text>
         <View style={styles.pickerContainer}>
-          <Picker selectedValue={grade} onValueChange={setGrade} style={styles.picker}>
+          <Picker
+            selectedValue={grade}
+            onValueChange={(itemValue) => setGrade(itemValue)}
+            style={styles.picker}
+          >
             <Picker.Item label="Select Grade" value="" />
-            {grades.map((grade, index) => <Picker.Item key={index} label={grade} value={grade} />)}
+            {grades.map((grade, index) => (
+              <Picker.Item key={index} label={grade} value={grade} />
+            ))}
           </Picker>
         </View>
       </View>
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Subject:</Text>
         <View style={styles.pickerContainer}>
-          <Picker selectedValue={subject} onValueChange={setSubject} style={styles.picker}>
+          <Picker
+            selectedValue={subject}
+            onValueChange={(itemValue) => setSubject(itemValue)}
+            style={styles.picker}
+          >
             <Picker.Item label="Select Subject" value="" />
-            {subjects.map((subject, index) => <Picker.Item key={index} label={subject.name} value={subject._id} />)}
+            {subjects.map((subject, index) => (
+              <Picker.Item key={index} label={subject} value={subject} />
+            ))}
           </Picker>
         </View>
       </View>
@@ -204,11 +228,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   datePickerButton: {
-    paddingVertical: 15, // Increased vertical padding
-    paddingHorizontal: 25, // Increased horizontal padding to make the button wider
+    paddingVertical: 15,
+    paddingHorizontal: 25,
     borderRadius: 2,
-    width: '100%', // Increased width
-    
+    width: '100%',
     marginVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -239,10 +262,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   createButton: {
-      paddingVertical: 15, // Increased vertical padding
-    paddingHorizontal: 25, // Increased horizontal padding to make the button wider
+    paddingVertical: 15,
+    paddingHorizontal: 25,
     borderRadius: 2,
-    width: '100%', // Set to 100% width
+    width: '100%',
     marginVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',

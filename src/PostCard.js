@@ -58,7 +58,7 @@ const PostCard = ({ post, myPostScreen }) => {
         </View>
         {(canDelete() || myPostScreen) && (
           <TouchableOpacity onPress={() => handleDeletePrompt(post?._id)}>
-            <FontAwesome5 name="trash" size={16} color={"red"} />
+            <FontAwesome5 name="trash" size={14} color={"red"} />
           </TouchableOpacity>
         )}
       </View>

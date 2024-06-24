@@ -23,7 +23,11 @@ const assignmentSchema = new mongoose.Schema({
     ref: 'Subject', // Assuming you have a Subject model
     required: true,
   },
-  
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Assuming you have a User model
+    required: true,
+  },
   submissions: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Submission',

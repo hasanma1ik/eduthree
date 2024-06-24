@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Button, StyleSheet, Alert, Text, ScrollView } from 'react-native';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 const StudentForm = () => {
   const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
@@ -9,6 +11,16 @@ const StudentForm = () => {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [users, setUsers] = useState([]);
+
+  const [fontsLoaded] = useFonts({
+    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = React.useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   useEffect(() => {
     fetchSubjects();
@@ -50,10 +62,15 @@ const StudentForm = () => {
     }
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onLayoutRootView}>
+      <Text style={styles.heading}>Student Form</Text>
       <ScrollView contentContainerStyle={styles.scrollView}>
-        <Text style={styles.headerText}>Select a Grade:</Text>
+      
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedGrade}
@@ -64,7 +81,7 @@ const StudentForm = () => {
           </Picker>
         </View>
 
-        <Text style={styles.headerText}>Select a Subject:</Text>
+        
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedSubject}
@@ -89,7 +106,15 @@ const StudentForm = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 10, // Reduce padding to move content up
+    paddingTop: 10,
+    backgroundColor: '#F7F7F7', // Light background for a clean look
+  },
+  heading: {
+    fontSize: 24,
+    fontFamily: 'kanitmedium',
+    color: 'black',
+    marginLeft: 20,
+    marginBottom: 30,
   },
   scrollView: {
     alignItems: 'center',
@@ -101,10 +126,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 20,
     width: '90%',
-   
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   picker: {
     width: '100%',
+    
   },
   headerText: {
     fontSize: 18,
@@ -138,7 +172,6 @@ const styles = StyleSheet.create({
 });
 
 export default StudentForm;
-
 
 
 

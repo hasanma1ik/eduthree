@@ -3,6 +3,8 @@ import { View, Button, Text, StyleSheet, TouchableOpacity, Platform, Alert } fro
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 function AddTermScreen() {
   const [term, setTerm] = useState('Spring'); // Default to 'Spring' for better UX
@@ -10,6 +12,16 @@ function AddTermScreen() {
   const [endDate, setEndDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = React.useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   const handleSubmit = async () => {
     const year = new Date().getFullYear(); // Get current year
@@ -30,14 +42,21 @@ function AddTermScreen() {
 
   const formatDate = (date) => date.toLocaleDateString();
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onLayoutRootView}>
+      <Text style={styles.heading}>Create Term</Text>
       <Text style={styles.label}>Select Term:</Text>
-      <Picker selectedValue={term} onValueChange={setTerm} style={styles.picker}>
-        <Picker.Item label="Spring" value="Spring" />
-        <Picker.Item label="Fall" value="Fall" />
-        <Picker.Item label="Summer" value="Summer" />
-      </Picker>
+      <View style={styles.pickerContainer}>
+        <Picker selectedValue={term} onValueChange={setTerm} style={styles.picker}>
+          <Picker.Item label="Spring" value="Spring" />
+          <Picker.Item label="Fall" value="Fall" />
+          <Picker.Item label="Summer" value="Summer" />
+        </Picker>
+      </View>
 
       <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.datePickerButton}>
         <Text style={styles.datePickerText}>Start Date: {formatDate(startDate)}</Text>
@@ -69,7 +88,9 @@ function AddTermScreen() {
         />
       )}
 
-      <Button title="Add Term" onPress={handleSubmit} color="#007AFF" />
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <Text style={styles.submitButtonText}>Add Term</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -78,23 +99,68 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    backgroundColor: '#f7f7f7',
+  },
+  heading: {
+    fontSize: 24,
+    fontFamily: 'kanitmedium',
+    color: 'black',
+    marginBottom: 50,
+    marginLeft: 10,
   },
   label: {
     fontSize: 16,
     marginBottom: 10,
+    color: '#333',
+  },
+  pickerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginBottom: 20,
+    overflow: 'hidden',
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow for iOS
+    shadowOpacity: 0.2, // Shadow for iOS
+    shadowRadius: 3, // Shadow for iOS
   },
   picker: {
-    marginBottom: 20,
+    width: '100%',
+    
   },
   datePickerButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#e0e0e0',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 8,
     marginBottom: 20,
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow for iOS
+    shadowOpacity: 0.2, // Shadow for iOS
+    shadowRadius: 3, // Shadow for iOS
   },
   datePickerText: {
     fontSize: 16,
+    color: '#333',
+  },
+  submitButton: {
+    backgroundColor: 'black',
+    borderRadius: 8,
+    paddingVertical: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow for iOS
+    shadowOpacity: 0.2, // Shadow for iOS
+    shadowRadius: 3, // Shadow for iOS
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
