@@ -67,7 +67,31 @@ Ensures that users receive real-time updates regarding schedules, and assignment
 <strong>Authentication and Security:</strong>
 
 <strong>JWT (JSON Web Tokens):</strong>
+Implements secure user authentication. Ensures that sensitive information is protected and accessible only to authorized users.
 
-Implements secure user authentication.
-Ensures that sensitive information is protected and accessible only to authorized users.
+
+
+
+
+![Screenshot_20240704-213948~2](https://github.com/hasanma1ik/eduthree/assets/126330616/3b10f2c9-bfdc-4e2b-a09e-07c77411f94d)
+![Screenshot_20240704-200841~2](https://github.com/hasanma1ik/eduthree/assets/126330616/7a47e6ce-4991-4a32-a2d3-f8ed6e02b7a8)
+![Screenshot_20240704-200630~2](https://github.com/hasanma1ik/eduthree/assets/126330616/65a608d5-90f1-4e90-b2ef-c3bff1ce8d01)
+![Screenshot_20240704-200436~2](https://github.com/hasanma1ik/eduthree/assets/126330616/e0d916d6-b952-4b08-97cb-f5883cf7d754)
+![Screenshot_20240704-194148~2](https://github.com/hasanma1ik/eduthree/assets/126330616/b59a1892-dfc6-447a-8db9-1bb14c1bf1ee)
+![Screenshot_20240704-192255~2](https://github.com/hasanma1ik/eduthree/assets/126330616/05fb2bac-1360-45a3-9bb0-346e41815000)
+![Screenshot_20240704-025755~2](https://github.com/hasanma1ik/eduthree/assets/126330616/ff286a61-bf33-4d75-be25-12e28bc3abd6)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
