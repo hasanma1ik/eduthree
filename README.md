@@ -10,32 +10,36 @@ This educational application is designed to streamline various administrative an
 <strong>Features</strong>
 
 <strong>User Management:</strong>
+
 Secure login system with role-based access control for students, teachers, and administrators.
 Detailed user profiles storing personal information, academic records, and permissions.
 
 <strong>Class Schedules:</strong>
+
 Dynamic class scheduling feature that allows automated timetable creation.
 Real-time updates and notifications for schedule changes.
 
-Assignments:
+<strong>Assignments:</strong>
+
 Versatile assignment management system supporting daily uploads and downloads.
 Allows teachers to create, distribute, and grade assignments, while students can submit their work digitally.
-Notifications:
+
+<strong>Notifications:</strong>
 
 Real-time notifications for announcements, class reminders, and assignment deadlines.
 Supports both push notifications and in-app notifications.
-Events and Timetables:
 
-Event management feature for school events and activities.
+<strong>Timetables:<strong>
+
 Comprehensive timetable view for both teachers and students, displaying class schedules, assignments, and events.
-Course and Subject Management:
+
+<strong>Course and Subject Management:<strong>
 
 Tools for creating and managing courses and subjects.
 Allows administrators to add or modify course content and subject details.
-Communication:
 
+<strong>Database:<strong>
 
-Database:
 MongoDB:
 Used to store detailed information regarding users, class schedules, assignments, notifications, dates, course creation, events, timetables, subjects, posts, and more.
 Provides a scalable and flexible database structure to handle large volumes of educational data.
