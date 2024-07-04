@@ -1,17 +1,19 @@
  <strong>Educational Application for Learn Academy</strong>
+ 
 <strong>Location: Karachi, Pakistan </strong>
 
 
-Overview
+<strong>Overview</strong>
+
 This educational application is designed to streamline various administrative and academic tasks for school teachers, administrators, and students. It provides a user-friendly interface and robust backend to manage everything from user information to class schedules and assignments.
 
-Features
+<strong>Features</strong>
 
-User Management:
+<strong>User Management:</strong>
 Secure login system with role-based access control for students, teachers, and administrators.
 Detailed user profiles storing personal information, academic records, and permissions.
 
-Class Schedules:
+<strong>Class Schedules:</strong>
 Dynamic class scheduling feature that allows automated timetable creation.
 Real-time updates and notifications for schedule changes.
 
