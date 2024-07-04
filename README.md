@@ -1,4 +1,4 @@
-Educational Application for Learn Academy <strong>bold text</strong>
+ <strong>Educational Application for Learn Academy</strong>
 Location: Karachi, Pakistan <strong>bold text</strong>
 
 Client: Learn Academy <strong>bold text</strong>
