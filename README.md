@@ -63,7 +63,8 @@ Real-Time Features:
 
 <strong>Socket.io:</strong>
 Ensures that users receive real-time updates regarding schedules, and assignments.
-Authentication and Security:
+
+<strong>Authentication and Security:</strong>
 
 <strong>JWT (JSON Web Tokens):</strong>
 Implements secure user authentication.
