@@ -21,8 +21,7 @@ Real-time updates and notifications for schedule changes.
 
 <strong>Assignments:</strong>
 
-Versatile assignment management system supporting daily uploads and downloads.
-Allows teachers to create, distribute, and grade assignments, while students can submit their work digitally.
+The assignments feature allows teachers to create and distribute assignments seamlessly. Students receive notifications about new assignments and their due dates. All assignments relevant to a student's subjects are displayed in their assignments tab, organized by subject when selected. This ensures that students can easily keep track of their assignments and due dates, managing their academic work in an efficient manner.
 
 <strong>Notifications:</strong>
 
