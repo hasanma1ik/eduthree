@@ -1,3 +1,14 @@
+
+ <img src="https://github.com/hasanma1ik/eduthree/assets/126330616/b59a1892-dfc6-447a-8db9-1bb14c1bf1ee" alt="Screenshot_20240704-194148~2" width="300"/>
+<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/05fb2bac-1360-45a3-9bb0-346e41815000" alt="Screenshot_20240704-192255~2" width="300"/>
+ <img src="https://github.com/hasanma1ik/eduthree/assets/126330616/7a47e6ce-4991-4a32-a2d3-f8ed6e02b7a8" alt="Screenshot_20240704-200841~2" width="300"/>
+<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/65a608d5-90f1-4e90-b2ef-c3bff1ce8d01" alt="Screenshot_20240704-200630~2" width="300"/>
+<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/e0d916d6-b952-4b08-97cb-f5883cf7d754" alt="Screenshot_20240704-200436~2" width="300"/>
+<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/ff286a61-bf33-4d75-be25-12e28bc3abd6" alt="Screenshot_20240704-025755~2" width="300"/>
+ 
+ 
+ 
+ 
  <strong>Educational Application for Learn Academy</strong>
  
 <strong>Location: Karachi, Pakistan </strong>
@@ -72,12 +83,7 @@ Implements secure user authentication. Ensures that sensitive information is pro
 
 
 
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/7a47e6ce-4991-4a32-a2d3-f8ed6e02b7a8" alt="Screenshot_20240704-200841~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/65a608d5-90f1-4e90-b2ef-c3bff1ce8d01" alt="Screenshot_20240704-200630~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/e0d916d6-b952-4b08-97cb-f5883cf7d754" alt="Screenshot_20240704-200436~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/b59a1892-dfc6-447a-8db9-1bb14c1bf1ee" alt="Screenshot_20240704-194148~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/05fb2bac-1360-45a3-9bb0-346e41815000" alt="Screenshot_20240704-192255~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/ff286a61-bf33-4d75-be25-12e28bc3abd6" alt="Screenshot_20240704-025755~2" width="300"/>
+
 
 
 
