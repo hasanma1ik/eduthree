@@ -19,6 +19,7 @@ const ClassSchedule = require('../models/ClassScheduleModel')
 const Term = require('../models/termmodel')
 const moment = require('moment');
 
+const mongoose = require("mongoose");
 //middleware
 
 const requireSignIn = jwt({
@@ -491,9 +492,14 @@ const createGrade = async (req, res) => {
           return res.status(404).json({ message: "Selected term does not exist." });
       }
 
+      const subjectObj = await Subject.findOne({ name: subject });
+      if (!subjectObj) {
+          return res.status(404).json({ message: "Selected subject does not exist." });
+      }
+
       const [startTime, endTime] = timeSlot.split(' - ');
-      const startTimeUTC = moment.tz(startTime, 'h:mm A', true, 'UTC');
-      const endTimeUTC = moment.tz(endTime, 'h:mm A', true, 'UTC');
+      const startTimeUTC = moment.tz(startTime, 'h:mm A', 'UTC');
+      const endTimeUTC = moment.tz(endTime, 'h:mm A', 'UTC');
       let utcDayOfWeek = day;
       if (startTimeUTC.day() !== moment(startTime, 'h:mm A').day()) {
           utcDayOfWeek = moment().day(startTimeUTC.day()).format('dddd');
@@ -501,7 +507,7 @@ const createGrade = async (req, res) => {
 
       const newClass = new Class({
           grade,
-          subject,
+          subject: subjectObj._id,
           timeSlot: `${startTimeUTC.format('HH:mm')} - ${endTimeUTC.format('HH:mm')}`,
           day: utcDayOfWeek,
           teacher,
@@ -511,25 +517,30 @@ const createGrade = async (req, res) => {
       await newClass.save();
 
       const studentsInGrade = await User.find({ grade }).select('_id');
-      
+
       await new ClassSchedule({
           classId: newClass._id,
           dayOfWeek: utcDayOfWeek,
           startTime: startTimeUTC.format('HH:mm'),
           endTime: endTimeUTC.format('HH:mm'),
-          subject,
+          subject: subjectObj._id,
           teacher,
           users: studentsInGrade,
           term
       }).save();
 
-      // Create notifications for each student
-      studentsInGrade.forEach(async (user) => {
-        await Notification.create({
-          user: user._id,
-          message: `Reminder: Your ${subject} class starts in 15 minutes!`,
-        });
-      });
+      // Delay notification creation to 15 minutes before class
+      const delay = moment(startTimeUTC).subtract(15, 'minutes').diff(moment.utc(), 'milliseconds');
+      setTimeout(async () => {
+          studentsInGrade.forEach(async (user) => {
+              await Notification.create({
+                  user: user._id,
+                  message: `Reminder: Your ${subject} class starts in 15 minutes!`,
+                  type: 'classReminder'
+              });
+          });
+          console.log("Notifications scheduled for class starting soon.");
+      }, delay);
 
       res.status(201).json({
           message: 'Grade, class, and class schedule created successfully',
@@ -540,7 +551,6 @@ const createGrade = async (req, res) => {
       res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
   }
 };
-
 
 
 
@@ -589,9 +599,11 @@ const registerUserForSubject = async (req, res) => {
     const subject = await Subject.findById(subjectId);
 
     if (!user) {
+      console.error(`User not found: ${userId}`);
       return res.status(404).json({ message: "User not found." });
     }
     if (!subject) {
+      console.error(`Subject not found: ${subjectId}`);
       return res.status(404).json({ message: "Subject not found." });
     }
 
@@ -600,22 +612,27 @@ const registerUserForSubject = async (req, res) => {
       user.subjects.push(subjectId);
       await user.save();
     } else {
+      console.error(`User already registered for this subject: ${userId}, ${subjectId}`);
       return res.status(400).json({ message: "User already registered for this subject." });
     }
 
     // Update Class document
-    const classToUpdate = await Class.findOne({ grade: user.grade, subject: subject.name });
+    const classToUpdate = await Class.findOne({ grade: user.grade, subject: subjectId });
     if (classToUpdate && !classToUpdate.users.includes(userId)) {
       classToUpdate.users.push(userId);
       await classToUpdate.save();
+    } else {
+      console.error(`Class not found or user already in class: ${user.grade}, ${subjectId}`);
     }
 
+    console.log(`User registered for subject successfully: ${userId}, ${subjectId}`);
     res.json({ message: "User registered for subject successfully." });
   } catch (error) {
     console.error(`Failed to register user ${userId} for subject ${subjectId}:`, error);
     res.status(500).json({ message: "Error registering user for subject", error: error.message });
   }
 };
+
 
 const getClassUsersByGrade = async (req, res) => {
   const { grade } = req.params; // Assuming grade is passed as a URL parameter
@@ -733,8 +750,13 @@ const createAssignment = async (req, res) => {
     // Debug: Log the received request body
     console.log('Received request body:', req.body);
 
-    // Find the subject ObjectId using the subject name
-    const subjectDoc = await Subject.findOne({ name: subject });
+    // Validate that the subject is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(subject)) {
+      return res.status(400).json({ message: "Invalid subject ID" });
+    }
+
+    // Find the subject document using the ObjectId
+    const subjectDoc = await Subject.findById(subject);
 
     // Debug: Log the found subject document
     console.log('Found subjectDoc:', subjectDoc);
@@ -778,8 +800,13 @@ const createAssignment = async (req, res) => {
     users.forEach(async (user) => {
       await Notification.create({
         user: user._id,
-        message: `Subject: ${subject} - New assignment: ${title}, ${description}, due: ${dueDate}`,
+        message: `Subject: ${subjectDoc.name}
+        
+New Assignment: ${title}, ${description} 
+
+Due: ${dueDate}`,
         assignmentId: newAssignment._id,
+          type: 'assignment'
       });
 
       // Debug: Log notification creation
@@ -834,7 +861,8 @@ const getAssignmentById = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
       .populate('submissions') // Assuming a relation to submissions
-      .exec();
+      .exec()
+      
     
     if (!assignment) {
       return res.status(404).json({ message: 'Assignment not found' });
@@ -898,44 +926,65 @@ const submitAttendance = async (req, res) => {
 
 const getSubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find({});
+    const user = await User.findById(req.auth._id).populate('subjects');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let subjects;
+    if (user.role === 'teacher') {
+      const classes = await Class.find({ teacher: user._id }).populate('subject');
+      subjects = [...new Set(classes.map(cls => cls.subject))];  // Ensure unique subjects
+    } else if (user.role === 'student') {
+      subjects = user.subjects;
+    } else {
+      subjects = await Subject.find({});
+    }
+
     res.json({ subjects });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch subjects', error: error.message });
   }
 };
 
-// Assuming you have a middleware that authenticates the user and sets req.auth
+
+
+
 const getAssignmentsForLoggedInUser = async (req, res) => {
   try {
-    const subjectId = req.query.subject; // Get subject ID from query parameters
+    const subjectId = req.query.subject;
 
-    // Fetch user details from the database using the ID from req.auth
-    const user = await User.findById(req.auth._id);
+    const user = await User.findById(req.auth._id).populate('subjects');
 
     if (!user) {
       return res.status(404).send('User not found');
     }
 
-    const query = {
-      subject: subjectId,
-      $or: [
-        { grade: user.grade }, // Filter by user's grade
-        { createdBy: req.auth._id } // Assignments created by the teacher
-      ]
-    };
+    let query = { subject: subjectId };
+
+    if (user.role === 'teacher') {
+      query.createdBy = req.auth._id;
+    } else if (user.role === 'student') {
+      query.grade = user.grade;
+      query.subject = subjectId; // Ensure we only fetch assignments for the selected subject
+    }
 
     const assignments = await Assignment.find(query)
-      .populate('subject', 'name') // Populate subject name
-      .populate('createdBy', 'name'); // Populate teacher name
+      .populate('subject', 'name')
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 });  // Sort by createdAt in descending order
+        // Sort by createdAt in descending order
 
-    res.json(assignments);
+    // Ensure that assignments with null createdBy are filtered out or handled
+    const validAssignments = assignments.filter(assignment => assignment.createdBy && assignment.subject);
+
+    res.json(validAssignments);
   } catch (error) {
     console.error(error);
     res.status(500).send('Server Error');
   }
 };
-
 
 
 const getAttendanceDates = async (req, res) => {
@@ -1033,7 +1082,8 @@ const getClassSchedulesForLoggedInUser = async (req, res) => {
       dayOfWeek
     })
     .populate('classId')
-    .populate('teacher', 'name');
+    .populate('teacher', 'name')
+    .populate('subject', 'name'); // Populate subject name
 
     // Convert startTime and endTime to 24-hour format
     classSchedules = classSchedules.map(schedule => ({

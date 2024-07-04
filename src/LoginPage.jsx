@@ -8,6 +8,7 @@ import { useWarmUpBrowser } from '../hooks/warmUpBrowser';
 import { useNavigation } from '@react-navigation/native';
 
 WebBrowser.maybeCompleteAuthSession();
+
 export default function LoginPage(){
     useWarmUpBrowser();
     const navigation = useNavigation();

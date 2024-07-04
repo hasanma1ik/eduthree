@@ -15,3 +15,6 @@ const connectDB = async () => {
 
 module.exports = connectDB;
 
+
+
+// mongodb+srv://hasanmalik7:Chelseafc7551@cluster7.nkm984z.mongodb.net/react-native

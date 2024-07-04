@@ -4629,6 +4629,56 @@ export default Assignments;
 
 
 
+const createGrade = async (req, res) => {
+  const { grade, subject, timeSlot, day, teacher, term } = req.body;
+
+  // Validate all required fields including 'term'
+  if (!grade || !subject || !timeSlot || !day || !teacher || !term) {
+      return res.status(400).json({ message: 'Please fill all fields including term.' });
+  }
+
+  try {
+      // Ensure the term exists
+      const termExists = await Term.findById(term);
+      if (!termExists) {
+          return res.status(404).json({ message: "Selected term does not exist." });
+      }
+
+      // Check if a class with these exact details already exists including the same term
+      const existingClass = await Class.findOne({ grade, subject, timeSlot, day, term });
+      if (existingClass) {
+          return res.status(400).json({ message: 'A class with these exact details already exists for the selected term.' });
+      }
+
+      // Proceed to create a new class with the term included
+      const newClass = await new Class({ grade, subject, timeSlot, day, teacher, term }).save();
+
+      // Find all students assigned to this grade
+      const studentsInGrade = await User.find({ grade }).select('_id');
+
+      // Update the newly created Class document with the student IDs (This might be redundant if users are to be populated in ClassSchedule instead)
+      await Class.findByIdAndUpdate(newClass._id, { $set: { users: studentsInGrade } });
+
+      // Create a ClassSchedule entry with all students in this grade and the specified term
+      await new ClassSchedule({
+          classId: newClass._id,
+          dayOfWeek: day,
+          startTime: timeSlot.split(' - ')[0],
+          endTime: timeSlot.split(' - ')[1],
+          subject,
+          teacher,
+          users: studentsInGrade,
+          term // Added term to ClassSchedule as well
+      }).save();
+
+      res.status(201).json({ message: 'Grade, class, and class schedule created successfully', class: newClass });
+  } catch (error) {
+      console.error("Failed to create grade/class due to error:", error);
+      res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
+  }
+};
+
+
 
 
 
@@ -4883,3 +4933,72 @@ So basically when class is created i want the teacher to be associated with thos
 
 
 there should be a dropdown input for teachers in assginments, dropdown showing list of subjects that list assignments via subject
+
+
+
+Admin Portal
+- Course Creation -> Admin has the authority to select grade, subject, timeslot, day, teacher, and term and then create class.
+That subject and grade will then be assigned to the teacher.
+
+-Grade Setter - Select Students and assign them to their respectable grades
+
+-Student Form - allows admin to select grade that will display all the students in that particular grade and then enroll them in subjects
+
+- Create Term - allows admin to select dates and create summer, spring or fall term. So now when we create a class, for instance we create Math class for grade 2 and select Wednesday and select Spring term, that class will now appear on student schedule every wednesday between the dates selected in create term of spring term.
+
+
+Teacher Portal
+- Attendance - i- Take attendance allows teacher to select grade and subject that will display students which belong to that grade and are enrolled in that subject and now teachr can mark students attendance.
+ii- See attendance allows teachers to see history of attendance that has been taken.
+
+-Assignments - The assignments teacher has created are displayed here when you select subject, so like if the teacher has created English Literature assignment, he will just navigation to Literature that will display all the assignments created by them
+
+- Create Assignment - select grade, subject, date and create assignment, this assignment will now appear for students enrolled in that parituclar grade and subject.
+
+
+Student Portal
+- Class Schedule - shows class schedule for students, will recieve notification 15 mins prior to start of class
+- Assignments - Selects subject and will display the assignments, will recieve notification everytime assignment is posted by teacher
+
+
+
+//
+// mongodb+srv://hasanmalik7:Chelseafc7551@cluster7.nkm984z.mongodb.net/react-native
+
+
+
+
+
+faculty
+take attendance and see attendance
+
+create assignments - all the assignments that teacher has created will appear for those students who are enrolled in that subject and grade
+
+assignments - assignments he has created
+
+- ability to post and ability to delete his own posts
+
+admin
+create class - teacher will be assigned that particular subject 
+grade setter - assign grades to studentd
+student form - enroll student in subjects
+create term - after setting dates and creating term, class schedule is interconnected, when we create class and select wednesday and dates of term are b/w 1st jan to 15th may, for students, every wednesday that class will appear on their schedule b/w these dates
+- ability to post, and delete all posts
+
+abiity to load profile picture
+
+
+
+students
+assignments - enrolled in only 2 subjects, so only 2 will show up, assignments will be show according to subject selected
+
+
+
+timezone
+payment gateway
+unenroll
+
+
+
+
+mark all 

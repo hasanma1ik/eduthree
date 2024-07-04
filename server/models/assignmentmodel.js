@@ -32,8 +32,13 @@ const assignmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Submission',
   }],
+  
   files: [String] // Array of file URLs
+},
+{
+  timestamps: true // This adds createdAt and updatedAt fields
 });
+
 
 const Assignment = mongoose.model('Assignment', assignmentSchema);
 

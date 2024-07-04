@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSocket } from './socketservice'; // Ensure the path to socketService is correct
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,7 +32,6 @@ export const NotificationProvider = ({ children }) => {
     const [notificationCount, setNotificationCount] = useState(0);
 
     useEffect(() => {
-      console.log("useEffect triggered: NotificationContext");
       const init = async () => {
         const storedCount = await getNotificationCountAsync();
         console.log(`Retrieved count from AsyncStorage: ${storedCount}`);
@@ -46,13 +43,18 @@ export const NotificationProvider = ({ children }) => {
       const socket = getSocket();
       console.log("Setting up socket listeners for notifications");
       const onNotificationReceived = (notification) => {
-        console.log("Notification received:", notification);
-        setNotificationCount(prevCount => {
-          const newCount = prevCount + 1;
-          console.log(`Updating count in AsyncStorage: ${newCount}`);
-          setNotificationCountAsync(newCount);
-          return newCount;
-        });
+        // Assuming your notification object has a 'type' property that identifies the notification type
+        if (notification.type === 'classReminder') {
+          console.log("Class reminder received:", notification);
+          setNotificationCount(prevCount => {
+            const newCount = prevCount + 1;
+            console.log(`Updating count in AsyncStorage due to class reminder: ${newCount}`);
+            setNotificationCountAsync(newCount);
+            return newCount;
+          });
+        } else {
+          console.log("Received non-class reminder notification:", notification);
+        }
       };
     
       socket.on("notification-channel", onNotificationReceived);
@@ -61,8 +63,6 @@ export const NotificationProvider = ({ children }) => {
         console.log("Cleaning up socket listeners");
         socket.off("notification-channel", onNotificationReceived);
       };
-
-      
     }, []);
     
     const updateNotificationCount = async (count) => {
@@ -74,11 +74,7 @@ export const NotificationProvider = ({ children }) => {
       await setNotificationCountAsync(0); // Reset the count in AsyncStorage
       await AsyncStorage.setItem('notificationsViewed', 'true'); // Set a flag that notifications have been viewed
       setNotificationCount(0); // Reset the state
-  };
-  
-    
-    
-  
+    };
 
     return (
         <NotificationContext.Provider value={{ notificationCount, updateNotificationCount, resetNotificationCount }}>

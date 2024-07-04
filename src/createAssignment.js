@@ -128,8 +128,8 @@ const CreateAssignment = () => {
             style={styles.picker}
           >
             <Picker.Item label="Select Subject" value="" />
-            {subjects.map((subject, index) => (
-              <Picker.Item key={index} label={subject} value={subject} />
+            {subjects.map((subject) => (
+              <Picker.Item key={subject._id} label={subject.name} value={subject._id} />
             ))}
           </Picker>
         </View>

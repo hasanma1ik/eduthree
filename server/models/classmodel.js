@@ -4,10 +4,10 @@ const classSchema = new mongoose.Schema({
   grade: {
     type: String,
     required: true,
-
   },
   subject: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
     required: true,
   },
   timeSlot: {
@@ -19,7 +19,6 @@ const classSchema = new mongoose.Schema({
     required: true,
   },
   teacher: {
-    // Assuming a class has one teacher. Adjust according to your needs.
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
@@ -30,15 +29,12 @@ const classSchema = new mongoose.Schema({
   }],
   term: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Term', // Ensure you have a Term model defined somewhere
+    ref: 'Term',
     required: true
   },
-  
-})
-
+});
 
 classSchema.index({ grade: 1, day: 1, timeSlot: 1, term: 1 }, { unique: true });
-
 
 const Class = mongoose.model('Class', classSchema);
 

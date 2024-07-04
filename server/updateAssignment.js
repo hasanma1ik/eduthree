@@ -2,9 +2,8 @@ require('dotenv').config();
 const mongoose = require("mongoose");
 const connectDB = require('./config/db'); // Adjust the path to where connectDB is located
 const Assignment = require('../server/models/assignmentmodel'); // Adjust the path according to your project structure
-const User = require('../server/models/userModel'); // Assuming you have a User model
 
-const updateAssignmentsWithCreatedBy = async () => {
+const updateAssignmentsWithCreatedByAndTimestamps = async () => {
   try {
     await connectDB();
 
@@ -15,11 +14,21 @@ const updateAssignmentsWithCreatedBy = async () => {
       throw new Error('The defaultTeacherId is not a valid ObjectId');
     }
 
-    const updateResult = await Assignment.updateMany({}, { 
-      $set: { createdBy: defaultTeacherId } 
-    });
+    const now = new Date();
+    const updateResult = await Assignment.updateMany(
+      { 
+        createdAt: { $exists: false } // Target documents without a createdAt field
+      }, 
+      { 
+        $set: { 
+          createdBy: defaultTeacherId,
+          createdAt: now,
+          updatedAt: now
+        }
+      }
+    );
 
-    console.log(`${updateResult.nModified} assignments have been updated.`);
+    console.log(`${updateResult.nModified} assignments have been updated with createdBy and timestamps.`);
   } catch (error) {
     console.error("Error updating assignments:", error);
   } finally {
@@ -27,4 +36,4 @@ const updateAssignmentsWithCreatedBy = async () => {
   }
 };
 
-updateAssignmentsWithCreatedBy();
+updateAssignmentsWithCreatedByAndTimestamps();

@@ -10,6 +10,11 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  type: {
+    type: String,
+    required: true,
+    enum: ['classReminder', 'assignment', 'general'], // Example types
+  },
   read: {
     type: Boolean,
     default: false,

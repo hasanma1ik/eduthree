@@ -61,7 +61,7 @@ const ClassSchedule = () => {
             <ScrollView style={styles.scheduleList}>
                 {classSchedules.length > 0 ? classSchedules.map((schedule, index) => (
                     <View key={index} style={styles.scheduleItem}>
-                        <Text style={styles.subject}>{schedule.subject}</Text>
+                          <Text style={styles.subject}>{schedule.subject.name}</Text>
                         <Text style={styles.info}><MaterialIcons name="schedule" size={14} /> {schedule.dayOfWeek} {schedule.startTime} - {schedule.endTime}</Text>
                         <Text style={styles.info}><MaterialIcons name="person" size={14} /> {schedule.teacher.name}</Text>
                     </View>

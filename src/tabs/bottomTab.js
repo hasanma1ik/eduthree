@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React, { useContext } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native'
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
+import { MaterialIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { AuthContext } from '../screen/context/authContext';
 import NotificationIcon from '../bellicon';
@@ -46,14 +47,16 @@ if(!fontsLoaded) {
         <Text style={[route.name === "Home" ? styles.activeColor : styles.inactiveColor, styles.labelStyle]}>Home</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Messages')}>
-        <AntDesign 
-          name="message1" 
+      {(userRole === 'teacher' || userRole === 'student') && (
+      <TouchableOpacity onPress={() => navigation.navigate('Assignments')}>
+        <MaterialIcons
+          name="assignment" 
           style={styles.iconStyle} 
-          color={route.name === "Messages" ? styles.activeColor.color : styles.inactiveColor.color} 
+          color={route.name === "Assignments" ? styles.activeColor.color : styles.inactiveColor.color} 
         />
-        <Text style={[route.name === "Messages" ? styles.activeColor : styles.inactiveColor, styles.labelStyle]}>Messages</Text>
+        <Text style={[route.name === "Assignments" ? styles.activeColor : styles.inactiveColor, styles.labelStyle]}>Assignments</Text>
       </TouchableOpacity>
+       )}
 
       {(userRole === 'teacher' || userRole === 'admin') && (
         <TouchableOpacity onPress={() => navigation.navigate('Post')}>

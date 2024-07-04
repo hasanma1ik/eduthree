@@ -180,7 +180,7 @@ if (!fontsLoaded) {
 
   const AuthenticationStackNavigator = () => (
       <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen name="Login" component={LoginPage} />
+          <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }}  />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Login1" component={Login} options={{ headerShown: false }} />
     <Stack.Screen name="ForgetPassword" component={handleForgetPassword } options={{ headerShown: false }} />

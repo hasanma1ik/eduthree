@@ -76,30 +76,36 @@
 
 // updateWithClassSchedule();
 require('dotenv').config();
-
 const mongoose = require("mongoose");
-const connectDB = require('./config/db'); // Adjust the path to where connectDB is located
-const ClassSchedule = require('../server/models/ClassScheduleModel'); // Ensure you have the correct path to your ClassSchedule model
+const connectDB = require('./config/db'); // Ensure this path is correct and the function properly connects to MongoDB
 
-const addentFieldToClassSchedules = async () => {
+const Notification = require('../server/models/notificationmodel'); // Correct path to your Notification model
+
+// Function to update 'type' field in all existing Notification documents
+const updateNotificationType = async () => {
   try {
-    // Connect to the database
+    // Connect to the MongoDB database
     await connectDB();
 
-    // Update all ClassSchedule documents to include the ent field, set to false
-    await ClassSchedule.updateMany(
-      {}, // Match all documents
-      { $set: { ent: false } } // Set ent to false
-    );
+    // Set a default 'type' for all existing notifications if not present or not valid
+    const notifications = await Notification.find({ 
+      type: { $exists: true, $nin: ['classReminder', 'assignment', 'general'] } 
+    });
 
-    console.log("Update complete: All ClassSchedules now have a 'ent' field set to false.");
+    // Update notifications with invalid or missing 'type' to 'general' as a fallback
+    for (let notification of notifications) {
+      notification.type = 'general'; // Default to 'general' if the type was invalid
+      await notification.save();
+    }
+
+    console.log(`Update complete: Notifications have been updated to include valid 'type' fields.`);
 
   } catch (error) {
-    console.error("Error adding 'ent' field to ClassSchedules:", error);
+    console.error("Error updating Notifications to comply with new model schema:", error);
   } finally {
-    // Disconnect from the database whether an error occurred or not
+    // Disconnect from MongoDB
     await mongoose.disconnect();
   }
 };
 
-addentFieldToClassSchedules();
+updateNotificationType();

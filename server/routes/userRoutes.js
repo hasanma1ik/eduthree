@@ -127,7 +127,7 @@ router.post('/create-assignments',  requireSignIn, logUser, createAssignment);
 // In your routes file
 router.get('/assignments/:id', getAssignmentById)
 
-router.get('/assignments',  requireSignIn, getAssignmentsForLoggedInUser)
+router.get('/assignments', requireSignIn, logUser, getAssignmentsForLoggedInUser)
 
 
 // router.get('/users/class/:classId', getStudentsByClass);
@@ -172,7 +172,7 @@ router.post('/notifications/:notificationId/mark-read', requireSignIn, markNotif
 router.get('/notifications/unread-count', requireSignIn, getUnreadNotificationsCount);
 
 
-router.get('/subjects', getSubjects);
+router.get('/subjects', requireSignIn, logUser, getSubjects);
 router.get('/attendance/:grade/:subject/dates', getAttendanceDates);
 router.get('/attendance/:grade/:subject/:date', getAttendanceData);
 

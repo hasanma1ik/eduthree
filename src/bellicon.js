@@ -9,7 +9,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
 const NotificationIcon = ({ navigation }) => {
-  const { notificationCount, resetNotificationCount } = useNotifications(); // Assuming resetNotificationCount correctly resets the count
+  const { notificationCount, updateNotificationCount } = useNotifications(); // Assuming resetNotificationCount correctly resets the count
 
   const [fontsLoaded] = useFonts({
     'BebasNeue': require('../assets/fonts/BebasNeue-Regular.ttf'),
@@ -21,19 +21,15 @@ const NotificationIcon = ({ navigation }) => {
       const fetchNotificationCount = async () => {
         try {
           const response = await axios.get('/auth/notifications/unread-count');
-          const notificationsViewed = await AsyncStorage.getItem('notificationsViewed');
-          if (notificationsViewed !== 'true') {
-            resetNotificationCount(response.data.unreadCount); // Use the correct context function here
-          }
+          updateNotificationCount(response.data.unreadCount);  // Directly update the count
         } catch (error) {
           console.log('Error fetching unread notifications count:', error);
         }
       };
 
       fetchNotificationCount();
-    }, [resetNotificationCount])
+    }, [updateNotificationCount])
   );
-
   useFocusEffect(
     useCallback(() => {
       const onLayoutRootView = async () => {

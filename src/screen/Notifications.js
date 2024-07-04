@@ -3,6 +3,9 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native
 import axios from 'axios';
 import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 import { useNotifications } from '../../NotificationContext';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
 
 
 const NotificationsScreen = () => {
@@ -40,9 +43,25 @@ const NotificationsScreen = () => {
       console.error('Failed to mark notification as read:', error);
     }
   };
+  const [fontsLoaded] = useFonts({
+    'kanitmedium': require('../../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = React.useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onLayoutRootView}>
+      <Text style={styles.heading}>Notifications</Text>
       <FlatList
         data={notifications}
         keyExtractor={(item) => item._id.toString()}
@@ -69,6 +88,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f0f5', // Light gray background for the whole screen
+  },
+  heading: {
+    fontSize: 24,
+    fontFamily: 'kanitmedium', // Use Kanit Medium font for the heading
+    color: 'black',
+    marginLeft: 20,
+    marginVertical: 20,
   },
   notificationItem: {
     backgroundColor: '#ffffff', // White background for each item
@@ -99,6 +125,7 @@ const styles = StyleSheet.create({
   notificationMessage: {
     fontSize: 16,
     color: '#333',
+    // fontWeight: 'bold',
     flexShrink: 1, // Ensure text does not push other elements out of view
   },
   unreadIndicator: {

@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import moment from 'moment-timezone'; // Import moment-timezone
 import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 const CreateClasses = () => {
   const [selectedGrade, setSelectedGrade] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('')
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedDay, setSelectedDay] = useState('');
   const [terms, setTerms] = useState([]);
@@ -16,7 +18,7 @@ const CreateClasses = () => {
   const [teachers, setTeachers] = useState([]);
   const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
   const subjects = ['Math', 'Science', 'Islamiat', 'History', 'English Language', 'English Literature', 'Urdu'];
-  const timeSlots = ['5:41 PM - 6:46 PM', '8:00 AM - 9:00 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM', '9:00 PM - 10:00 PM', '10:30 PM - 11:30 PM'];
+  const timeSlots = ['8:02 PM - 9:00 PM', '4:17 AM - 5:17 AM', '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM', '9:00 PM - 10:00 PM', '10:30 PM - 11:30 PM'];
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   useEffect(() => {
@@ -81,15 +83,30 @@ const CreateClasses = () => {
     }
   };
 
+  const [fontsLoaded] = useFonts({
+    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Create Class</Text>
-        <Ionicons name="ios-school" size={40} color="#04AA6D" />
+        {/* <Ionicons name="ios-school" size={40} color="black" /> */}
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Grade</Text>
+        {/* <Text style={styles.label}>Grade</Text> */}
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedGrade}
@@ -105,7 +122,7 @@ const CreateClasses = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Subject</Text>
+        {/* <Text style={styles.label}>Subject</Text> */}
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedSubject}
@@ -121,7 +138,7 @@ const CreateClasses = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Time Slot</Text>
+        {/* <Text style={styles.label}>Time Slot</Text> */}
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedTimeSlot}
@@ -137,7 +154,7 @@ const CreateClasses = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Day</Text>
+        {/* <Text style={styles.label}>Day</Text> */}
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedDay}
@@ -153,7 +170,7 @@ const CreateClasses = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Teacher</Text>
+        {/* <Text style={styles.label}>Teacher</Text> */}
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedTeacher}
@@ -169,7 +186,7 @@ const CreateClasses = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Term</Text>
+        {/* <Text style={styles.label}>Term</Text> */}
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedTerm}
@@ -202,6 +219,7 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingBottom: 120,
     backgroundColor: '#F9F9F9',
+    marginTop: 90,
   },
   header: {
     flexDirection: 'row',
@@ -211,12 +229,18 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#04AA6D',
-    marginRight: 5,
+    fontFamily: 'kanitmedium', // Use Kanit Medium font for the heading
+    color: 'black',
+    marginTop: -100,
+    
+ 
+    marginLeft: 10,
+    position: 'absolute',
+    top: 10,
+    left: 10,
   },
   inputContainer: {
-    marginBottom: 10,
+    marginBottom: 20,
   },
   label: {
     fontSize: 14,
@@ -227,10 +251,11 @@ const styles = StyleSheet.create({
   pickerContainer: {
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#04AA6D',
+    borderColor: 'black',
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     height: 50,
+   
   },
   picker: {
     width: '100%',
@@ -238,10 +263,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   button: {
-    backgroundColor: '#04AA6D',
-    paddingVertical: 12,
+    backgroundColor: '#000',
     borderRadius: 8,
+    paddingVertical: 15,
+    justifyContent: 'center',
     alignItems: 'center',
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow for iOS
+    shadowOpacity: 0.2, // Shadow for iOS
+    shadowRadius: 3, // Shadow for iOS
   },
   buttonText: {
     color: '#FFFFFF',
