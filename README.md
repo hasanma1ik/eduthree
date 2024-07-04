@@ -7,7 +7,7 @@
 
 This educational application is designed to streamline various administrative and academic tasks for school teachers, administrators, and students. It provides a user-friendly interface and robust backend to manage everything from user information to class schedules and assignments.
 
-<strong>Features</strong>
+<strong>Features Include:</strong>
 
 <strong>User Management:</strong>
 
