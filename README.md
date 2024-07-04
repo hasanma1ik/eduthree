@@ -29,41 +29,43 @@ Allows teachers to create, distribute, and grade assignments, while students can
 Real-time notifications for announcements, class reminders, and assignment deadlines.
 Supports both push notifications and in-app notifications.
 
-<strong>Timetables:<strong>
+<strong>Timetables:</strong>
 
 Comprehensive timetable view for both teachers and students, displaying class schedules, assignments, and events.
 
-<strong>Course and Subject Management:<strong>
+<strong>Course and Subject Management:</strong>
 
 Tools for creating and managing courses and subjects.
 Allows administrators to add or modify course content and subject details.
 
-<strong>Database:<strong>
+<strong>Database:</strong>
 
-MongoDB:
+<strong>MongoDB:</strong>
 Used to store detailed information regarding users, class schedules, assignments, notifications, dates, course creation, events, timetables, subjects, posts, and more.
 Provides a scalable and flexible database structure to handle large volumes of educational data.
 
-Frontend:
-React Native:
+<strong>Frontend:</strong>
+
+<strong>React Native:</strong>
 Developed a user-friendly mobile interface accessible on both Android and iOS platforms.
 Ensures a seamless and responsive user experience for teachers, students, and administrators.
-Backend:
 
-Node.js:
+<strong>Backend:</strong>
+
+<strong>Node.js:</strong>
 Handles server-side logic, authentication, and API integrations.
 Manages data transactions between the frontend and MongoDB database.
 
-Express.js:
+<strong>Express.js:</strong>
 Used to set up the server and define RESTful API endpoints.
 Ensures efficient and secure communication between the client and server.
 Real-Time Features:
 
-Socket.io:
+<strong>Socket.io:</strong>
 Ensures that users receive real-time updates regarding schedules, and assignments.
 Authentication and Security:
 
-JWT (JSON Web Tokens):
+<strong>JWT (JSON Web Tokens):</strong>
 Implements secure user authentication.
 Ensures that sensitive information is protected and accessible only to authorized users.
 
