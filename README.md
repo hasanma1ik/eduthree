@@ -59,7 +59,8 @@ Manages data transactions between the frontend and MongoDB database.
 <strong>Express.js:</strong>
 Used to set up the server and define RESTful API endpoints.
 Ensures efficient and secure communication between the client and server.
-Real-Time Features:
+
+<strong>Real-Time Features:</strong>
 
 <strong>Socket.io:</strong>
 Ensures that users receive real-time updates regarding schedules, and assignments.
@@ -67,6 +68,7 @@ Ensures that users receive real-time updates regarding schedules, and assignment
 <strong>Authentication and Security:</strong>
 
 <strong>JWT (JSON Web Tokens):</strong>
+
 Implements secure user authentication.
 Ensures that sensitive information is protected and accessible only to authorized users.
 
