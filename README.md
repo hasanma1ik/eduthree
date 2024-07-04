@@ -1,7 +1,6 @@
  <strong>Educational Application for Learn Academy</strong>
-Location: Karachi, Pakistan <strong>bold text</strong>
+<strong>Location: Karachi, Pakistan </strong>
 
-Client: Learn Academy <strong>bold text</strong>
 
 Overview
 This educational application is designed to streamline various administrative and academic tasks for school teachers, administrators, and students. It provides a user-friendly interface and robust backend to manage everything from user information to class schedules and assignments.
