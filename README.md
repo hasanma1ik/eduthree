@@ -43,10 +43,17 @@ Supports both push notifications and in-app notifications.
 
 Comprehensive timetable view for both teachers and students, displaying class schedules, assignments, and events.
 
+<strong>Student Enrollment and Class Assignment:</strong>
+
+Developed features for administrators to enroll students and assign them to appropriate classes and subjects, streamlining the student onboarding process and ensuring accurate class allocations.
+
+
 <strong>Course and Subject Management:</strong>
 
 Tools for creating and managing courses and subjects.
 Allows administrators to add or modify course content and subject details.
+
+
 
 <strong>Database:</strong>
 
