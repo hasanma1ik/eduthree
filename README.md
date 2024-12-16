@@ -1,18 +1,20 @@
 
 
-
-
-
  <img src="https://github.com/user-attachments/assets/8c248187-6b98-4bde-b49b-2a79b129793a" alt="Screenshot_20240704-194148~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/05fb2bac-1360-45a3-9bb0-346e41815000" alt="Screenshot_20240704-192255~2" width="300"/>
- <img src="https://github.com/hasanma1ik/eduthree/assets/126330616/7a47e6ce-4991-4a32-a2d3-f8ed6e02b7a8" alt="Screenshot_20240704-200841~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/65a608d5-90f1-4e90-b2ef-c3bff1ce8d01" alt="Screenshot_20240704-200630~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/e0d916d6-b952-4b08-97cb-f5883cf7d754" alt="Screenshot_20240704-200436~2" width="300"/>
-<img src="https://github.com/hasanma1ik/eduthree/assets/126330616/ff286a61-bf33-4d75-be25-12e28bc3abd6" alt="Screenshot_20240704-025755~2" width="300"/>
+<img src="https://github.com/user-attachments/assets/6d9f431a-c8be-4ec4-adbc-44a65a2ed865" alt="Screenshot_20240704-192255~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/43cabe3b-ebca-45f2-a28c-d98212f489e4" alt="Screenshot_20240704-200841~2" width="300"/>
  
- 
- 
- 
+<img src="https://github.com/user-attachments/assets/1aa2a473-af54-4b20-b561-67ffe59f0034" alt="Screenshot_20240704-200630~2" width="300"/>
+<img src="https://github.com/user-attachments/assets/78beb4bc-6be2-440c-ac00-f74ae271de86" alt="Screenshot_20240704-200436~2" width="300"/>
+<img src="https://github.com/user-attachments/assets/c1880039-9652-4955-bf0d-92a9c3bdb97e" alt="Screenshot_20240704-025755~2" width="300"/>
+
+ <img src="https://github.com/user-attachments/assets/d0ce4992-d3ee-4897-9c8b-b92118ddd974" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/c594f17b-d224-41bf-a69b-9f77863a8e9c" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/8d2089ce-01d6-4fc1-8cc7-fc9022cc7f19" alt="Screenshot_20240704-025755~2" width="300"/>
+
+ <img src="https://github.com/user-attachments/assets/4133ec99-757c-4c53-89b6-4dde45b8cc5a" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/24ae07fc-0311-477b-b702-b8fe8ebf6480" alt="Screenshot_20240704-025755~2" width="300"/>
+  
  <strong>Educational Application for Learn Academy</strong>
  
 <strong>Location: Karachi, Pakistan </strong>
