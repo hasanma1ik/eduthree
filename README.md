@@ -3,9 +3,7 @@
 
 
 
-
-
- <img src="https://github.com/hasanma1ik/eduthree/assets/991a4982-49a4-42b5-a060-1806643980c8" alt="Screenshot_20240704-194148~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/8c248187-6b98-4bde-b49b-2a79b129793a" alt="Screenshot_20240704-194148~2" width="300"/>
 <img src="https://github.com/hasanma1ik/eduthree/assets/126330616/05fb2bac-1360-45a3-9bb0-346e41815000" alt="Screenshot_20240704-192255~2" width="300"/>
  <img src="https://github.com/hasanma1ik/eduthree/assets/126330616/7a47e6ce-4991-4a32-a2d3-f8ed6e02b7a8" alt="Screenshot_20240704-200841~2" width="300"/>
 <img src="https://github.com/hasanma1ik/eduthree/assets/126330616/65a608d5-90f1-4e90-b2ef-c3bff1ce8d01" alt="Screenshot_20240704-200630~2" width="300"/>
