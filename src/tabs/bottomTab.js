@@ -22,7 +22,7 @@ const BottomTab = () => {
   const [fontsLoaded] = useFonts({
     'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf'),
     'kanitregular': require('../../assets/fonts/Kanit-Regular.ttf'),
-    'kanitmedium': require('../../assets/fonts/Kanit-Medium.ttf')
+    'Kanit-Medium': require('../../assets/fonts/Kanit-Medium.ttf')
 
   })
 
@@ -95,10 +95,10 @@ const styles = StyleSheet.create({
     fontSize: 25,
   },
   activeColor: {
-    color: '#2ecc71', // vibrant green
+    color: 'red', // vibrant green
   },
   inactiveColor: {
-    color: '#000000', // black for inactive icons and labels
+    color: 'white', // black for inactive icons and labels
   },
 labelStyle: {
   fontFamily: 'kanitregular',

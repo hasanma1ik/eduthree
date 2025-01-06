@@ -330,106 +330,105 @@ try {
 const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
-    //validation
+
+    // Validation
     if (!email || !password) {
-      return res.status(500).send({
+      return res.status(400).send({
         success: false,
-        message: "Please Provide Email Or Password",
+        message: "Please provide email and password.",
       });
     }
-    // find user
-    const user = await userModel.findOne({ email });
-    if (!user) {
-      return res.status(500).send({
-        success: false,
-        message: "User Not Found",
-      });
-    }
-   //match password
-   const match = await comparePassword(password, user.password);
-   if (!match) {
-     return res.status(500).send({
-       success: false,
-       message: "Invalid username or password",
-     });
-   }
 
-
-//TOKEN JWT
-const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
-  expiresIn: "27d",
-});
-
-
-
-// undeinfed password
-user.password = undefined;
-res.status(200).send({
-  success: true,
-  message: "login successfully",
-  token,
-  user,
-});
-} catch (error) {
-console.log(error);
-return res.status(500).send({
-  success: false,
-  message: "error in login api",
-  error,
-});
-}
-};
-
-
-//Update User
-const updateUserController = async (req, res) => {
-  try {
-    const { name, password, email, profilePicture } = req.body;
-
-    const user = await userModel.findOne({ email });
-
+    // Find user by email and include password and role
+    const user = await userModel.findOne({ email }).select('+password +role');
     if (!user) {
       return res.status(404).send({
         success: false,
-        message: "User not found",
+        message: "User not found.",
       });
     }
 
-    if (password && password.length < 6) {
-      return res.status(400).send({
+    // Match password
+    const match = await comparePassword(password, user.password);
+    if (!match) {
+      return res.status(401).send({
         success: false,
-        message: "Password must be at least 6 characters",
+        message: "Invalid email or password.",
       });
     }
 
-    const hashedPassword = password ? await hashPassword(password) : undefined;
+    // Generate JWT token
+    const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "27d",
+    });
 
-    const updatedUser = await userModel.findOneAndUpdate(
-      { email },
-      {
-        name: name || user.name,
-        password: hashedPassword || user.password,
-        profilePicture: profilePicture || user.profilePicture,
-      },
-      { new: true }
-    );
-
-    updatedUser.password = undefined;
+    // Exclude sensitive fields before sending the response
+    user.password = undefined;
 
     res.status(200).send({
       success: true,
-      message: 'Profile updated',
-      updatedUser,
+      message: "Login successful.",
+      token,
+      user, // Includes the `role` and other fields
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).send({
+    console.error("Error in loginController:", error);
+    return res.status(500).send({
       success: false,
-      message: 'Error in User Update API',
+      message: "Error in login API.",
       error,
     });
   }
 };
+
+
+//Update User
+// controllers/userController.js
+
+const updateUserController = async (req, res) => {
+  try {
+      const { name, password, email, profilePicture, country } = req.body;
+
+      const user = await userModel.findById(req.auth._id);
+      if (!user) {
+          return res.status(404).send({ success: false, message: "User not found" });
+      }
+
+      if (password && password.length < 6) {
+          return res.status(400).send({ success: false, message: "Password must be at least 6 characters" });
+      }
+
+      const hashedPassword = password ? await hashPassword(password) : undefined;
+
+      user.name = name || user.name;
+      user.country = country || user.country; // Save the updated country
+      if (hashedPassword) user.password = hashedPassword;
+      user.profilePicture = profilePicture || user.profilePicture;
+      user.email = email || user.email;
+
+      await user.save();
+
+      console.log("Updated user:", user); // Debug log to verify the updated user object
+
+      user.password = undefined;
+
+      res.status(200).send({
+          success: true,
+          message: 'Profile updated',
+          updatedUser: user,
+      });
+  } catch (error) {
+      console.log(error);
+      res.status(500).send({
+          success: false,
+          message: 'Error in User Update API',
+          error,
+      });
+  }
+};
+
+
+
 
 
 const deleteConversation = async (req, res) => {
@@ -492,16 +491,17 @@ const createGrade = async (req, res) => {
           return res.status(404).json({ message: "Selected term does not exist." });
       }
 
-      const subjectObj = await Subject.findOne({ name: subject });
+      // Use the subject ID directly
+      const subjectObj = await Subject.findById(subject);
       if (!subjectObj) {
           return res.status(404).json({ message: "Selected subject does not exist." });
       }
 
       const [startTime, endTime] = timeSlot.split(' - ');
-      const startTimeUTC = moment.tz(startTime, 'h:mm A', 'UTC');
-      const endTimeUTC = moment.tz(endTime, 'h:mm A', 'UTC');
+      const startTimeUTC = moment.tz(startTime, 'HH:mm', 'UTC');
+      const endTimeUTC = moment.tz(endTime, 'HH:mm', 'UTC');
       let utcDayOfWeek = day;
-      if (startTimeUTC.day() !== moment(startTime, 'h:mm A').day()) {
+      if (startTimeUTC.day() !== moment(startTime, 'HH:mm').day()) {
           utcDayOfWeek = moment().day(startTimeUTC.day()).format('dddd');
       }
 
@@ -515,6 +515,9 @@ const createGrade = async (req, res) => {
       });
 
       await newClass.save();
+
+      // Update the teacher's subjects array
+      await User.findByIdAndUpdate(teacher, { $addToSet: { subjects: subjectObj._id } });
 
       const studentsInGrade = await User.find({ grade }).select('_id');
 
@@ -744,82 +747,47 @@ const addEvent = async (req, res) => {
 }
 
 const createAssignment = async (req, res) => {
+  const { title, description, dueDate, grade, subject } = req.body;
+
+  console.log("Inside createAssignment controller");
+  console.log("Request Body:", req.body);
+
+  if (!title || !description || !dueDate || !grade || !subject) {
+    console.log("Validation failed");
+    return res.status(400).json({ message: 'Please fill all fields.' });
+  }
+
   try {
-    const { title, description, dueDate, files, grade, subject } = req.body;
+    // Check if subject is an ID or name
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(subject);
+    const subjectObj = isObjectId
+      ? await Subject.findById(subject) // If it's an ObjectId
+      : await Subject.findOne({ name: subject }); // If it's a name
 
-    // Debug: Log the received request body
-    console.log('Received request body:', req.body);
+    console.log("Subject Found:", subjectObj);
 
-    // Validate that the subject is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(subject)) {
-      return res.status(400).json({ message: "Invalid subject ID" });
+    if (!subjectObj) {
+      console.log("Subject not found");
+      return res.status(404).json({ message: 'Subject not found.' });
     }
 
-    // Find the subject document using the ObjectId
-    const subjectDoc = await Subject.findById(subject);
-
-    // Debug: Log the found subject document
-    console.log('Found subjectDoc:', subjectDoc);
-
-    if (!subjectDoc) {
-      return res.status(404).json({ message: "Subject not found" });
-    }
-
-    // Create a new assignment document
     const newAssignment = new Assignment({
       title,
       description,
       dueDate,
-      files,
       grade,
-      subject: subjectDoc._id, // Save ObjectId
-      createdBy: req.auth._id, // Ensure this is correctly set
+      subject: subjectObj._id,
+      createdBy: req.auth._id,
     });
 
-    // Debug: Log the new assignment before saving
-    console.log('New Assignment to be saved:', newAssignment);
-
-    // Save the assignment to the database
     await newAssignment.save();
 
-    // Debug: Log after saving the assignment
-    console.log('Assignment saved successfully');
+    console.log("Assignment Created:", newAssignment);
 
-    // Find users in the specified grade and enrolled in the specified subject
-    const users = await User.find({
-      $or: [
-        { grade: grade, subjects: subjectDoc._id }, // Match students
-        { _id: req.auth._id } // Include the teacher who created the assignment
-      ]
-    });
-
-    // Debug: Log the found users
-    console.log('Found users for notifications:', users);
-
-    // For each user, create a new notification about the assignment
-    users.forEach(async (user) => {
-      await Notification.create({
-        user: user._id,
-        message: `Subject: ${subjectDoc.name}
-        
-New Assignment: ${title}, ${description} 
-
-Due: ${dueDate}`,
-        assignmentId: newAssignment._id,
-          type: 'assignment'
-      });
-
-      // Debug: Log notification creation
-      console.log(`Notification created for user: ${user._id}`);
-    });
-
-    res.status(201).json({
-      message: 'Assignment created successfully',
-      assignment: newAssignment
-    });
+    res.status(201).json({ message: 'Assignment created successfully', assignment: newAssignment });
   } catch (error) {
-    console.error('Failed to create assignment:', error);
-    res.status(500).json({ message: 'Failed to create assignment', error: error.message });
+    console.error("Failed to create assignment:", error);
+    res.status(500).json({ message: 'Failed to create assignment', error: error.toString() });
   }
 };
 
@@ -883,16 +851,33 @@ const setGradeForUser = async (req, res) => {
     // Look for an existing class for this grade
     let classForGrade = await Class.findOne({ grade });
 
-    // If no class exists for this grade, create one
+    // If no class exists for this grade, create one with default values
     if (!classForGrade) {
-      classForGrade = new Class({ grade });
+      const defaultSubject = await Subject.findOne(); // Or provide a specific subject ID
+      const defaultTeacher = await User.findOne({ role: 'teacher' }); // Or provide a specific teacher ID
+      const defaultTerm = await Term.findOne(); // Or provide a specific term ID
+
+      if (!defaultSubject || !defaultTeacher || !defaultTerm) {
+        return res.status(400).json({
+          message: 'Cannot create class. Default subject, teacher, or term missing.',
+        });
+      }
+
+      classForGrade = new Class({
+        grade,
+        subject: defaultSubject._id,
+        timeSlot: '8:00 AM - 9:00 AM', // Default value
+        day: 'Monday', // Default value
+        teacher: defaultTeacher._id,
+        term: defaultTerm._id,
+      });
       await classForGrade.save();
     }
 
     // Update the user with the grade and classId
     const updatedUser = await User.findByIdAndUpdate(
-      userId, 
-      { $set: { grade: grade, classId: classForGrade._id } }, 
+      userId,
+      { $set: { grade: grade, classId: classForGrade._id } },
       { new: true }
     ).populate('classId'); // Optionally populate the classId to return the class details
 
@@ -935,7 +920,7 @@ const getSubjects = async (req, res) => {
     let subjects;
     if (user.role === 'teacher') {
       const classes = await Class.find({ teacher: user._id }).populate('subject');
-      subjects = [...new Set(classes.map(cls => cls.subject))];  // Ensure unique subjects
+      subjects = [...new Set(classes.map((cls) => cls.subject))];
     } else if (user.role === 'student') {
       subjects = user.subjects;
     } else {
@@ -944,7 +929,8 @@ const getSubjects = async (req, res) => {
 
     res.json({ subjects });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch subjects', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch subjects' });
   }
 };
 
@@ -953,38 +939,34 @@ const getSubjects = async (req, res) => {
 
 const getAssignmentsForLoggedInUser = async (req, res) => {
   try {
-    const subjectId = req.query.subject;
+    const { grade, subject } = req.query; // Destructure grade and subject from query
 
-    const user = await User.findById(req.auth._id).populate('subjects');
+    const user = await User.findById(req.auth._id);
 
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    let query = { subject: subjectId };
+    const query = user.role === 'teacher' 
+      ? { createdBy: req.auth._id } // Filter by teacher's ID
+      : { grade: user.grade }; // Filter by student's grade
 
-    if (user.role === 'teacher') {
-      query.createdBy = req.auth._id;
-    } else if (user.role === 'student') {
-      query.grade = user.grade;
-      query.subject = subjectId; // Ensure we only fetch assignments for the selected subject
-    }
+    // Add grade and subject filters if present
+    if (grade) query.grade = grade;
+    if (subject) query.subject = subject;
 
     const assignments = await Assignment.find(query)
-      .populate('subject', 'name')
-      .populate('createdBy', 'name')
-      .sort({ createdAt: -1 });  // Sort by createdAt in descending order
-        // Sort by createdAt in descending order
+      .populate('subject', 'name') // Populate subject details
+      .populate('createdBy', 'name') // Populate teacher details
+      .sort({ createdAt: -1 });
 
-    // Ensure that assignments with null createdBy are filtered out or handled
-    const validAssignments = assignments.filter(assignment => assignment.createdBy && assignment.subject);
-
-    res.json(validAssignments);
+    res.json(assignments); // Send the filtered assignments
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Server Error');
+    console.error('Error fetching assignments:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
+
 
 
 const getAttendanceDates = async (req, res) => {
@@ -1131,23 +1113,36 @@ const getTerms = async (req, res) => {
   }
 };
 
+// Controller to get grades and subjects taught by a teacher
 const getTeacherData = async (req, res) => {
   try {
     const teacherId = req.params.id;
 
-    // Fetch the classes and subjects assigned to the teacher
     const classes = await Class.find({ teacher: teacherId }).populate('subject');
-    
-    // Extract unique grades and subjects from the classes
-    const grades = [...new Set(classes.map(cls => cls.grade))];
-    const subjects = [...new Set(classes.map(cls => JSON.stringify(cls.subject)))].map(JSON.parse);
 
-    res.json({ grades, subjects });
+    const grades = [...new Set(classes.map((cls) => cls.grade))];
+    const gradeSubjectMap = {};
+
+    classes.forEach((cls) => {
+      if (!gradeSubjectMap[cls.grade]) {
+        gradeSubjectMap[cls.grade] = [];
+      }
+      gradeSubjectMap[cls.grade].push({
+        _id: cls.subject._id,
+        name: cls.subject.name,
+      });
+    });
+
+    res.json({ grades, gradeSubjectMap });
   } catch (error) {
-    console.error('Failed to fetch teacher data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch teacher data' });
   }
 };
+
+
+
+
 
 const deleteAssignment = async (req, res) => {
   try {
@@ -1175,12 +1170,96 @@ const deleteAssignment = async (req, res) => {
 
 
 
+const getStudentAttendance = async (req, res) => {
+  const { studentId, subjectId, grade } = req.query;
+
+  try {
+    const attendanceRecords = await AttendanceRecord.find({
+      grade,
+      subject: subjectId,
+      'attendance.userId': studentId, // Check if studentId is in attendance array
+    }).sort('date');
+
+    // Filter attendance for the specific student
+    const filteredRecords = attendanceRecords.map((record) => {
+      const studentAttendance = record.attendance.find((entry) => entry.userId.toString() === studentId);
+      return {
+        date: record.date,
+        status: studentAttendance?.status || 'Absent',
+      };
+    });
+
+    res.json({ attendance: filteredRecords });
+  } catch (error) {
+    console.error('Error fetching attendance:', error);
+    res.status(500).json({ message: 'Failed to fetch attendance.', error: error.message });
+  }
+};
+
+
+const unenrollUserFromSubject = async (req, res) => {
+  const { userId, subjectId } = req.body;
+
+  try {
+    // Find the user and subject
+    const user = await User.findById(userId);
+    const subject = await Subject.findById(subjectId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found." });
+    }
+
+    // Remove subject from user's subjects array
+    if (user.subjects.includes(subjectId)) {
+      user.subjects = user.subjects.filter(
+        (subject) => subject.toString() !== subjectId
+      );
+      await user.save();
+    } else {
+      return res
+        .status(400)
+        .json({ message: "User is not enrolled in this subject." });
+    }
+
+    // Update Class document to remove user
+    const classToUpdate = await Class.findOne({ grade: user.grade, subject: subjectId });
+    if (classToUpdate && classToUpdate.users.includes(userId)) {
+      classToUpdate.users = classToUpdate.users.filter(
+        (user) => user.toString() !== userId
+      );
+      await classToUpdate.save();
+    }
+
+    res.json({ message: "User unenrolled from subject successfully." });
+  } catch (error) {
+    console.error(`Failed to unenroll user ${userId} from subject ${subjectId}:`, error);
+    res.status(500).json({ message: "Error unenrolling user from subject", error: error.message });
+  }
+};
 
 
 
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.auth._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.password = undefined; // Exclude password
+    res.json({ user });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Failed to fetch user profile" });
+  }
+};
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment  }
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile }
 
 
 

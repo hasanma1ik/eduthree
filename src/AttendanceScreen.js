@@ -8,7 +8,7 @@ const AttendanceScreen = ({ navigation }) => {
 
   const [fontsLoaded] = useFonts({
     'kanitregular': require('../assets/fonts/Kanit-Medium.ttf'),
-    'kanitmedium': require('../assets/fonts/Kanit-Regular.ttf'),
+    'kanitmedium1': require('../assets/fonts/Kanit-Regular.ttf'),
   });
   
   const onLayoutRootView = useCallback(async () => {
@@ -46,11 +46,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F9F9F9',
   },
   header: {
     fontSize: 24,
-    fontFamily: 'kanitmedium', // Use Kanit Regular font for the heading
+    fontFamily: 'kanitmedium1', // Use Kanit Regular font for the heading
     color: 'black',
     marginLeft: 20,
     position: 'absolute',
@@ -76,15 +76,17 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   takeAttendanceButton: {
-    backgroundColor: 'black', // Red background
+    backgroundColor: 'red', // Red background
+    
   },
   seeAttendanceButton: {
-    backgroundColor: 'black', // Blue background
+    backgroundColor: 'red', // Blue background
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: 'kanitmedium1'
   },
 });
 

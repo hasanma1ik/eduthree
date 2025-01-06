@@ -1,33 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment-timezone';
 import { MaterialIcons } from '@expo/vector-icons';
+import { AuthContext } from './screen/context/authContext';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 const ClassSchedule = () => {
+    const [state] = useContext(AuthContext);
+    const { user } = state;
+
     const [classSchedules, setClassSchedules] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
+
+    const [fontsLoaded] = useFonts({
+        'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+    });
+
+    const onLayoutRootView = React.useCallback(async () => {
+        if (fontsLoaded) {
+            await SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded]);
 
     const formatDate = (date) => {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         return date.toLocaleDateString('en-US', options);
     };
 
-    const convertToLocalTime = (utcTime) => {
-        // Assuming utcTime is in 'HH:mm' format
-        return moment.utc(utcTime, 'HH:mm').local().format('h:mm A');
+    const getTimezoneFromCountry = (country) => {
+        switch (country) {
+            case "Pakistan":
+                return "Asia/Karachi";
+            case "Saudi Arabia":
+                return "Asia/Riyadh";
+            case "United Arab Emirates":
+                return "Asia/Dubai";
+            default:
+                return "UTC"; // Fallback timezone
+        }
+    };
+
+    const convertToLocalTime = (utcTime, timezone) => {
+        return moment.tz(utcTime, 'HH:mm', 'UTC').tz(timezone).format('h:mm A');
     };
 
     const fetchClassSchedules = async (date) => {
         const formattedDate = `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`;
         try {
             const response = await axios.get(`/auth/class-schedules/logged-in-user?date=${formattedDate}`);
+            const timezone = getTimezoneFromCountry(user?.country);
+
             const schedulesWithLocalTimes = response.data.classSchedules.map(schedule => ({
                 ...schedule,
-                startTime: convertToLocalTime(schedule.startTime),
-                endTime: convertToLocalTime(schedule.endTime),
+                startTime: convertToLocalTime(schedule.startTime, timezone),
+                endTime: convertToLocalTime(schedule.endTime, timezone),
             }));
             setClassSchedules(schedulesWithLocalTimes || []);
         } catch (error) {
@@ -38,8 +68,9 @@ const ClassSchedule = () => {
 
     const onDateChange = (event, selectedDate) => {
         setShowDatePicker(Platform.OS === 'ios');
-        setSelectedDate(selectedDate || selectedDate);
-        fetchClassSchedules(selectedDate || selectedDate);
+        const currentDate = selectedDate || selectedDate;
+        setSelectedDate(currentDate);
+        fetchClassSchedules(currentDate);
     };
 
     const toggleDatePicker = () => setShowDatePicker(!showDatePicker);
@@ -48,8 +79,12 @@ const ClassSchedule = () => {
         fetchClassSchedules(selectedDate);
     }, []);
 
+    if (!fontsLoaded) {
+        return null;
+    }
+
     return (
-        <View style={styles.container}>
+        <View style={styles.container} onLayout={onLayoutRootView}>
             <Text style={styles.dateHeading}>{formatDate(selectedDate)}</Text>
             <TouchableOpacity onPress={toggleDatePicker} style={styles.datePickerButton}>
                 <Text style={styles.datePickerButtonText}>Select Date</Text>
@@ -61,11 +96,13 @@ const ClassSchedule = () => {
             <ScrollView style={styles.scheduleList}>
                 {classSchedules.length > 0 ? classSchedules.map((schedule, index) => (
                     <View key={index} style={styles.scheduleItem}>
-                          <Text style={styles.subject}>{schedule.subject.name}</Text>
-                        <Text style={styles.info}><MaterialIcons name="schedule" size={14} /> {schedule.dayOfWeek} {schedule.startTime} - {schedule.endTime}</Text>
-                        <Text style={styles.info}><MaterialIcons name="person" size={14} /> {schedule.teacher.name}</Text>
+                        <Text style={styles.subject}>{schedule.subject.name}</Text>
+                        <Text style={styles.info}><MaterialIcons name="schedule" size={14} color="white" /> {schedule.dayOfWeek} {schedule.startTime} - {schedule.endTime}</Text>
+                        <Text style={styles.info}><MaterialIcons name="person" size={14} color="white" /> {schedule.teacher.name}</Text>
                     </View>
-                )) : <Text style={styles.noSchedules}>No class schedules found for the selected date.</Text>}
+                )) : (
+                    <Text style={styles.noSchedules}>No class schedules found for the selected date.</Text>
+                )}
             </ScrollView>
         </View>
     );
@@ -75,59 +112,67 @@ const ClassSchedule = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#F9F9F9',
+        padding: 20,
+    },
+    dateHeading: {
+        fontSize: 20,
+        fontFamily: 'Kanit-Medium',
+        color: 'black',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    datePickerButton: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'red',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 20,
+    },
+    datePickerButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontFamily: 'Kanit-Medium',
+        marginRight: 10,
     },
     scheduleList: {
-        marginTop: 20,
+        marginTop: 10,
     },
     scheduleItem: {
-        backgroundColor: '#e3f2fd',
+        backgroundColor: '#333333',
         padding: 20,
+        borderRadius: 8,
         marginBottom: 10,
-        borderRadius: 10,
-        marginHorizontal: 20,
+        borderColor: '#555555',
+        borderWidth: 1,
         shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
     },
     subject: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontFamily: 'Kanit-Medium',
+        color: 'white',
         marginBottom: 5,
     },
     info: {
         fontSize: 14,
-        marginLeft: 5,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    datePickerButton: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#1976d2',
-        margin: 20,
-        padding: 10,
-        borderRadius: 5,
-    },
-    datePickerButtonText: {
         color: 'white',
-        marginRight: 10,
+        fontFamily: 'Kanit-Medium',
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 2,
     },
     noSchedules: {
+        color: '#888',
+        fontSize: 16,
+        fontFamily: 'Kanit-Medium',
         textAlign: 'center',
         marginTop: 20,
-    },
-    dateHeading: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginVertical: 20,
     },
 });
 

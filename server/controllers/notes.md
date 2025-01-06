@@ -4685,6 +4685,855 @@ const createGrade = async (req, res) => {
 
 
 
+export default function SignInScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Determine button color based on the input criteria
+  const buttonColor = email.length > 0 && password.length > 0 ? '#ff0000' : '#000000'; // Red if conditions are met, otherwise black
+
+  const handleSignIn = () => {
+    console.log("Sign-In Submitted:", email, password);
+    // Placeholder for future navigation
+  };
+
+  return (
+    <ImageBackground 
+      source={require('../../assets/max-bender-iF5odYWB_nQ-unsplash.jpg')} // Ensure this path is correct
+      style={styles.fullScreenBackground}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <Text style={styles.title}>login</Text>
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor="white"
+            value={email}
+            onChangeText={setEmail}s
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="white"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+          />
+          <TouchableOpacity style={[styles.signInButton, {backgroundColor: buttonColor}]} onPress={handleSignIn}>
+            <Text style={styles.buttonText}>Sign In</Text>
+          </TouchableOpacity>
+          <Text style={styles.textLink}>Forget password?</Text>
+          <Text style={styles.textLink}>Don't have an account? REGISTER</Text>
+          <TouchableOpacity style={[styles.googleButton, {backgroundColor: '#000000'}]} onPress={() => console.log("Google Sign-In Pressed")}>
+            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ImageBackground>
+  
+  );
+}
+
+
+
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
+import axios from 'axios';
+import moment from 'moment-timezone';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import RNPickerSelect from 'react-native-picker-select';
+
+const CreateClasses = () => {
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
+  const [terms, setTerms] = useState([]);
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [teachers, setTeachers] = useState([]);
+  const grades = [
+    'Grade 1',
+    'Grade 2',
+    'Grade 3',
+    'Grade 4',
+    'Grade 5',
+    'Grade 6',
+    'Grade 7',
+    'Grade 8',
+    'Grade 9',
+  ];
+  const subjects = [
+    'Math',
+    'Science',
+    'Islamiat',
+    'History',
+    'English Language',
+    'English Literature',
+    'Urdu',
+  ];
+  const timeSlots = [
+    '8:02 PM - 9:00 PM',
+    '4:17 AM - 5:17 AM',
+    '10:00 AM - 11:00 AM',
+    '11:00 AM - 12:00 PM',
+    '12:00 PM - 1:00 PM',
+    '9:00 PM - 10:00 PM',
+    '10:30 PM - 11:30 PM',
+  ];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  useEffect(() => {
+    fetchTeachers();
+    fetchTerms();
+  }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      const response = await axios.get('/auth/teachers');
+      setTeachers(response.data.teachers);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to fetch teachers');
+    }
+  };
+
+  const fetchTerms = async () => {
+    try {
+      const response = await axios.get('/auth/terms');
+      setTerms(response.data.terms);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to fetch terms');
+    }
+  };
+
+  const displayLocalTimeSlot = (utcTimeSlot) => {
+    const [startTime, endTime] = utcTimeSlot.split(' - ');
+    const format = 'h:mm A';
+    const localStartTime = moment.utc(startTime, 'HH:mm').local().format(format);
+    const localEndTime = moment.utc(endTime, 'HH:mm').local().format(format);
+    return `${localStartTime} - ${localEndTime}`;
+  };
+
+  const createGrade = async () => {
+    if (
+      selectedGrade === '' ||
+      selectedSubject === '' ||
+      selectedTimeSlot === '' ||
+      selectedDay === '' ||
+      selectedTeacher === ''
+    ) {
+      Alert.alert('Validation Error', 'Please fill all fields');
+      return;
+    }
+    const [startTime, endTime] = selectedTimeSlot.split(' - ');
+    const format = 'h:mm A';
+    const utcStartTime = moment.tz(startTime, format, moment.tz.guess()).utc().format(format);
+    const utcEndTime = moment.tz(endTime, format, moment.tz.guess()).utc().format(format);
+    const utcTimeSlot = `${utcStartTime} - ${utcEndTime}`;
+
+    const postData = {
+      grade: selectedGrade,
+      subject: selectedSubject,
+      timeSlot: utcTimeSlot,
+      day: selectedDay,
+      teacher: selectedTeacher,
+      term: selectedTerm,
+    };
+
+    try {
+      const response = await axios.post('/auth/grades', postData);
+      Alert.alert('Success', 'Class created successfully');
+      // Optionally reset the form
+      setSelectedGrade('');
+      setSelectedSubject('');
+      setSelectedTimeSlot('');
+      setSelectedDay('');
+      setSelectedTeacher('');
+      setSelectedTerm('');
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'An unexpected error occurred';
+      Alert.alert('Error', errorMessage);
+    }
+  };
+
+  const [fontsLoaded] = useFonts({
+    kanitmedium: require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <View style={styles.container} onLayout={onLayoutRootView}>
+      <Text style={styles.mainTitle}></Text>
+
+      {/* Grade Picker */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Grade</Text>
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setSelectedGrade(value)}
+            items={grades.map((grade) => ({ label: grade, value: grade }))}
+            placeholder={{ label: 'Select Grade', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => {
+              return <Text style={styles.icon}>▼</Text>;
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Subject Picker */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Subject</Text>
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setSelectedSubject(value)}
+            items={subjects.map((subject) => ({ label: subject, value: subject }))}
+            placeholder={{ label: 'Select Subject', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => {
+              return <Text style={styles.icon}>▼</Text>;
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Time Slot Picker */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Time Slot</Text>
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setSelectedTimeSlot(value)}
+            items={timeSlots.map((slot) => ({ label: slot, value: slot }))}
+            placeholder={{ label: 'Select Time Slot', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => {
+              return <Text style={styles.icon}>▼</Text>;
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Day Picker */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Day</Text>
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setSelectedDay(value)}
+            items={days.map((day) => ({ label: day, value: day }))}
+            placeholder={{ label: 'Select Day', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => {
+              return <Text style={styles.icon}>▼</Text>;
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Teacher Picker */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Teacher</Text>
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setSelectedTeacher(value)}
+            items={teachers.map((teacher) => ({ label: teacher.name, value: teacher._id }))}
+            placeholder={{ label: 'Select Teacher', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => {
+              return <Text style={styles.icon}>▼</Text>;
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Term Picker */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Term</Text>
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setSelectedTerm(value)}
+            items={terms.map((term) => ({ label: term.name, value: term._id }))}
+            placeholder={{ label: 'Select Term', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => {
+              return <Text style={styles.icon}>▼</Text>;
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Create Class Button */}
+      <TouchableOpacity style={styles.button} onPress={createGrade}>
+        <Text style={styles.buttonText}>Create Class</Text>
+      </TouchableOpacity>
+
+      {/* Display Local Time Slot */}
+      {selectedTimeSlot && (
+        <Text style={styles.localTimeSlot}>{displayLocalTimeSlot(selectedTimeSlot)}</Text>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+    paddingBottom: 120,
+    backgroundColor: '#000', // Black background
+  },
+  mainTitle: {
+    fontSize: 26,
+    fontFamily: 'kanitmedium',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: -30, // Adjust this value as needed to bring the title down
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'kanitmedium',
+    color: 'white',
+    marginTop: -100,
+    marginLeft: 10,
+    position: 'absolute',
+    top: 10,
+    left: 10,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontFamily: 'kanitmedium',
+    color: 'white',
+    marginBottom: 5,
+  },
+  pickerWrapper: {
+    marginBottom: 20,
+  },
+  icon: {
+    color: 'white',
+    fontSize: 18,
+    paddingRight: 10,
+  },
+  button: {
+    backgroundColor: '#FF0000', // Red button
+    borderRadius: 8,
+    paddingVertical: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'kanitmedium',
+  },
+  localTimeSlot: {
+    marginTop: 10,
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#04AA6D',
+    fontFamily: 'kanitmedium',
+  },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'white', // White border
+    borderRadius: 8,
+    color: 'white', // White text
+    backgroundColor: '#333333', // Dark background
+    paddingRight: 30, // To ensure the text is never behind the icon
+    fontFamily: 'kanitmedium',
+    marginBottom: -20,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'white', // White border
+    borderRadius: 8,
+    color: 'white', // White text
+    backgroundColor: '#333333', // Dark background
+    paddingRight: 30, // To ensure the text is never behind the icon
+    fontFamily: 'kanitmedium',
+    marginBottom: -20,
+  },
+  placeholder: {
+    color: 'white', // White placeholder text
+    fontFamily: 'kanitmedium',
+  },
+});
+
+export default CreateClasses;
+
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import axios from 'axios';
+import SearchableDropdown from 'react-native-searchable-dropdown';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import RNPickerSelect from 'react-native-picker-select';
+
+const GradeSetter = () => {
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState({});
+  const [grade, setGrade] = useState('');
+  const grades = [
+    'Grade 1',
+    'Grade 2',
+    'Grade 3',
+    'Grade 4',
+    'Grade 5',
+    'Grade 6',
+    'Grade 7',
+    'Grade 8',
+  ];
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('/auth/all-users');
+        const formattedUsers = response.data.users.map((user) => ({
+          id: user._id,
+          name: user.name,
+        }));
+        setUsers(formattedUsers);
+      } catch (error) {
+        Alert.alert('Error', 'Failed to fetch users');
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!selectedUser.id || !grade) {
+      Alert.alert('Error', 'Please select both a user and a grade');
+      return;
+    }
+    try {
+      await axios.post('/auth/users/setGrade', { userId: selectedUser.id, grade });
+      Alert.alert('Success', 'Grade updated successfully!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to set grade');
+    }
+  };
+
+  const [fontsLoaded] = useFonts({
+    kanitmedium: require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <View style={styles.outerContainer} onLayout={onLayoutRootView}>
+      <Text style={styles.title}>Set User Grade</Text>
+      <View style={styles.container}>
+        {/* Searchable Dropdown */}
+        <SearchableDropdown
+          onItemSelect={(item) => setSelectedUser(item)}
+          containerStyle={styles.searchableContainer}
+          itemStyle={styles.dropdownItemStyle}
+          itemTextStyle={styles.dropdownItemText}
+          itemsContainerStyle={styles.itemsContainerStyle}
+          items={users}
+          resetValue={false}
+          textInputProps={{
+            placeholder: selectedUser.name || 'Select a user',
+            placeholderTextColor: '#AAAAAA',
+            underlineColorAndroid: 'transparent',
+            style: styles.searchableStyle,
+          }}
+          listProps={{
+            nestedScrollEnabled: true,
+          }}
+        />
+
+        {/* Grade Picker */}
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setGrade(value)}
+            items={grades.map((g) => ({ label: g, value: g }))}
+            placeholder={{ label: 'Select a grade', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => {
+              return <Text style={styles.icon}>▼</Text>;
+            }}
+          />
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Set Grade</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    backgroundColor: 'black', // Black background
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'kanitmedium',
+    color: 'white',
+    marginBottom: 20,
+    marginLeft: 10,
+  },
+  searchableContainer: {
+    marginBottom: 20,
+    padding: 5,
+    borderRadius: 8,
+    backgroundColor: '#2C2C2C', // Dark background
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  dropdownItemStyle: {
+    padding: 10,
+    backgroundColor: '#1E1E1E',
+    borderColor: '#444444',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 5,
+  },
+  dropdownItemText: {
+    color: '#FFFFFF',
+    fontFamily: 'kanitmedium',
+  },
+  itemsContainerStyle: {
+    maxHeight: 140,
+    backgroundColor: '#2C2C2C',
+  },
+  searchableStyle: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'white', // White border to match SeeAttendance
+    borderRadius: 8,
+    backgroundColor: '#333333', // Dark input background
+    color: '#FFFFFF', // White text
+    fontFamily: 'kanitmedium',
+  },
+  pickerWrapper: {
+    marginBottom: 20,
+  },
+  icon: {
+    color: 'white',
+    fontSize: 18,
+    paddingRight: 10,
+  },
+  button: {
+    backgroundColor: '#FF0000',
+    borderRadius: 8,
+    paddingVertical: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontFamily: 'kanitmedium',
+    fontSize: 18,
+  },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'white', // White border
+    borderRadius: 8,
+    color: 'white', // White text
+    backgroundColor: '#333333', // Dark background
+    paddingRight: 30, // To ensure the text is never behind the icon
+    fontFamily: 'kanitmedium',
+    marginBottom: -20,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'white', // White border
+    borderRadius: 8,
+    color: 'white', // White text
+    backgroundColor: '#333333', // Dark background
+    paddingRight: 30, // To ensure the text is never behind the icon
+    fontFamily: 'kanitmedium',
+    marginBottom: -20,
+  },
+  placeholder: {
+    color: 'white', // White placeholder text
+    fontFamily: 'kanitmedium',
+  },
+});
+
+export default GradeSetter;
+
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import axios from 'axios';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Picker } from '@react-native-picker/picker';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
+import { AuthContext } from './screen/context/authContext';
+
+const Assignments = () => {
+  const [state] = useContext(AuthContext);
+  const currentUser = state.user;
+  const [assignments, setAssignments] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [fontsLoaded] = useFonts({
+    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const response = currentUser.role === 'teacher'
+          ? await axios.get(`/auth/teacher/${currentUser._id}/data`)
+          : await axios.get('/auth/subjects');
+
+        const data = currentUser.role === 'teacher' 
+          ? Object.values(response.data.gradeSubjectMap).flat() 
+          : response.data.subjects;
+
+        setSubjects(data);
+      } catch (error) {
+        console.error('Failed to fetch subjects:', error);
+        Alert.alert('Error', 'Failed to fetch subjects');
+      }
+    };
+
+    if (currentUser) {
+      fetchSubjects();
+    }
+  }, [currentUser]);
+
+  const fetchAssignments = async (subjectId) => {
+    try {
+      const response = await axios.get(`/auth/assignments?subjectId=${encodeURIComponent(subjectId)}`);
+      setAssignments(response.data);
+    } catch (error) {
+      console.error('Failed to fetch assignments:', error);
+      Alert.alert('Error', 'Failed to fetch assignments');
+    }
+  };
+
+  const handleSubjectChange = (subjectId) => {
+    setSelectedSubject(subjectId);
+    if (subjectId) {
+      fetchAssignments(subjectId);
+    } else {
+      setAssignments([]);
+    }
+  };
+
+  const deleteAssignment = async (assignmentId) => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this assignment?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              await axios.delete(`/auth/assignments/${assignmentId}`);
+              setAssignments((prev) => prev.filter((a) => a._id !== assignmentId));
+              Alert.alert('Success', 'Assignment deleted successfully');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete assignment');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <ScrollView style={styles.container} onLayout={onLayoutRootView}>
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={selectedSubject}
+          onValueChange={(itemValue) => handleSubjectChange(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Select a subject" value="" />
+          {subjects.map((subject) => (
+            <Picker.Item key={subject._id} label={subject.name} value={subject._id} />
+          ))}
+        </Picker>
+      </View>
+
+      {assignments.length > 0 ? (
+        assignments.map((assignment) => (
+          <View key={assignment._id} style={styles.assignmentItem}>
+            <View style={styles.assignmentHeader}>
+              <Text style={styles.assignmentTitle}>{assignment.title}</Text>
+              {currentUser.role === 'teacher' && (
+                <TouchableOpacity onPress={() => deleteAssignment(assignment._id)}>
+                  <FontAwesome5 name="trash" size={14} color="red" />
+                </TouchableOpacity>
+              )}
+            </View>
+            <Text style={styles.assignmentDescription}>{assignment.description}</Text>
+            <Text style={styles.assignmentMetaText}>Due Date: {assignment.dueDate}</Text>
+            <Text style={styles.assignmentMetaText}>Grade: {assignment.grade}</Text>
+            <Text style={styles.assignmentMetaText}>Subject: {assignment.subject.name}</Text>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noAssignmentsText}>No assignments found for the selected subject.</Text>
+      )}
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+    padding: 20,
+  },
+  pickerWrapper: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'black',
+    backgroundColor: 'white',
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    color: 'black',
+  },
+  assignmentItem: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#333333',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#555555',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  assignmentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  assignmentTitle: {
+    fontSize: 20,
+    fontFamily: 'Kanit-Medium',
+    color: 'white',
+  },
+  assignmentDescription: {
+    fontSize: 16,
+    color: '#CCCCCC',
+    marginBottom: 10,
+  },
+  assignmentMetaText: {
+    fontSize: 14,
+    color: '#FF6347',
+    fontFamily: 'Kanit-Medium',
+  },
+  noAssignmentsText: {
+    textAlign: 'center',
+    color: '#888',
+    fontSize: 16,
+    marginTop: 20,
+    fontFamily: 'Kanit-Medium',
+  },
+});
+
+export default Assignments;
+
 
 
 
@@ -4696,6 +5545,693 @@ const createGrade = async (req, res) => {
 //   },
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok so create assignment is working right now, like through teacher portal i can create assignment, but when i go to assignments tab the subject is still not appearing in dropdown, let me explain again what i want,
+
+in assignments when users who are students access their assignments, the dropdown in their assignments tab show display all the subjects they are enrolled in, so for instance if a student is enrolled in Math, when that student user goes to the assignment tab, the subject dropdown should display Math and all the math assignments that have been created by the teacher
+
+furthermore, when user teacher accesses the assignment tab, all the assignments that the teacher has created should be displayed in relevance to the subject.
+
+sharing my current code
+
+
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import axios from 'axios';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Picker } from '@react-native-picker/picker';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { UserContext } from './screen/context/userContext';
+
+const Assignments = () => {
+  const { currentUser } = useContext(UserContext);
+  const [assignments, setAssignments] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [fontsLoaded] = useFonts({
+    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    const fetchTeacherSubjects = async () => {
+      try {
+        const response = await axios.get(`/auth/teacher/${currentUser._id}/data`);
+        console.log("Teacher Subjects Response:", response.data); // Debugging Line
+        // Flatten the gradeSubjectMap to get unique subjects
+        const subjectsSet = new Set();
+        Object.values(response.data.gradeSubjectMap).forEach(subjectsArray => {
+          subjectsArray.forEach(subject => subjectsSet.add(subject));
+        });
+        setSubjects([...subjectsSet]);
+        console.log("Subjects Set for Assignments:", [...subjectsSet]); // Debugging Line
+      } catch (error) {
+        console.error('Failed to fetch subjects:', error);
+        Alert.alert('Error', 'Failed to fetch subjects');
+      }
+    };
+
+    if (currentUser && currentUser.role === 'teacher') {
+      fetchTeacherSubjects();
+    }
+  }, [currentUser]);
+
+  const fetchAssignments = async (subjectName) => {
+    try {
+      const response = await axios.get(`/auth/assignments?subjectName=${encodeURIComponent(subjectName)}`);
+      setAssignments(response.data);
+      console.log(`Fetched Assignments for Subject ${subjectName}:`, response.data); // Debugging Line
+    } catch (error) {
+      console.error('Failed to fetch assignments:', error);
+      Alert.alert("Error", "Failed to fetch assignments");
+    }
+  };
+
+  const handleSubjectChange = (subjectName) => {
+    setSelectedSubject(subjectName);
+    if (subjectName) {
+      fetchAssignments(subjectName);
+    } else {
+      setAssignments([]);
+    }
+  };
+
+  const deleteAssignment = async (assignmentId) => {
+    Alert.alert(
+      "Confirm Deletion",
+      "Are you sure you want to delete this assignment?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete", 
+          onPress: async () => {
+            try {
+              await axios.delete(`/auth/assignments/${assignmentId}`);
+              setAssignments(prev => prev.filter(a => a._id !== assignmentId));
+              Alert.alert("Success", "Assignment deleted successfully");
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete assignment");
+            }
+          }
+        }
+      ],
+      { cancelable: false }
+    );
+  };
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <ScrollView style={styles.container} onLayout={onLayoutRootView}>
+      {/* Subject Picker */}
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={selectedSubject}
+          onValueChange={(itemValue) => handleSubjectChange(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Select a subject" value="" />
+          {subjects.map((subject, index) => (
+            <Picker.Item key={index} label={subject} value={subject} />
+          ))}
+        </Picker>
+      </View>
+
+      {/* Assignments List */}
+      {assignments.length > 0 ? (
+        assignments.map((assignment, index) => (
+          <View key={index} style={styles.assignmentItem}>
+            <View style={styles.assignmentHeader}>
+              <Text style={styles.assignmentTitle}>{assignment.title}</Text>
+              <TouchableOpacity onPress={() => deleteAssignment(assignment._id)}>
+                <FontAwesome5 name="trash" size={14} color={"red"} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.assignmentDescription}>{assignment.description}</Text>
+            <Text style={styles.assignmentMetaText}>Due Date: {assignment.dueDate}</Text>
+            <Text style={styles.assignmentMetaText}>Grade: {assignment.grade}</Text>
+            <Text style={styles.assignmentMetaText}>Subject: {assignment.subject.name}</Text>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noAssignmentsText}>No assignments found for the selected subject.</Text>
+      )}
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+    padding: 20,
+  },
+  pickerWrapper: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'white',
+    backgroundColor: '#333333',
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    color: 'white',
+  },
+  assignmentItem: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#333333',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#555555',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  assignmentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  assignmentTitle: {
+    fontSize: 20,
+    fontFamily: 'Kanit-Medium',
+    color: 'white',
+  },
+  assignmentDescription: {
+    fontSize: 16,
+    color: '#CCCCCC',
+    marginBottom: 10,
+  },
+  assignmentMetaText: {
+    fontSize: 14,
+    color: '#FF6347', // Tomato color for visibility
+    fontFamily: 'Kanit-Medium',
+  },
+  noAssignmentsText: {
+    textAlign: 'center',
+    color: '#888',
+    fontSize: 16,
+    marginTop: 20,
+    fontFamily: 'Kanit-Medium',
+  },
+});
+
+export default Assignments;
+
+controllers
+
+const getAssignmentsForLoggedInUser = async (req, res) => {
+  try {
+    const { subjectId } = req.query; // Change from subjectName to subjectId
+
+    const user = await User.findById(req.auth._id);
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    let query = {};
+
+    if (user.role === 'teacher') {
+      query.createdBy = req.auth._id;
+      if (subjectId) {
+        if (!mongoose.Types.ObjectId.isValid(subjectId)) {
+          return res.status(400).json({ message: 'Invalid subject ID' });
+        }
+        const subject = await Subject.findById(subjectId);
+        if (!subject) {
+          return res.status(404).json({ message: 'Subject not found' });
+        }
+        query.subject = subject._id;
+      }
+    } else if (user.role === 'student') {
+      query.grade = user.grade;
+      if (subjectId) {
+        if (!mongoose.Types.ObjectId.isValid(subjectId)) {
+          return res.status(400).json({ message: 'Invalid subject ID' });
+        }
+        const subject = await Subject.findById(subjectId);
+        if (!subject) {
+          return res.status(404).json({ message: 'Subject not found' });
+        }
+        query.subject = subject._id;
+      }
+    }
+
+    const assignments = await Assignment.find(query)
+      .populate('subject', 'name')
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json(assignments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
+};
+
+const getTeacherData = async (req, res) => {
+  try {
+    const teacherId = req.params.id;
+
+    // Fetch classes where the teacher is assigned
+    const classes = await Class.find({ teacher: teacherId }).populate('subject');
+
+    console.log("Fetched Classes for Teacher:", classes); // Debugging Line
+
+    // Extract unique grades
+    const grades = [...new Set(classes.map(cls => cls.grade))];
+
+    // Map grades to subjects
+    const gradeSubjectMap = {};
+
+    classes.forEach(cls => {
+      if (!gradeSubjectMap[cls.grade]) {
+        gradeSubjectMap[cls.grade] = [];
+      }
+      gradeSubjectMap[cls.grade].push(cls.subject);
+    });
+
+    // Remove duplicate subjects in each grade
+    for (const grade in gradeSubjectMap) {
+      gradeSubjectMap[grade] = [...new Set(gradeSubjectMap[grade].map(subject => subject.name))];
+    }
+
+    console.log("Grades:", grades); // Debugging Line
+    console.log("GradeSubjectMap:", gradeSubjectMap); // Debugging Line
+
+    res.json({ grades, gradeSubjectMap });
+  } catch (error) {
+    console.error('Failed to fetch teacher data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const getSubjects = async (req, res) => {
+  try {
+    const user = await User.findById(req.auth._id).populate('subjects');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let subjects;
+    if (user.role === 'teacher') {
+      const classes = await Class.find({ teacher: user._id }).populate('subject');
+      subjects = [...new Set(classes.map(cls => cls.subject))];  // Ensure unique subjects
+    } else if (user.role === 'student') {
+      subjects = user.subjects;
+    } else {
+      subjects = await Subject.find({});
+    }
+
+    res.json({ subjects });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch subjects', error: error.message });
+  }
+};
+
+const getSubjectsByClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const subjects = await Subject.find({ classId });
+    res.json({ success: true, subjects });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching subjects', error: error.message });
+  }
+};
+
+userroutes
+
+const express = require('express');
+
+const upload = require('../config/uploadConfig')
+const { 
+    registerController,
+     loginController,
+     updateUserController,
+     requireSignIn,
+     searchController,
+     allUsersController,
+     userPress,
+     getAllThreads,
+     postMessageToThread,
+     getMessagesInThread,
+     deleteConversation,
+     muteConversation,
+     requestPasswordReset,
+     resetPassword,
+     getAttendanceDates,
+     getAttendanceData,
+     getAssignmentsForLoggedInUser,
+     getStudentsByClassAndSubject,
+     getTimetableForUser,
+     addEvent,
+     getEvents,
+     submitAssignment,
+     createAssignment,
+     getAssignmentById,
+     getSubjects,
+     getClassIdByGrade,
+     getClassUsersByGrade,
+     getUsersByGradeAndSubject,
+     registerUserForSubject,
+     getNotifications,
+     markNotificationAsRead,
+     getUnreadNotificationsCount,
+     getAllClasses,
+     getUsersByClass,
+     getSubjectsByClass,
+     addOrUpdateStudent,
+     getStudentsByClass,
+     createSubject,
+     createGrade,
+     getAllTeachers,
+     submitAttendance,
+     registerSubjectForStudent,
+     setGradeForUser,
+     getClassSchedulesForLoggedInUser,
+     createTerms,
+     getTerms,
+     deleteAssignment,
+     getTeacherData,
+     logUser,
+   
+    
+    
+    
+     } = require('../controllers/userController');
+     
+
+
+const router = express.Router();
+
+//routes
+router.post("/register", registerController);
+
+// LOGIN || POST
+router.post("/login", loginController);
+
+//UPDATE || PUT
+
+router.put("/update-user", requireSignIn, updateUserController)
+
+// Search users
+router.get("/search", searchController)
+
+// All Users
+router.get("/all-users", allUsersController)
+  
+router.get('/threads', requireSignIn, getAllThreads); // Add this route
+router.post('/threads', userPress);
+
+router.get('/threads/:threadId', requireSignIn, getMessagesInThread);
+router.post('/threads/:threadId/messages', postMessageToThread);
+
+router.delete('/threads/:threadId', deleteConversation);
+router.patch('/threads/:threadId/mute', muteConversation);
+
+//password reset Routes
+router.post('/request-password-reset', requestPasswordReset)
+router.post('/reset-password', resetPassword)
+
+// Route to list students in a class
+
+router.get('/users/:classId/:subjectId', getStudentsByClassAndSubject)
+
+// router to fetch timetable
+
+// router.get('/timetable/:userId', getTimetableForUser);
+
+
+
+// Route for fetching all events
+router.get('/events', getEvents);
+router.post('/events', addEvent);
+
+// In your routes file
+router.post('/upload', upload.single('file'), (req, res) => {
+  if (req.file) {
+    // Assuming the file's URL or path is accessible via req.file.path
+    // You may need to adjust based on your storage setup
+    res.status(200).json({ message: 'File uploaded successfully', filePath: req.file.path });
+  } else {
+    res.status(400).json({ message: 'No file uploaded' });
+  }
+});
+
+router.post('/submission', (req, res) => {
+  console.log("Received submission:", req.body);
+  submitAssignment(req, res);
+});
+
+
+// Route for creating a new assignment
+router.post('/create-assignments',  requireSignIn, logUser, createAssignment);
+
+// In your routes file
+router.get('/assignments/:id', getAssignmentById)
+
+router.get('/assignments', requireSignIn, logUser, getAssignmentsForLoggedInUser)
+
+
+// router.get('/users/class/:classId', getStudentsByClass);
+
+// Inside your routes file
+// router.get('/classes', getAllClasses);
+
+router.get('/subjects/class/:classId', getSubjectsByClass);
+
+// router.post('/classes', createClass)
+// router.post('/subjects', createSubject)
+
+router.post('/grades', createGrade);
+router.post('/subjects', createSubject);
+
+// Route to add or update a student
+// router.post('/students/addOrUpdate', addOrUpdateStudent);
+
+// router.get('/users/grade/:grade', getUsersByClass);
+
+// router.post('/users/registerSubject', registerSubjectForStudent);
+
+
+// Route to fetch students by grade
+router.get('/class/grade/:grade', getClassIdByGrade);
+// router.get('/users/class/:classId', getUsersByClassId);
+
+
+
+// Route to register a student for a subject
+router.post('/users/registerSubject', registerUserForSubject);
+router.post('/users/setGrade', setGradeForUser);
+router.get('/class/grade/:grade/users', getClassUsersByGrade);
+
+// fetches users from grade and that are enrolled in a particular subject
+router.get('/class/grade/:grade/subject/:subjectId/users', getUsersByGradeAndSubject);
+
+router.post('/attendance', submitAttendance);
+
+router.get('/notifications', requireSignIn, getNotifications);
+router.post('/notifications/:notificationId/mark-read', requireSignIn, markNotificationAsRead);
+router.get('/notifications/unread-count', requireSignIn, getUnreadNotificationsCount);
+
+
+router.get('/subjects', requireSignIn, logUser, getSubjects);
+router.get('/attendance/:grade/:subject/dates', getAttendanceDates);
+router.get('/attendance/:grade/:subject/:date', getAttendanceData);
+
+
+router.get('/class-schedules/logged-in-user', requireSignIn, getClassSchedulesForLoggedInUser);
+
+
+router.get('/teacher
+
+
+
+
+import React, { useState, useContext } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import BottomTab from '../tabs/bottomTab';
+import { PostContext } from './context/postContext';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import axios from 'axios';
+
+const Post = ({ navigation }) => {
+  const [posts, setPosts] = useContext(PostContext);
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Handle form data post Data
+  const handlePost = async () => {
+    try {
+      if (!description.trim()) {
+        Alert.alert('Validation Error', 'Please add a post description.');
+        return;
+      }
+
+      setLoading(true);
+      const { data } = await axios.post('/post/create-post', { description });
+      setLoading(false);
+
+      if (data?.post) {
+        setPosts([...posts, data.post]);
+        Alert.alert('Success', data.message || 'Post created successfully!');
+        setDescription(''); // Clear the input after successful post
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Error', 'Failed to create post. Please try again.');
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error(error);
+      Alert.alert('Error', error.response?.data?.message || 'An unexpected error occurred.');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {/* Header */}
+        
+
+        {/* Input Box */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.inputBox}
+            placeholder="Add post description"
+            placeholderTextColor="#AAAAAA"
+            multiline={true}
+            numberOfLines={5}
+            value={description}
+            onChangeText={(text) => setDescription(text)}
+            textAlignVertical="top"
+          />
+        </View>
+
+        {/* Submit Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.postBtn}
+            onPress={handlePost}
+            disabled={loading}
+          >
+            <Text style={styles.postBtnText}>
+              <FontAwesome5 name="plus-square" size={18} />{'   '}
+              {loading ? 'Posting...' : 'Create Post'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {/* Bottom Tab */}
+      <View style={styles.bottomTabContainer}>
+        <BottomTab />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    // margin: 10,
+    backgroundColor: 'black', // Entire page background is black
+    // borderRadius: 10, // Optional: Rounded corners for the container
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 20, // To prevent content from being hidden behind BottomTab
+  },
+  headerContainer: {
+    marginBottom: 20,
+  },
+  headerText: {
+    fontSize: 28,
+    fontFamily: 'kanitmedium', // Ensure 'kanitmedium' is loaded
+    color: '#FFFFFF',
+    fontWeight: 'bold', // Optional: Depending on font family
+  },
+  inputContainer: {
+    width: '100%',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  inputBox: {
+    backgroundColor: '#2C2C2C', // Dark input background
+    color: '#FFFFFF', // White text
+    padding: 15,
+    fontSize: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#444444', // Dark border
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5, // For Android shadow
+    fontFamily: 'kanitmedium', // Ensure 'kanitmedium' is loaded
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  postBtn: {
+    backgroundColor: '#FF0000', // Red button
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    width: '100%', // Full width for better touch area
+    marginVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5, // For Android shadow
+  },
+  postBtnText: {
+    color: '#FFFFFF', // White text
+    fontSize: 18,
+    fontFamily: 'kanitmedium', // Ensure 'kanitmedium' is loaded
+    // fontWeight: 'bold', // Optional: Depending on font family
+  },
+  bottomTabContainer: {
+    // Ensure BottomTab doesn't overlap content
+    justifyContent: 'flex-end',
+  },
+});
+
+export default Post;
 
 
 

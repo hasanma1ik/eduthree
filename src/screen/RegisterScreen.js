@@ -1,135 +1,243 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator} from 'react-native';
-import InputBox from '../InputBox';
-import SubmitButton from '../SubmitButton';
-import axios from 'axios';
+import React, { useState, useContext } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from './context/authContext';
 
-
-const RegisterScreen = ({ navigation }) => {
+export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState(''); // Added state for role
-  const [verificationCode, setVerificationCode] = useState(''); // Added state for verificationCode
+  const [role, setRole] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [state, setState] = useContext(AuthContext);
 
-  const handleSubmit = async () => {
+  const handleRegister = async () => {
     try {
       setLoading(true);
       if (!name || !email || !password || !role) {
-        Alert.alert('Please fill all fields');
+        Alert.alert('Error', 'Please fill in all required fields.');
         setLoading(false);
         return;
       }
-      
-      // Include role and verificationCode in the POST request
-      const { data } = await axios.post('/auth/register', { name, email, password, role, verificationCode });
 
-      Alert.alert(data && data.message);
-      navigation.navigate('Login');
-      console.log('Register Data==> ', { name, email, password, role, verificationCode });
+      // Include role and verificationCode in the POST request
+      const payload = { name, email, password, role };
+      if (role === 'teacher' || role === 'admin') {
+        payload.verificationCode = verificationCode;
+      }
+
+      const { data } = await axios.post('/auth/register', payload);
+
+      if (data.success) {
+        Alert.alert('Success', 'Registration successful! Please log in.');
+        navigation.navigate('Login1'); // Navigate to Login screen after registration
+      } else {
+        Alert.alert('Registration Failed', data.message || 'An error occurred during registration.');
+      }
+
       setLoading(false);
     } catch (error) {
-      Alert.alert("Error", error.response.data.message);
+      Alert.alert('Registration Error', error.response?.data?.message || 'An unexpected error occurred.');
+      console.error('Registration error:', error);
       setLoading(false);
-      console.log(error);
     }
   };
 
+  // Dynamic button color based on input validation
+  const buttonColor =
+    name.length > 0 && email.length > 0 && password.length > 0 && role.length > 0
+      ? '#ff0000' // Active: Red
+      : 'black'; // Inactive: Maroon
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.pageTitle}>Register</Text>
-      <View style={styles.inputContainer}>
-        <InputBox inputTitle={"Name"} value={name} setValue={setName} />
-        <InputBox inputTitle={"Email"} keyboardType="email-address" autoComplete="email" value={email} setValue={setEmail} />
-        <InputBox inputTitle={"Password"} secureTextEntry={true} autoComplete="password" value={password} setValue={setPassword} />
+    <ImageBackground
+      source={require('../../assets/edupic2.png')}
+      style={styles.fullScreenBackground}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <Text style={styles.mainTitle}>Learn Academy</Text>
+          <Text style={styles.title}>Register</Text>
 
-        {/* Role Picker */}
-        <Picker
-          selectedValue={role}
-          onValueChange={(itemValue, itemIndex) => setRole(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select Role" value="" />
-          <Picker.Item label="Student" value="student" />
-          <Picker.Item label="Teacher" value="teacher" />
-          <Picker.Item label="Admin" value="admin" />
-        </Picker>
-
-        {/* Conditionally render verification code input for teachers */}
-        {(role === 'teacher' || role === 'admin') && ( // Show for both teacher and admin roles
-          <InputBox
-            inputTitle="Verification Code"
-            value={verificationCode}
-            setValue={setVerificationCode}
+          {/* Name Input */}
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Full Name"
+            placeholderTextColor="#ccc"
+            autoCapitalize="words"
           />
-        )}
+
+          {/* Email Input */}
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            placeholderTextColor="#ccc"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          {/* Password Input */}
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+            secureTextEntry={true}
+            placeholderTextColor="#ccc"
+          />
+
+          {/* Role Picker */}
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={role}
+              onValueChange={(itemValue) => setRole(itemValue)}
+              style={styles.picker}
+              dropdownIconColor="#fff"
+              mode="dropdown"
+            >
+              <Picker.Item label="Select Role" value="" />
+              <Picker.Item label="Student" value="student" />
+              <Picker.Item label="Teacher" value="teacher" />
+              <Picker.Item label="Admin" value="admin" />
+            </Picker>
+          </View>
+
+          {/* Conditionally render verification code input for teachers and admins */}
+          {(role === 'teacher' || role === 'admin') && (
+            <TextInput
+              style={styles.input}
+              value={verificationCode}
+              onChangeText={setVerificationCode}
+              placeholder="Verification Code"
+              placeholderTextColor="#ccc"
+              autoCapitalize="none"
+            />
+          )}
+
+          {/* Submit Button */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: buttonColor }]}
+            onPress={handleRegister}
+            disabled={loading || !(name && email && password && role)}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Register</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Link to Login */}
+          <TouchableOpacity onPress={() => navigation.navigate("Login1")}>
+            <Text style={styles.textLink}>
+              Already Registered? <Text style={styles.link}>LOGIN</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator size="small" color="#ffffff" />
-        ) : (
-          <Text style={styles.submitButtonText}>Submit</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate("Login1")}>
-        <Text style={styles.linkText}>
-          Already Registered Please <Text style={styles.link}>LOGIN</Text>
-        </Text>
-      </TouchableOpacity>
-    </View>
+    </ImageBackground>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
+  fullScreenBackground: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Dark overlay for readability
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  container: {
+    width: '90%',
     padding: 20,
-    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    alignItems: 'center',
+    // backgroundColor: 'rgba(255, 255, 255, 0.1)', // Slightly transparent container
   },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  mainTitle: {
+    fontSize: 42,
+    color: '#fff', // White color for title text
+    marginBottom: 30,
     textAlign: 'center',
-    color: "#1e2225",
-    marginBottom: 20,
+    fontFamily: 'Kanit-Medium',
   },
-  inputContainer: {
-    marginHorizontal: 20,
+  title: {
+    fontSize: 24,
+    color: '#fff',
+    marginBottom: 20,
+    textAlign: 'center',
+    fontFamily: 'BebasNeue',
+  },
+  input: {
+    width: '100%',
+    marginVertical: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#fff',
+    borderRadius: 5,
+    color: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pickerContainer: {
+    width: '100%',
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#fff',
+    borderRadius: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   picker: {
     height: 50,
-    marginBottom: 20,
+    width: '100%',
+    color: '#fff',
   },
-  submitButton: {
-    backgroundColor: '#007bff',
-    padding: 15,
+  button: {
+    padding: 12,
     borderRadius: 5,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 10,
-    marginHorizontal: 20,
-  },
-  submitButtonText: {
-    fontSize: 18,
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  linkText: {
-    textAlign: "center",
     marginTop: 10,
+    width: '100%',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+  },
+  orStyle: {
+    color: '#fff', // White color for "or" text
+    fontSize: 16,
+    fontFamily: 'outfit-bold',
+    marginVertical: 10,
+  },
+  textLink: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
+    fontFamily: 'Kanit-Medium',
+    textDecorationLine: 'underline',
   },
   link: {
-    color: "#007BFF",
-  }
+    color: '#ff0000', // Red color for link text
+  },
 });
-
-export default RegisterScreen;

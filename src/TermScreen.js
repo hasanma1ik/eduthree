@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { View, Button, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
 function AddTermScreen() {
-  const [term, setTerm] = useState('Spring'); // Default to 'Spring' for better UX
+  const [term, setTerm] = useState('Spring');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
   const [fontsLoaded] = useFonts({
-    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
   });
 
   const onLayoutRootView = React.useCallback(async () => {
@@ -24,19 +24,19 @@ function AddTermScreen() {
   }, [fontsLoaded]);
 
   const handleSubmit = async () => {
-    const year = new Date().getFullYear(); // Get current year
-    const termWithYear = `${term} ${year}`; // Combine term with year
+    const year = new Date().getFullYear();
+    const termWithYear = `${term} ${year}`;
 
     try {
       await axios.post('/auth/terms', {
         name: termWithYear,
-        startDate: startDate.toISOString().split('T')[0], // Format as 'YYYY-MM-DD'
-        endDate: endDate.toISOString().split('T')[0], // Format as 'YYYY-MM-DD'
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
       });
-      Alert.alert("Success", "Term created successfully"); // Show success message
+      Alert.alert("Success", "Term created successfully");
     } catch (error) {
       console.error('Error adding term:', error);
-      Alert.alert("Error", "Failed to add term"); // Show error message
+      Alert.alert("Error", "Failed to add term");
     }
   };
 
@@ -48,16 +48,27 @@ function AddTermScreen() {
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
-      <Text style={styles.heading}>Create Term</Text>
-      <Text style={styles.label}>Select Term:</Text>
-      <View style={styles.pickerContainer}>
-        <Picker selectedValue={term} onValueChange={setTerm} style={styles.picker}>
-          <Picker.Item label="Spring" value="Spring" />
-          <Picker.Item label="Fall" value="Fall" />
-          <Picker.Item label="Summer" value="Summer" />
-        </Picker>
+      <Text style={styles.heading}></Text>
+
+      {/* Term Picker */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Select Term:</Text>
+        <RNPickerSelect
+          onValueChange={(value) => setTerm(value)}
+          items={[
+            { label: "Spring", value: "Spring" },
+            { label: "Fall", value: "Fall" },
+            { label: "Summer", value: "Summer" },
+          ]}
+          placeholder={{ label: 'Select a term', value: null }}
+          style={pickerSelectStyles}
+          useNativeAndroidPickerStyle={false}
+          Icon={() => <Text style={styles.icon}>▼</Text>}
+          value={term}
+        />
       </View>
 
+      {/* Start Date Picker */}
       <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.datePickerButton}>
         <Text style={styles.datePickerText}>Start Date: {formatDate(startDate)}</Text>
       </TouchableOpacity>
@@ -73,6 +84,7 @@ function AddTermScreen() {
         />
       )}
 
+      {/* End Date Picker */}
       <TouchableOpacity onPress={() => setShowEndDatePicker(true)} style={styles.datePickerButton}>
         <Text style={styles.datePickerText}>End Date: {formatDate(endDate)}</Text>
       </TouchableOpacity>
@@ -88,6 +100,7 @@ function AddTermScreen() {
         />
       )}
 
+      {/* Submit Button */}
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
         <Text style={styles.submitButtonText}>Add Term</Text>
       </TouchableOpacity>
@@ -99,68 +112,94 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#F4F6F8',
   },
   heading: {
-    fontSize: 24,
-    fontFamily: 'kanitmedium',
-    color: 'black',
-    marginBottom: 50,
-    marginLeft: 10,
+    fontSize: 26,
+    fontFamily: 'Kanit-Medium',
+    color: '#2C3E50',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  inputContainer: {
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    marginBottom: 10,
-    color: '#333',
-  },
-  pickerContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginBottom: 20,
-    overflow: 'hidden',
-    elevation: 3, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 }, // Shadow for iOS
-    shadowOpacity: 0.2, // Shadow for iOS
-    shadowRadius: 3, // Shadow for iOS
-  },
-  picker: {
-    width: '100%',
-    
+    fontFamily: 'Kanit-Medium',
+    color: '#34495E',
+    marginBottom: 8,
   },
   datePickerButton: {
-    backgroundColor: '#e0e0e0',
-    padding: 10,
+    backgroundColor: '#FFF',
+    padding: 15,
     borderRadius: 8,
     marginBottom: 20,
-    elevation: 3, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 }, // Shadow for iOS
-    shadowOpacity: 0.2, // Shadow for iOS
-    shadowRadius: 3, // Shadow for iOS
+    borderWidth: 1,
+    borderColor: 'black',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   datePickerText: {
     fontSize: 16,
-    color: '#333',
+    color: '#34495E',
+    fontFamily: 'Kanit-Medium',
   },
   submitButton: {
-    backgroundColor: 'black',
+    backgroundColor: '#018749',
     borderRadius: 8,
     paddingVertical: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 }, // Shadow for iOS
-    shadowOpacity: 0.2, // Shadow for iOS
-    shadowRadius: 3, // Shadow for iOS
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
   submitButtonText: {
-    color: '#fff',
+    color: '#FFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Kanit-Medium',
+  },
+  icon: {
+    color: '#2C3E50',
+    fontSize: 18,
+    paddingRight: 10,
+  },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#DADADA',
+    borderRadius: 8,
+    color: '#34495E',
+    backgroundColor: '#FFF',
+    paddingRight: 30,
+    fontFamily: 'Kanit-Medium',
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 8,
+    color: '#34495E',
+    backgroundColor: '#FFF',
+    paddingRight: 30,
+    fontFamily: 'Kanit-Medium',
+  },
+  placeholder: {
+    color: '#999',
+    fontFamily: 'Kanit-Medium',
   },
 });
 

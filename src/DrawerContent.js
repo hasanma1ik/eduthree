@@ -1,9 +1,9 @@
-// DrawerContent.js
 import React, { useContext } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { AuthContext } from './screen/context/authContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 
 const DrawerContent = (props) => {
   const [state, setState] = useContext(AuthContext);
@@ -17,99 +17,108 @@ const DrawerContent = (props) => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <DrawerContentScrollView {...props}>
-        {/* Custom drawer content */}
-        {userRole === 'teacher' && (
-          <>
-            <DrawerItem
-              label="Attendance"
-              onPress={() => props.navigation.navigate('AttendanceScreen')}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="Assignments"
-              onPress={() => props.navigation.navigate('Assignments', { assignmentId: '65d36a1d36c62925038c6e78' })}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="Create Assignment"
-              onPress={() => props.navigation.navigate('CreateAssignment')}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="My Posts"
-              onPress={() => props.navigation.navigate('MyPosts')}
-              labelStyle={styles.drawerLabel}
-            />
-          </>
-        )}
+        {/* Header with User Info */}
+        <View style={styles.header}>
+          <Image
+            source={{
+              uri: state?.user?.profilePicture || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png',
+            }}
+            style={styles.profileImage}
+          />
+          <Text style={styles.userName}>{state?.user?.name || 'User'}</Text>
+          <Text style={styles.userRole}>{userRole ? userRole.toUpperCase() : ''}</Text>
+        </View>
 
-        {userRole === 'admin' && (
-          <>
-            <DrawerItem
-              label="Course Creation"
-              onPress={() => props.navigation.navigate('CreateClasses')}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="Attendance"
-              onPress={() => props.navigation.navigate('AttendanceScreen')}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="My Posts"
-              onPress={() => props.navigation.navigate('MyPosts')}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="Grade Setter"
-              onPress={() => props.navigation.navigate('GradeSetter')}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="Student Form"
-              onPress={() => props.navigation.navigate('StudentForm')}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="Create Term"
-              onPress={() => props.navigation.navigate('AddTermScreen')}
-              labelStyle={styles.drawerLabel}
-            />
-          </>
-        )}
+        {/* Divider */}
+        <View style={styles.divider} />
 
-        {userRole === 'student' && (
-          <>
-            <DrawerItem
-              label="Class Schedule"
-              onPress={() => props.navigation.navigate('ClassSchedule', { userId: state.user.id })}
-              labelStyle={styles.drawerLabel}
-            />
-            <DrawerItem
-              label="Assignments"
-              onPress={() => props.navigation.navigate('Assignments', { assignmentId: '65d36a1d36c62925038c6e78' })}
-              labelStyle={styles.drawerLabel}
-            />
-          </>
-        )}
-        
+        {/* Common drawer content for all roles */}
         <DrawerItem
-          label="Log Out"
-          onPress={() => handleLogOut()}
+          label="Home"
+          onPress={() => props.navigation.navigate('Home')}
           labelStyle={styles.drawerLabel}
+          icon={() => <Icon name="home" size={20} color="#4E9F3D" />}
+        />
+        <DrawerItem
+          label="Account"
+          onPress={() => props.navigation.navigate('Account')}
+          labelStyle={styles.drawerLabel}
+          icon={() => <Icon name="user" size={20} color="#3F72AF" />}
+        />
+        <DrawerItem
+          label="Change Password"
+          onPress={() => props.navigation.navigate('ChangePasswordScreen')}
+          labelStyle={styles.drawerLabel}
+          icon={() => <Icon name="lock" size={20} color="#FF5722" />}
+        />
+        <DrawerItem
+          label="My Posts"
+          onPress={() => props.navigation.navigate('MyPosts')}
+          labelStyle={styles.drawerLabel}
+          icon={() => <Icon name="pencil-alt" size={20} color="#FF5722" />}
         />
       </DrawerContentScrollView>
+
+      {/* Logout Button */}
+      <TouchableOpacity style={styles.logoutButton} onPress={() => handleLogOut()}>
+        <Icon name="sign-out-alt" size={20} color="white" />
+        <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    backgroundColor: '#1F8A70',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 15,
+  },
+  userName: {
+    fontSize: 22,
+    fontFamily: 'Kanit-Medium',
+    color: 'white',
+  },
+  userRole: {
+    fontSize: 14,
+    fontFamily: 'Kanit-Medium',
+    color: 'white',
+    marginTop: 5,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
   drawerLabel: {
-    fontFamily: 'BebasNeue',
-    fontSize: 18,
-    color: '#2ecc71'
+    fontFamily: 'Kanit-Medium',
+    fontSize: 16,
+    color: '#333333',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D7263D',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  logoutText: {
+    fontFamily: 'Kanit-Medium',
+    fontSize: 16,
+    color: 'white',
+    marginLeft: 10,
   },
 });
 

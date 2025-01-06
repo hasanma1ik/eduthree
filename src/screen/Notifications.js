@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import axios from 'axios';
-import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { useFocusEffect } from '@react-navigation/native';
 import { useNotifications } from '../../NotificationContext';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
-
-
 const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState([]);
-  const { resetNotificationCount } = useNotifications(); // Use the context
+  const { resetNotificationCount } = useNotifications();
 
   useFocusEffect(
     React.useCallback(() => {
       fetchNotifications();
       const resetCount = async () => {
-        await resetNotificationCount(0); // Reset notification count when screen is focused
+        await resetNotificationCount(0);
       };
       resetCount();
-      return () => {}; // Optional cleanup actions
+      return () => {};
     }, [])
   );
 
@@ -35,7 +33,7 @@ const NotificationsScreen = () => {
   const markNotificationAsRead = async (notificationId) => {
     try {
       await axios.post(`/auth/notifications/${notificationId}/mark-read`);
-      const updatedNotifications = notifications.map(notification =>
+      const updatedNotifications = notifications.map((notification) =>
         notification._id === notificationId ? { ...notification, read: true } : notification
       );
       setNotifications(updatedNotifications);
@@ -43,8 +41,9 @@ const NotificationsScreen = () => {
       console.error('Failed to mark notification as read:', error);
     }
   };
+
   const [fontsLoaded] = useFonts({
-    'kanitmedium': require('../../assets/fonts/Kanit-Medium.ttf'),
+    'Kanit-Medium': require('../../assets/fonts/Kanit-Medium.ttf'),
   });
 
   const onLayoutRootView = React.useCallback(async () => {
@@ -57,11 +56,9 @@ const NotificationsScreen = () => {
     return null;
   }
 
-
-
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
-      <Text style={styles.heading}>Notifications</Text>
+      
       <FlatList
         data={notifications}
         keyExtractor={(item) => item._id.toString()}
@@ -87,35 +84,28 @@ const NotificationsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f5', // Light gray background for the whole screen
+    backgroundColor: 'black',
+    padding: 20,
   },
   heading: {
     fontSize: 24,
-    fontFamily: 'kanitmedium', // Use Kanit Medium font for the heading
-    color: 'black',
-    marginLeft: 20,
-    marginVertical: 20,
+    fontFamily: 'Kanit-Medium',
+    color: 'white',
+    marginBottom: 20,
   },
   notificationItem: {
-    backgroundColor: '#ffffff', // White background for each item
+    backgroundColor: '#333333',
     padding: 15,
-    borderRadius: 10, // Rounded corners for each notification
+    borderRadius: 10,
     marginVertical: 5,
-    marginHorizontal: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000', // Shadow for depth
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#555555',
   },
   unreadNotification: {
-    backgroundColor: '#eef2ff', // Slightly different background for unread notifications
+    backgroundColor: '#444444',
   },
   notificationContent: {
     flex: 1,
@@ -124,15 +114,15 @@ const styles = StyleSheet.create({
   },
   notificationMessage: {
     fontSize: 16,
-    color: '#333',
-    // fontWeight: 'bold',
-    flexShrink: 1, // Ensure text does not push other elements out of view
+    fontFamily: 'Kanit-Medium',
+    color: 'white',
+    flexShrink: 1,
   },
   unreadIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF6347', // Tomate color for a noticeable indicator
+    backgroundColor: '#FF6347',
     marginLeft: 10,
   },
 });

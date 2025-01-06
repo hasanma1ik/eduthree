@@ -13,14 +13,19 @@ const PostProvider = ({ children }) => {
   const getAllPosts = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("/post/get-all-post");
+      const { data } = await axios.get("/post/get-all-post", {
+        params: {
+          populate: "postedBy", // Ensure this is sent or handled in the backend
+        },
+      });
       setLoading(false);
       setPosts(data?.posts);
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching posts:", error);
       setLoading(false);
     }
   };
+  
 
   // inintal  posts
   useEffect(() => {

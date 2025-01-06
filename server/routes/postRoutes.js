@@ -1,6 +1,6 @@
 const express = require("express")
 const { requireSignIn } = require("../controllers/userController");
-const { createPostController, getAllPostsController, getUserPostsController, deletePostController, updatePostController } = require("../controllers/postController");
+const { createPostController, getAllPostsController, getUserPostsController, deletePostController, updatePostController, getAnnouncementsController, getTeacherDataController } = require("../controllers/postController");
 
 //router object
 const router = express.Router()
@@ -20,6 +20,12 @@ router.delete('/delete-post/:id', requireSignIn, deletePostController)
 
 //Update Post
 router.put("/update-post/:id", requireSignIn, updatePostController)
+
+
+router.get("/get-announcements", requireSignIn, getAnnouncementsController);
+
+router.get("/teacher/:id/data", requireSignIn, getTeacherDataController);
+
 
 
 //export

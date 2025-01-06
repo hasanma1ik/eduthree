@@ -6,10 +6,13 @@ const {
      loginController,
      updateUserController,
      requireSignIn,
+     getUserProfile,
      searchController,
+     getStudentAttendance,
      allUsersController,
      userPress,
      getAllThreads,
+    //  getCurrentUser,
      postMessageToThread,
      getMessagesInThread,
      deleteConversation,
@@ -44,6 +47,7 @@ const {
      getAllTeachers,
      submitAttendance,
      registerSubjectForStudent,
+     unenrollUserFromSubject,
      setGradeForUser,
      getClassSchedulesForLoggedInUser,
      createTerms,
@@ -73,6 +77,7 @@ router.put("/update-user", requireSignIn, updateUserController)
 
 // Search users
 router.get("/search", searchController)
+// router.get('/current-user', requireSignIn, getCurrentUser);
 
 // All Users
 router.get("/all-users", allUsersController)
@@ -93,6 +98,7 @@ router.post('/reset-password', resetPassword)
 // Route to list students in a class
 
 router.get('/users/:classId/:subjectId', getStudentsByClassAndSubject)
+router.get('/attendance/student-attendance', getStudentAttendance);
 
 // router to fetch timetable
 
@@ -159,6 +165,9 @@ router.get('/class/grade/:grade', getClassIdByGrade);
 
 // Route to register a student for a subject
 router.post('/users/registerSubject', registerUserForSubject);
+router.post( "/users/unenrollSubject", requireSignIn, logUser, unenrollUserFromSubject
+);
+
 router.post('/users/setGrade', setGradeForUser);
 router.get('/class/grade/:grade/users', getClassUsersByGrade);
 
@@ -189,7 +198,10 @@ router.get('/terms', getTerms)
 router.get('/teacher/:id/data', requireSignIn, getTeacherData);
 
 
+
 router.delete('/assignments/:assignmentId', requireSignIn, deleteAssignment);
+
+router.get('/profile', requireSignIn, getUserProfile);
 
 
 

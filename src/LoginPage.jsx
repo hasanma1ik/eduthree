@@ -1,123 +1,196 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
+import React, { useState, useContext } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import * as WebBrowser from "expo-web-browser";
-import React from 'react'
-import { FontAwesome } from '@expo/vector-icons';
-import Colors from './Colors';
-import { useOAuth } from '@clerk/clerk-expo'
-import { useWarmUpBrowser } from '../hooks/warmUpBrowser';
+import { AuthContext } from './screen/context/authContext';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 WebBrowser.maybeCompleteAuthSession();
 
-export default function LoginPage(){
-    useWarmUpBrowser();
-    const navigation = useNavigation();
- 
-    const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-    
-    const onPress= async()=>{
-        try {
-            const { createdSessionId, signIn, signUp, setActive } =
-              await startOAuthFlow();
-       
-            if (createdSessionId) {
-              setActive({ session: createdSessionId });
-            } else {
-              // Use signIn or signUp for next steps such as MFA
-            }
-          } catch (err) {
-            console.error("OAuth error", err);
-          }
-    }
-    const onSignUp = () => {
-      // Navigate to the RegisterScreen
-      navigation.navigate('Register');
-    };
-    const onLogin = () =>{
-      navigation.navigate('Login1')
-    }
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [state, setState] = useContext(AuthContext);
+  const navigation = useNavigation();
+  const [loading, setLoading] = useState(false); // Loading state
 
-    return (
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) {
+        Alert.alert('Error', 'Please fill in both email and password.');
+        return;
+      }
+      setLoading(true); // Start loading
+      const { data } = await axios.post('/auth/login', { email, password });
+      if (data && data.user) {
+        setState((prevState) => {
+          const updatedState = {
+            ...prevState,
+            user: data.user,
+            token: data.token,
+            isDriver: data.user.isDriver,
+          };
+          AsyncStorage.setItem('@auth', JSON.stringify(updatedState));
+          return updatedState;
+        });
+        // Optionally navigate to HomeScreen
+        // navigation.navigate('HomeScreen');
+      } else {
+        Alert.alert('Login failed', 'Invalid response from server');
+      }
+    } catch (error) {
+      Alert.alert('Login Error', error.response?.data?.message || error.message);
+    } finally {
+      setLoading(false); // Stop loading
+    }
+  };
+
+  // Dynamic button color based on input validation
+  const buttonColor = email.length > 0 && password.length > 0 ? '#ff0000' : 'black'; // Active: Red, Inactive: Maroon
+
+  return (
+    <ImageBackground 
+      source={require('./../assets/edupic3.png')}
+      style={styles.fullScreenBackground}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
         <View style={styles.container}>
-          <Text style={styles.loginText}>Learn Academy</Text>
-               <Image source={require('./../assets/loginpic.png')} style={{width: 400, height: 400}} />
+          <Text style={styles.mainTitle}>Learn Academy</Text>
+          <Text style={styles.title}>Login</Text>
 
-      
+          {/* Email Input */}
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            placeholderTextColor="#ccc"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-      <TouchableOpacity style={styles.button1} onPress={onLogin}>
-      <Text style={styles.linkText1}> <Text style ={styles.link1}>LOGIN</Text></Text>
-      </TouchableOpacity>
-      <Text style={styles.orStyle}>or</Text>
-      <TouchableOpacity style={styles.button2} onPress={onPress}>
-            <FontAwesome name="google" size={24} color="white" style={{marginRight:10}} />
-                <Text style={styles.linkText2}><Text style ={styles.link1}>Sign in with Google</Text></Text>
-            </TouchableOpacity>
+          {/* Password Input */}
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+            secureTextEntry={true}
+            placeholderTextColor="#ccc"
+          />
 
-            {/* <TouchableOpacity style={styles.button} onPress={onSignUp}>
-        <Text style={{ color: Colors.BLACK }}>Sign Up</Text>
-      </TouchableOpacity> */}
-   
-      
+          {/* Sign In Button */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: buttonColor }]}
+            onPress={handleLogin}
+            disabled={email.length === 0 || password.length === 0 || loading} // Disable button during loading
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* OR Divider */}
+         
+
+          {/* Forgot Password Link */}
+          <Text
+            style={styles.textLink}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            Forgot password?
+          </Text>
+
+          {/* Register Link */}
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.textLink}>Don't have an account? REGISTER</Text>
+          </TouchableOpacity>
         </View>
-    )
+      </View>
+    </ImageBackground>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: "#fff",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-   
-  button1:{
-    backgroundColor:'#2B2D2F',
-    padding:10,
-    margin:30,
-    width: 200,
-    display:'flex',
-    flexDirection:'row',
-    justifyContent:'center',
-    alignItems:'center',
-    borderRadius: 10
-},
-button2:{
-  backgroundColor:'#2B2D2F',
-  padding:10,
-  margin:30,
-  width: 200,
-  display:'flex',
-  flexDirection:'row',
-  justifyContent:'center',
-  alignItems:'center',
-  borderRadius: 10
-},
-
-loginText:{
-  
-  fontSize:30,
-  textAlign: "center",
-  fontFamily: 'outfit-bold',
-},
-
-linkText1:{
-  textAlign: "center",
-  fontFamily: 'outfit-medium'
-},
-linkText2:{
-  textAlign: "center",
-  fontFamily: 'outfit-medium'
-},
-
-
-link1: {
-  color:'white',
-},
-orStyle:{
-  fontFamily: 'outfit-bold',
-  marginBottom:-10,
-  marginTop: -10,
-
-}
-
-  });
+  fullScreenBackground: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Dark overlay for readability
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  container: {
+    width: '90%',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0)', // Slightly transparent container for better readability
+  },
+  mainTitle: {
+    fontSize: 42,
+    color: '#fff', // White color for title text
+    marginBottom: 30,
+    textAlign: 'center',
+    fontFamily: 'Kanit-Medium',
+  },
+  title: {
+    fontSize: 24,
+    color: '#fff',
+    marginBottom: 20,
+    textAlign: 'center',
+    fontFamily: 'Kanit-Medium',
+  },
+  input: {
+    width: '100%',
+    marginVertical: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#fff',
+    borderRadius: 5,
+    color: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  button: {
+    padding: 12,
+    borderRadius: 5,
+    backgroundColor: '#ff0000', // Red color for active button
+    alignItems: 'center',
+    marginTop: 10,
+    width: '100%',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+  },
+  orStyle: {
+    color: '#fff', // White color for "or" text
+    fontSize: 16,
+    fontFamily: 'outfit-bold',
+    marginVertical: 10,
+  },
+  textLink: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
+    fontFamily: 'Kanit-Medium',
+    textDecorationLine: 'underline',
+  },
+});

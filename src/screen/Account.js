@@ -1,62 +1,88 @@
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from './context/authContext';
-import BottomTab from '../tabs/bottomTab';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 const Account = () => {
-  // Global State
   const [state, setState] = useContext(AuthContext);
-  // Local state
   const { user, token } = state;
-  const [name, setName] = useState(user?.name);
+
+  const [name, setName] = useState(user?.name || '');
   const [password, setPassword] = useState('');
-  const [email] = useState(user?.email);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email] = useState(user?.email || '');
+  const [country, setCountry] = useState(user?.country || 'Pakistan'); // Default country
   const [loading, setLoading] = useState(false);
-  const [imageUri, setImageUri] = useState(user?.profilePicture);
+  const [imageUri, setImageUri] = useState(user?.profilePicture || '');
 
-  useEffect(()=> {
-    setImageUri(user?.profilePicture)}, [user]);
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile();
+    }
+  }, [token]);
 
+  const fetchUserProfile = async () => {
+    try {
+      const timestamp = Date.now();
+      const { data } = await axios.get(`/auth/profile?t=${timestamp}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
+      setState((prev) => {
+        if (JSON.stringify(prev.user) !== JSON.stringify(data.user)) {
+          return { ...prev, user: data.user };
+        }
+        return prev;
+      });
 
+      setName(data.user.name || '');
+      setImageUri(data.user.profilePicture || '');
+      setCountry(data.user.country || 'Pakistan');
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+      alert("Failed to fetch user profile");
+    }
+  };
 
   const updateProfilePicture = async (uri) => {
     try {
       setLoading(true);
-      const { data } = await axios.put('/auth/update-user', {
-        name,
-        email,
-        profilePicture: uri,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await axios.put('/auth/update-user',
+        { name, email, profilePicture: uri, country },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLoading(false);
+
+      setState((prev) => {
+        if (JSON.stringify(prev.user) !== JSON.stringify(data.updatedUser)) {
+          return { ...prev, user: data.updatedUser };
+        }
+        return prev;
       });
 
-      setLoading(false);
-      setState({ ...state, user: data.updatedUser });
-      
+      setImageUri(data.updatedUser.profilePicture);
+      alert('Profile picture updated successfully!');
     } catch (error) {
-      console.log("Error updating profile picture:", error);
+      console.error("Error updating profile picture:", error);
       setLoading(false);
-      alert(error.response.data.message || error.message);
+      alert(error.response?.data?.message || error.message);
     }
   };
 
   const selectImage = async () => {
-    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
       alert("Permission to access camera roll is required!");
       return;
     }
 
-    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      aspect: [1, 1],
+      quality: 0.7,
     });
 
     if (!pickerResult.canceled) {
@@ -67,119 +93,188 @@ const Account = () => {
   };
 
   const handleUpdate = async () => {
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data } = await axios.put('/auth/update-user', {
-        name,
-        password,
-        email,
-        profilePicture: imageUri,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await axios.put('/auth/update-user',
+        { name, password, email, profilePicture: imageUri, country },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLoading(false);
+
+      setState((prev) => {
+        if (JSON.stringify(prev.user) !== JSON.stringify(data.updatedUser)) {
+          return { ...prev, user: data.updatedUser };
+        }
+        return prev;
       });
 
-      setLoading(false);
-      setState({ ...state, user: data.updatedUser });
-      alert(data.message);
+      alert('Profile updated successfully!');
     } catch (error) {
-      alert(error.response.data.message);
+      alert(error.response?.data?.message || error.message);
       setLoading(false);
-      console.log(error);
+      console.error(error);
     }
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <View style={{ alignItems: 'center' }}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.imageContainer}>
           <TouchableOpacity onPress={selectImage}>
             <Image
-              source={{
-                uri: imageUri || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png',
-              }}
-              style={{ height: 200, width: 200, borderRadius: 100 }}
+              source={{ uri: imageUri || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+              style={styles.profileImage}
             />
           </TouchableOpacity>
-        </View>
-        <Text style={styles.warningText}>Currently, you can only update your name and password</Text>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputText}>Name</Text>
-          <TextInput style={styles.inputBox} value={name} onChangeText={(text) => setName(text)} />
+          <Text style={styles.editText}>Tap to change picture</Text>
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.inputText}>Email</Text>
-          <TextInput style={styles.inputBox} value={email} editable={false} />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputText}>Password</Text>
+          <Text style={styles.inputLabel}>Name</Text>
           <TextInput
             style={styles.inputBox}
-            value={password}
-            onChangeText={(text) => setPassword(text)}
-            secureTextEntry={true}
-            placeholder="Enter new password (if changing)"
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter your name"
+            placeholderTextColor="#aaa"
           />
         </View>
 
-        <View style={{ alignItems: 'center' }}>
-          <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate}>
-            <Text style={styles.updateBtnText}>{loading ? 'Please Wait' : 'Update Profile'}</Text>
-          </TouchableOpacity>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Email</Text>
+          <TextInput
+            style={[styles.inputBox, styles.disabledInput]}
+            value={email}
+            editable={false}
+            placeholder="Email"
+            placeholderTextColor="#aaa"
+          />
         </View>
-      </ScrollView>
 
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <BottomTab />
-      </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Country</Text>
+          <Picker
+            selectedValue={country}
+            onValueChange={(itemValue) => setCountry(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Pakistan" value="Pakistan" />
+            <Picker.Item label="Saudi Arabia" value="Saudi Arabia" />
+            <Picker.Item label="United Arab Emirates" value="United Arab Emirates" />
+          </Picker>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={true}
+            placeholder="Enter new password (if changing)"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Confirm Password</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={true}
+            placeholder="Enter new password again"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.updateBtn, loading && styles.disabledBtn]}
+          onPress={handleUpdate}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text style={styles.updateBtnText}>Update Profile</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: 10,
-    justifyContent: 'space-between',
+    backgroundColor: '#F4F6F8',
   },
-  warningText: {
-    color: 'red',
-    fontSize: 13,
-    textAlign: 'center',
+  scrollContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileImage: {
+    height: 120,
+    width: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#018749',
+  },
+  editText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#018749',
+    fontFamily: 'Kanit-Medium',
   },
   inputContainer: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '100%',
+    marginBottom: 15,
   },
-  inputText: {
-    fontWeight: 'bold',
-    width: 70,
-    color: 'gray',
+  inputLabel: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Kanit-Medium',
+    marginBottom: 5,
   },
   inputBox: {
-    width: 250,
-    backgroundColor: '#ffffff',
-    marginLeft: 10,
-    fontSize: 16,
-    paddingLeft: 20,
-    borderRadius: 5,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: 'Kanit-Medium',
+    color: '#333',
+  },
+  disabledInput: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#EEE',
   },
   updateBtn: {
-    backgroundColor: '#04AA6D',
-    height: 40,
-    width: 250,
-    borderRadius: 10,
-    marginTop: 30,
+    width: '100%',
+    backgroundColor: '#018749',
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 20,
+  },
+  disabledBtn: {
+    backgroundColor: '#A9A9A9',
   },
   updateBtnText: {
-    color: '#ffffff',
-    fontSize: 18,
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
   },
 });
 

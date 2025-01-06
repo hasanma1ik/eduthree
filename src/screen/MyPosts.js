@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import BottomTab from '../tabs/bottomTab';
 import axios from 'axios';
 import PostCard from '../PostCard';
@@ -36,7 +36,7 @@ const MyPosts = () => {
   const [fontsLoaded] = useFonts({
     'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf'),
     'kanitregular': require('../../assets/fonts/Kanit-Regular.ttf'),
-    'kanitmedium': require('../../assets/fonts/Kanit-Medium.ttf'),
+    'Kanit-Medium': require('../../assets/fonts/Kanit-Medium.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -51,20 +51,30 @@ const MyPosts = () => {
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
+      {/* Header */}
       <View style={styles.header}>
-      
-        <Text style={styles.heading}>My Posts</Text>
+        
+        <TouchableOpacity onPress={getUserPosts}>
+          <Ionicons name="refresh" size={20} color="#007BFF" />
+        </TouchableOpacity>
       </View>
+
+      {/* Content */}
       {loading ? (
-        <ActivityIndicator size="large" color="#00ff00" />
+        <ActivityIndicator size="large" color="#007BFF" />
       ) : (
-        <ScrollView>
+        <ScrollView style={styles.postList}>
           {posts.map((post) => (
             <PostCard key={post._id} post={post} myPostScreen={true} />
           ))}
+          {posts.length === 0 && (
+            <Text style={styles.noPostsText}>No posts to display.</Text>
+          )}
         </ScrollView>
       )}
-      <View style={{ backgroundColor: '#ffffff' }}>
+
+      {/* Bottom Tab */}
+      <View style={styles.bottomTabContainer}>
         <BottomTab />
       </View>
     </View>
@@ -74,23 +84,41 @@ const MyPosts = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: 10,
-    justifyContent: 'space-between',
+    backgroundColor: '#F4F6F9', // Light background
+    padding: 10,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
-  heading: {
-    fontSize: 24,
-    fontFamily: 'kanitmedium', // Use Kanit Regular font for the heading
-    color: 'black',
-    marginLeft: 10,
+  headerTitle: {
+    fontSize: 26,
+    fontFamily: 'Kanit-Medium',
+    color: '#34495E', // Darker text for light background
   },
-  labelStyle: {
-    fontFamily: 'kanitregular',
-    fontSize: 14,
+  postList: {
+    marginBottom: 70, // Leave space for the bottom tab
+  },
+  noPostsText: {
+    fontFamily: 'Kanit-Medium',
+    fontSize: 16,
+    color: '#7F8C8D', // Neutral gray for no posts message
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  bottomTabContainer: {
+    backgroundColor: '#FFFFFF',
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    elevation: 5, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
 });
 

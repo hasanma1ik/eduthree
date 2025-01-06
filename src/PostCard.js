@@ -68,7 +68,7 @@ const PostCard = ({ post, myPostScreen }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'white',
     borderRadius: 15,
     padding: 15,
     marginBottom: 15,
@@ -90,21 +90,25 @@ const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
     justifyContent: 'center',
+    
   },
   userName: {
-    fontWeight: 'bold',
-    color: '#228B22',
+    // fontWeight: 'bold',
+      color: "#228B22",
+    fontFamily: 'Kanit-Medium',
     fontSize: 16,
     marginBottom: 5,
   },
   postDate: {
-    color: 'gray',
+    color: 'black',
     fontSize: 12,
     marginBottom: 5,
+    fontFamily: 'Kanit-Medium',
   },
   desc: {
     fontSize: 14,
-    color: '#333',
+    color: 'black',
+    fontFamily: 'Kanit-Medium'
   },
 });
 

@@ -53,13 +53,15 @@ const NotificationIcon = ({ navigation }) => {
 
   return (
     <TouchableOpacity onPress={handlePress} style={styles.iconContainer}>
-      <Ionicons name="notifications" size={24} color="black" />
+      <Ionicons name="notifications" size={24} color="white" />
       {notificationCount > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{notificationCount}</Text>
         </View>
       )}
-      <Text style={styles.notificationText}>Notifications</Text>
+      <Text style={[styles.notificationText, { color: 'white' }]}>
+        Notifications
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -92,6 +94,7 @@ const styles = StyleSheet.create({
   notificationText: {
     fontFamily: 'kanitregular', // Apply BebasNeue font
     fontSize: 14, // Adjust the size as needed
+    
   },
 });
 

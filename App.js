@@ -59,8 +59,10 @@ export default function App() {
     'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
     'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
     'merriweather-sans-bold': require('./assets/fonts/MerriweatherSans-Italic-VariableFont_wght.ttf'), 
-    'merriweather-sans-bold': require('./assets/fonts/MerriweatherSans-VariableFont_wght.ttf'), 
-    'BebasNeue': require('./assets/fonts/BebasNeue-Regular.ttf')
+    'MerriweatherSans-VariableFont_wght': require('./assets/fonts/MerriweatherSans-VariableFont_wght.ttf'),
+    'BebasNeue': require('./assets/fonts/BebasNeue-Regular.ttf'),
+    'Kanit-Medium': require('./assets/fonts/Kanit-Medium.ttf'),
+    'kanitmedium1': require('./assets/fonts/Kanit-Regular.ttf'),
 
   });
 

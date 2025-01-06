@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Alert, 
+  SafeAreaView 
+} from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
 import { useFonts } from 'expo-font';
@@ -15,7 +22,7 @@ const SeeAttendance = () => {
   const [attendanceData, setAttendanceData] = useState([]);
 
   const [fontsLoaded] = useFonts({
-    'kanitmedium': require('../assets/fonts/Kanit-Medium.ttf'),
+    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -75,117 +82,127 @@ const SeeAttendance = () => {
   }
 
   return (
-    <View style={styles.container} onLayout={onLayoutRootView}>
-      <Text style={styles.header}>See Attendance</Text>
-      <ScrollView style={styles.formContainer}>
-        <View style={styles.pickerContainer}>
-          <RNPickerSelect
-            onValueChange={value => setSelectedGrade(value)}
-            items={grades.map(grade => ({ label: grade, value: grade }))}
-            placeholder={{ label: "Select a grade", value: null }}
-            style={pickerSelectStyles}
-          />
-        </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container} onLayout={onLayoutRootView}>
+       
+        <ScrollView style={styles.formContainer}>
+          
+          {/* Grade Picker */}
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={value => setSelectedGrade(value)}
+              items={grades.map(grade => ({ label: grade, value: grade }))}
+              placeholder={{ label: "Select a grade", value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false} // Ensure custom styles are applied on Android
+              Icon={() => {
+                return <Text style={styles.icon}>▼</Text>; // Custom dropdown icon
+              }}
+            />
+          </View>
 
-        <View style={styles.pickerContainer}>
-          <RNPickerSelect
-            onValueChange={value => setSelectedSubject(value)}
-            items={subjects}
-            placeholder={{ label: "Select a subject", value: null }}
-            style={pickerSelectStyles}
-          />
-        </View>
+          {/* Subject Picker */}
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={value => setSelectedSubject(value)}
+              items={subjects}
+              placeholder={{ label: "Select a subject", value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => {
+                return <Text style={styles.icon}>▼</Text>;
+              }}
+            />
+          </View>
 
-        <View style={styles.pickerContainer}>
-          <RNPickerSelect
-            onValueChange={value => setSelectedDate(value)}
-            items={attendanceDates}
-            placeholder={{ label: "Select a date", value: null }}
-            style={pickerSelectStyles}
-          />
-        </View>
+          {/* Date Picker */}
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={value => setSelectedDate(value)}
+              items={attendanceDates}
+              placeholder={{ label: "Select a date", value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => {
+                return <Text style={styles.icon}>▼</Text>;
+              }}
+            />
+          </View>
 
-        <ScrollView style={styles.attendanceContainer}>
-          {attendanceData.map((record, index) => (
-            record.attendance.map((entry, subIndex) => (
-              <View key={`${index}-${subIndex}`} style={styles.attendanceItem}>
-                <Text style={styles.userNameText}>{entry.userId.name || 'Unknown'}</Text>
-                {entry.status === 'Present' ? (
-                  <View style={styles.statusPresent}>
-                    <Text style={styles.statusText}>P</Text>
-                  </View>
-                ) : entry.status === 'Absent' ? (
-                  <View style={styles.statusAbsent}>
-                    <Text style={styles.statusText}>A</Text>
-                  </View>
-                ) : entry.status === 'Late' ? (
-                  <View style={styles.statusLate}>
-                    <Text style={styles.statusText}>L</Text>
-                  </View>
-                ) : (
-                  <Text>{entry.status}</Text>
-                )}
-              </View>
-            ))
-          ))}
+          {/* Attendance Data */}
+          <View style={styles.attendanceContainer}>
+            {attendanceData.map((record, index) => (
+              record.attendance.map((entry, subIndex) => (
+                <View key={`${index}-${subIndex}`} style={styles.attendanceItem}>
+                  <Text style={styles.userNameText}>{entry.userId.name || 'Unknown'}</Text>
+                  {entry.status === 'Present' ? (
+                    <View style={styles.statusPresent}>
+                      <Text style={styles.statusText}>P</Text>
+                    </View>
+                  ) : entry.status === 'Absent' ? (
+                    <View style={styles.statusAbsent}>
+                      <Text style={styles.statusText}>A</Text>
+                    </View>
+                  ) : entry.status === 'Late' ? (
+                    <View style={styles.statusLate}>
+                      <Text style={styles.statusText}>L</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.statusOther}>{entry.status}</Text>
+                  )}
+                </View>
+              ))
+            ))}
+          </View>
+
         </ScrollView>
-      </ScrollView>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'black', // Black background for the safe area
+  },
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#E0E0E0', // Black background
   },
   header: {
     fontSize: 24,
-    fontFamily: 'kanitmedium',
-    color: 'black',
-    marginBottom: 10,
-    marginTop: -20,
+    fontFamily: 'Kanit-Medium',
+    color: 'white',
+    marginBottom: 20,
+    marginTop: 20, // Adjusted to bring the header down
+    textAlign: 'center',
   },
   formContainer: {
-    marginTop: 10, // Add marginTop to move the form down
+    marginTop: 10,
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    marginBottom: 10,
-    width: '100%',
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+  pickerWrapper: {
+    marginBottom: 20,
   },
   attendanceContainer: {
     marginTop: 20,
     width: '100%',
   },
   attendanceItem: {
-    borderWidth: 0,
-    backgroundColor: '#fff',
+    backgroundColor: 'white', // Darker shade for attendance items
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   userNameText: {
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     fontSize: 16,
-    fontFamily: 'kanitmedium',
+    fontFamily: 'Kanit-Medium',
+    color: 'black',
   },
   statusPresent: {
     width: 30,
@@ -194,10 +211,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
-  },
-  statusText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  
   },
   statusAbsent: {
     width: 30,
@@ -210,16 +224,25 @@ const styles = StyleSheet.create({
   statusLate: {
     width: 30,
     height: 30,
-    backgroundColor: '#343A40',
+    backgroundColor: '#FFC107',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
   },
-  dateText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
+  statusOther: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontFamily: 'Kanit-Medium',
   },
+  icon: {
+    color: 'white',
+    fontSize: 18,
+    paddingRight: 10,
+  },
+  statusText:{
+    color: 'white',
+    fontFamily: 'Kanit-Medium'
+  }
 });
 
 const pickerSelectStyles = StyleSheet.create({
@@ -228,26 +251,34 @@ const pickerSelectStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: 'black',
-    borderRadius: 4,
-    color: 'black',
-    backgroundColor: 'white',
-    paddingRight: 30,
+    borderColor: 'white', // White border
+    borderRadius: 8,
+    color: 'white', // White text
+    backgroundColor: '#333333', // Dark background
+    paddingRight: 30, // To ensure the text is never behind the icon
+    fontFamily: 'Kanit-Medium',
   },
   inputAndroid: {
     fontSize: 16,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: 'black',
-    borderRadius: 4,
-    color: 'black',
-    backgroundColor: 'white',
-    paddingRight: 30,
+    borderColor: 'black', // White border
+    borderRadius: 8,
+    color: 'black', // White text
+    backgroundColor: 'white', // Dark background
+    paddingRight: 30, // To ensure the text is never behind the icon
+    fontFamily: 'Kanit-Medium',
   },
+  placeholder: {
+    color: 'black', // White placeholder text
+    fontFamily: 'Kanit-Medium',
+  },
+  
 });
 
 export default SeeAttendance;
+
 
 
 

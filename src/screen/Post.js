@@ -1,66 +1,121 @@
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
-import React, { useState, useContext } from 'react';
-import BottomTab from '../tabs/bottomTab';
-import { PostContext } from './context/postContext';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import { AuthContext } from './context/authContext';
 import axios from 'axios';
 
 const Post = ({ navigation }) => {
-  const [posts, setPosts] = useContext(PostContext);
+  const [state] = useContext(AuthContext);
+  const currentUser = state.user;
+
   const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [grades, setGrades] = useState([]);
+  const [gradeSubjectMap, setGradeSubjectMap] = useState({});
+  const [subjects, setSubjects] = useState([]);
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
 
-  //handle form data post Data
-  const handlePost = async () => {
-    try {
-      setLoading(true);
-      if (!description) {
-        alert('Please add post description');
-        setLoading(false);
-        return;
+  useEffect(() => {
+    const fetchTeacherData = async () => {
+      if (currentUser.role === 'teacher') {
+        try {
+          const { data } = await axios.get(`/post/teacher/${currentUser._id}/data`);
+          setGrades(data.grades || []);
+          setGradeSubjectMap(data.gradeSubjectMap || {});
+        } catch (error) {
+          Alert.alert('Error', 'Failed to fetch grades and subjects.');
+        }
       }
+    };
 
-      const { data } = await axios.post('/post/create-post', { description });
-      setLoading(false);
-      setPosts([...posts, data?.post]);
-      alert(data?.message);
-      navigation.navigate('Home');
+    if (currentUser && currentUser.role === 'teacher') {
+      fetchTeacherData();
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (selectedGrade) {
+      setSubjects(gradeSubjectMap[selectedGrade] || []);
+    } else {
+      setSubjects([]);
+    }
+    setSelectedSubject('');
+  }, [selectedGrade, gradeSubjectMap]);
+
+  const handlePost = async () => {
+    if (!description.trim()) {
+      Alert.alert('Validation Error', 'Please add a description.');
+      return;
+    }
+
+    if (currentUser.role === 'teacher' && (!selectedGrade || !selectedSubject)) {
+      Alert.alert('Validation Error', 'Please select a grade and subject.');
+      return;
+    }
+
+    try {
+      const postData = {
+        description,
+        grade: currentUser.role === 'teacher' ? selectedGrade : undefined,
+        subject: currentUser.role === 'teacher' ? selectedSubject : undefined,
+      };
+
+      await axios.post('/post/create-post', postData);
+      Alert.alert('Success', 'Post created successfully.');
+      navigation.navigate('Announcements');
     } catch (error) {
-      alert(error.response.data.message || error.message);
-      setLoading(false);
-      console.log(error);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to create post.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.headerContainer}>
-         
-        </View>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.inputBox}
-            placeholder="Add post description"
-            placeholderTextColor={'gray'}
-            multiline={true}
-            numberOfLines={5}
-            value={description}
-            onChangeText={(text) => setDescription(text)}
-          />
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.postBtn} onPress={handlePost}>
-            <Text style={styles.postBtnText}>
-              <FontAwesome5 name="plus-square" size={18} /> {'   '}
-              Create Post
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <BottomTab />
-      </View>
+      <Text style={styles.title}>Create a Post</Text>
+
+      <TextInput
+        style={styles.textInput}
+        placeholder="Write your post here..."
+        placeholderTextColor="#aaa"
+        value={description}
+        onChangeText={setDescription}
+        multiline
+      />
+
+      {currentUser && currentUser.role === 'teacher' && (
+        <>
+          <View style={styles.pickerContainer}>
+            <Text style={styles.label}>Select Grade:</Text>
+            <Picker
+              selectedValue={selectedGrade}
+              onValueChange={(value) => setSelectedGrade(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select Grade" value="" />
+              {grades.map((grade) => (
+                <Picker.Item label={grade} value={grade} key={grade} />
+              ))}
+            </Picker>
+          </View>
+
+          <View style={styles.pickerContainer}>
+            <Text style={styles.label}>Select Subject:</Text>
+            <Picker
+              selectedValue={selectedSubject}
+              onValueChange={(value) => setSelectedSubject(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select Subject" value="" />
+              {subjects.map((subject) => (
+                <Picker.Item label={subject.name} value={subject._id} key={subject._id} />
+              ))}
+            </Picker>
+          </View>
+        </>
+      )}
+
+      <TouchableOpacity style={styles.button} onPress={handlePost}>
+        <Text style={styles.buttonText}>Post</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -68,71 +123,61 @@ const Post = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: 10,
-    justifyContent: 'space-between',
-    marginTop: 40,
-    backgroundColor: '#F5F5F5',
+    padding: 20,
+    backgroundColor: '#F4F6F8',
   },
-  scrollViewContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerContainer: {
+  title: {
+    fontSize: 26,
+    fontFamily: 'Kanit-Medium',
+    color: '#34495E',
+    textAlign: 'center',
     marginBottom: 20,
   },
-  heading: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#228B22',
-  },
-  inputContainer: {
-    width: '100%',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  inputBox: {
-    backgroundColor: '#ffffff',
-    textAlignVertical: 'top',
-    paddingTop: 10,
-    width: '100%',
-    fontSize: 16,
-    paddingLeft: 15,
-    borderColor: '#ddd',
+  textInput: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    borderColor: '#DADADA',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#333',
+    marginBottom: 20,
   },
-  buttonContainer: {
-    alignItems: 'center',
+  pickerContainer: {
+    marginBottom: 20,
   },
-  postBtn: {
-    backgroundColor: '#04AA6D',
-    paddingVertical: 15, // Increased vertical padding
-    paddingHorizontal: 25, // Increased horizontal padding to make the button wider
-    borderRadius: 2,
-    width: 250, // Increased width
-    marginHorizontal: 50, // Adjusted horizontal margin if needed
-    marginVertical: 10,
+  label: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#34495E',
+    marginBottom: 8,
+  },
+  picker: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DADADA',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#4CAF50', // Green button
+    borderRadius: 8,
+    paddingVertical: 15,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
-  postBtnText: {
-    color: '#ffffff',
+  buttonText: {
+    color: '#FFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Kanit-Medium',
   },
 });
 
