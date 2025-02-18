@@ -218,10 +218,12 @@ const styles = StyleSheet.create({
   scrollContainer: {
     alignItems: 'center',
     padding: 20,
+    
   },
   imageContainer: {
     alignItems: 'center',
     marginBottom: 20,
+    
   },
   profileImage: {
     height: 120,
@@ -239,6 +241,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     width: '100%',
     marginBottom: 15,
+    
   },
   inputLabel: {
     fontSize: 16,

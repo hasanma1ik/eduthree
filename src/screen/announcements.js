@@ -53,44 +53,50 @@ const Announcements = () => {
     );
   }
 
-  const renderPosts = (posts, isAdmin = false) => {
+  const renderPosts = (posts) => {
     return posts.length > 0 ? (
       posts.map((post, index) => (
-        <PostCard key={index} post={post} /> // Pass post to PostCard
+        <PostCard key={index} post={post} />
       ))
     ) : (
       <Text style={styles.noPostsText}>
-        No {isAdmin ? "Admin" : "Teacher"} announcements available.
+        No {activeTab} announcements available.
       </Text>
     );
   };
 
   return (
     <View style={styles.container}>
-      {(currentUser.role === "teacher" || currentUser.role === "student") && (
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === "Admin" && styles.activeTab]}
-            onPress={() => setActiveTab("Admin")}
-          >
-            <Text style={[styles.tabText, activeTab === "Admin" && styles.activeTabText]}>
-              Admin
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === "Teacher" && styles.activeTab]}
-            onPress={() => setActiveTab("Teacher")}
-          >
-            <Text style={[styles.tabText, activeTab === "Teacher" && styles.activeTabText]}>
-              Teacher
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Tabs Section */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "Admin" && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab("Admin")}
+        >
+          <Text style={[styles.tabText, activeTab === "Admin" && styles.activeTabText]}>
+            Admin 
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "Teacher" && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab("Teacher")}
+        >
+          <Text style={[styles.tabText, activeTab === "Teacher" && styles.activeTabText]}>
+            Teacher 
+          </Text>
+        </TouchableOpacity>
+      </View>
 
+      {/* Posts Section */}
       <ScrollView>
-        {activeTab === "Admin" && renderPosts(adminPosts, true)}
-        {activeTab === "Teacher" && renderPosts(teacherPosts, false)}
+        {activeTab === "Admin" && renderPosts(adminPosts)}
+        {activeTab === "Teacher" && renderPosts(teacherPosts)}
       </ScrollView>
     </View>
   );
@@ -99,59 +105,56 @@ const Announcements = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F6FA",
-    padding: 20,
+    backgroundColor: "white",
+    padding: 15,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F5F6FA",
+    backgroundColor: "white",
   },
   loaderText: {
     fontSize: 18,
-    color: "#3498DB",
+    color: "#018749",
     fontWeight: "bold",
+    fontFamily: "Kanit-Medium",
   },
   tabsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "#ECF0F1",
-    borderRadius: 10,
-    marginBottom: 20,
-    padding: 5,
+    justifyContent: "center",
+    marginBottom: 15,
   },
   tabButton: {
-    flex: 1,
+    width: "52%",
     alignItems: "center",
-    paddingVertical: 10,
-    backgroundColor: "#D5D8DC",
-    marginHorizontal: 5,
-    borderRadius: 10,
-    elevation: 3,
+    paddingVertical: 5,
+    borderRadius: 5,
+    backgroundColor: "white",
+    marginHorizontal: 0,
+    borderWidth: 1,
+    borderColor: "#006A4E",
   },
   activeTab: {
-    backgroundColor: "maroon",
+    backgroundColor: "#006A4E",
   },
   tabText: {
-    fontSize: 16,
-    color: "#7B7D7D",
-    // fontWeight: "bold",
-    fontFamily: 'Kanit-Medium'
+    fontSize: 14,
+    color: "#006A4E",
+    fontFamily: "Kanit-Medium",
   },
   activeTabText: {
     color: "#FFFFFF",
-    // fontWeight: "bold",
-    fontFamily: 'Kanit-Medium'
-
-
+    fontFamily: "Kanit-Medium",
   },
   noPostsText: {
     fontSize: 16,
     color: "#7B7D7D",
     textAlign: "center",
     marginTop: 10,
+    fontFamily: "Kanit-Medium",
   },
 });
 
 export default Announcements;
+

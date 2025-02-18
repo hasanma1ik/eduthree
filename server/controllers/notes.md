@@ -6235,7 +6235,1784 @@ export default Post;
 
 
 
+// App.js
+import { StatusBar } from 'expo-status-bar';
+import React, { useCallback, useState, useEffect } from "react";
+import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-expo";
+import * as SecureStore from "expo-secure-store";
+import { NavigationContainer } from '@react-navigation/native';
+import { Provider as PaperProvider } from 'react-native-paper';
+import TabNavigation from './src/navigations/TabNavigation';
+import RootNavigation from './Navigation';
+import { UserProvider } from './src/screen/context/userContext';
+import { NotificationProvider } from './NotificationContext';
 
+SplashScreen.preventAutoHideAsync();
+
+const tokenCache = {
+  async getToken(key) {
+    try {
+      return SecureStore.getItemAsync(key);
+    } catch (err) {
+      return null;
+    }
+  },
+  async saveToken(key, value) {
+    try {
+      return SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      return;
+    }
+  },
+};
+
+export default function App() {
+  const [appReady, setAppReady] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    'outfit': require('./assets/fonts/Outfit-Regular.ttf'),
+    'outfit-medium': require('./assets/fonts/Outfit-SemiBold.ttf'),
+    'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
+    'merriweather-sans-bold': require('./assets/fonts/MerriweatherSans-Italic-VariableFont_wght.ttf'), 
+    'MerriweatherSans-VariableFont_wght': require('./assets/fonts/MerriweatherSans-VariableFont_wght.ttf'),
+    'BebasNeue': require('./assets/fonts/BebasNeue-Regular.ttf'),
+    'Kanit-Medium': require('./assets/fonts/Kanit-Medium.ttf'),
+    'kanitmedium1': require('./assets/fonts/Kanit-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    async function prepareApp() {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync();
+        setAppReady(true);
+      }
+    }
+    prepareApp();
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded || !appReady) {
+    return (
+      <View style={styles.loadingContainer}>
+        <StatusBar style="auto" />
+        <ActivityIndicator size="large" color="white" />
+        <Text style={styles.loadingText}>
+          Your journey to a brighter{"\n"}future starts here.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <NotificationProvider>
+      <UserProvider>
+        <ClerkProvider
+          tokenCache={tokenCache}
+          publishableKey={'pk_test_bWVldC1jbGFtLTQ4LmNsZXJrLmFjY291bnRzLmRldiQ'}
+        >
+          <PaperProvider>
+            <NavigationContainer>
+              <View style={styles.container}>
+                <SignedIn>
+                  <TabNavigation />
+                </SignedIn>
+                <SignedOut>
+                  <RootNavigation />
+                </SignedOut>
+                <StatusBar style="auto" />
+              </View>
+            </NavigationContainer>
+          </PaperProvider>
+        </ClerkProvider>
+      </UserProvider>
+    </NotificationProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white', // Set background color to green
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'green', // Set loading screen background to green
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white', // White text for contrast
+    textAlign: 'center',
+  },
+});
+
+
+
+
+import React, { useState, useContext } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Image,
+  Alert,
+} from 'react-native';
+import * as WebBrowser from "expo-web-browser";
+import { AuthContext } from './screen/context/authContext';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [state, setState] = useContext(AuthContext);
+  const [loading, setLoading] = useState(false); // Loading state
+  const navigation = useNavigation();
+
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) {
+        Alert.alert('Error', 'Please fill in both email and password.');
+        return;
+      }
+      setLoading(true); // Start loading
+      const { data } = await axios.post('/auth/login', { email, password });
+      if (data && data.user) {
+        setState((prevState) => {
+          const updatedState = {
+            ...prevState,
+            user: data.user,
+            token: data.token,
+            isDriver: data.user.isDriver,
+          };
+          AsyncStorage.setItem('@auth', JSON.stringify(updatedState));
+          return updatedState;
+        });
+        // Optionally navigate to HomeScreen
+        // navigation.navigate('HomeScreen');
+      } else {
+        Alert.alert('Login failed', 'Invalid response from server');
+      }
+    } catch (error) {
+      Alert.alert('Login Error', error.response?.data?.message || error.message);
+    } finally {
+      setLoading(false); // Stop loading
+    }
+  };
+
+  // Dynamic button color based on input validation
+  const buttonColor = email.length > 0 && password.length > 0 ? '#ff0000' : 'black'; // Active: Red, Inactive: Maroon
+
+  return (
+    <View style={styles.container}>
+      {/* Top half with background image */}
+      <ImageBackground 
+        source={require('./../assets/edupic3.png')}
+        style={styles.topHalf}
+        resizeMode="cover"
+      >
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('./../assets/learn-logo-transparent.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.heading}>Learn Academy</Text>
+        </View>
+      </ImageBackground>
+
+      {/* Bottom half with login form */}
+      <View style={styles.bottomHalf}>
+        <Text style={styles.loginTitle}>LOG IN TO YOUR CLASSROOM</Text>
+
+          {/* Email Input */}
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            placeholderTextColor="#ccc"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+          secureTextEntry={true}
+          placeholderTextColor="#ccc"
+        />
+
+        <Text style={styles.forgotPassword} onPress={() => navigation.navigate('ForgetPassword')}
+          >
+            Forgot password?
+          </Text>
+
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>SIGN IN NOW</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.registerText}>
+          Don't have an account? <Text style={styles.registerLink} onPress={() => navigation.navigate('Register')}>Register Now</Text>
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  topHalf: {
+    flex: 1,
+    width: '110%',
+    height: '150%',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    paddingTop: 60,
+    paddingLeft: 20,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 50,  // Adjust logo size as needed
+    height: 50, 
+    marginRight: 10,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  bottomHalf: {
+    flex: 1,
+    backgroundColor: '#174D3A',  // Green background color
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 30,
+    paddingTop: 40,
+    alignItems: 'center',
+  },
+  loginTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 20,
+  },
+  input: {
+    width: '100%',
+    padding: 15,
+    backgroundColor: 'white',
+    borderRadius: 5,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    color: 'white',
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: '#00C853', // Green button color
+    width: '100%',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  registerText: {
+    color: 'white',
+    marginTop: 20,
+    fontSize: 14,
+  },
+  registerLink: {
+    fontWeight: 'bold',
+    color: '#00C853',
+  },
+});
+
+import React, { useState, useContext } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
+import { AuthContext } from './context/authContext';
+
+export default function RegisterScreen({ navigation }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [state, setState] = useContext(AuthContext);
+
+  const handleRegister = async () => {
+    try {
+      setLoading(true);
+      if (!name || !email || !password || !role) {
+        Alert.alert('Error', 'Please fill in all required fields.');
+        setLoading(false);
+        return;
+      }
+
+      const payload = { name, email, password, role };
+      if (role === 'teacher' || role === 'admin') {
+        payload.verificationCode = verificationCode;
+      }
+
+      const { data } = await axios.post('/auth/register', payload);
+
+      if (data.success) {
+        Alert.alert('Success', 'Registration successful! Please log in.');
+        navigation.navigate('Login');
+      } else {
+        Alert.alert('Registration Failed', data.message || 'An error occurred during registration.');
+      }
+
+      setLoading(false);
+    } catch (error) {
+      Alert.alert('Registration Error', error.response?.data?.message || 'An unexpected error occurred.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <Image source={require('../../assets/edupic2.png')} style={styles.image} />
+
+        <View style={styles.logoContainer}>
+                  <Image 
+                    source={require('../../assets/learn-logo-transparent.png')} 
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.heading}>Learn Academy</Text>
+                </View>
+      </View>
+
+      <View style={styles.formContainer}>
+        <Text style={styles.title}>CREATE AN ACCOUNT</Text>
+
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder="Full Name"
+          placeholderTextColor="#aaa"
+        />
+
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Email"
+          placeholderTextColor="#aaa"
+          keyboardType="email-address"
+        />
+
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+          secureTextEntry
+          placeholderTextColor="#aaa"
+        />
+
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={role}
+            onValueChange={(itemValue) => setRole(itemValue)}
+            style={styles.picker}
+            dropdownIconColor="#555"
+          >
+            <Picker.Item label="Select Role" value="" />
+            <Picker.Item label="Student" value="student" />
+            <Picker.Item label="Teacher" value="teacher" />
+            <Picker.Item label="Admin" value="admin" />
+          </Picker>
+        </View>
+
+        {(role === 'teacher' || role === 'admin') && (
+          <TextInput
+            style={styles.input}
+            value={verificationCode}
+            onChangeText={setVerificationCode}
+            placeholder="Verification Code"
+            placeholderTextColor="#aaa"
+          />
+        )}
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleRegister}
+          disabled={loading || !(name && email && password && role)}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>REGISTER NOW</Text>
+          )}
+        </TouchableOpacity>
+
+        <Text style={styles.footerText}>
+          Already have an account?{' '}
+          <Text style={styles.link} onPress={() => navigation.navigate('Login')}>
+            Log in
+          </Text>
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#013220',
+  },
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: -30, 
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  formContainer: {
+    flex: 1.3,
+    backgroundColor: '#024b30',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    overflow: 'hidden',  // Ensures the curved effect stays clean
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  input: {
+    width: '100%',
+    marginBottom: 15,
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    fontSize: 16,
+    color: '#333',
+  },
+  pickerContainer: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  picker: {
+    height: 50,
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#00A651',
+    padding: 15,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  footerText: {
+    color: '#fff',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  link: {
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+
+  logoContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+  logoText: {
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  
+});
+
+
+
+
+
+
+import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useContext, useCallback } from 'react';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import Home from '../screen/Home';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import LoginPage from '../LoginPage';
+import RegisterScreen from '../screen/RegisterScreen';
+import handleForgetPassword from '../screen/forgetpasswordscreen';
+import ContactUs from '../screen/ContactUs';
+import { AuthContext } from '../screen/context/authContext';
+import TopTab from './TopTab';
+import Post from '../screen/Post';
+import About from '../screen/About';
+import Account from '../screen/Account';
+import MyPosts from '../screen/MyPosts';
+import { DrawerContent } from '../DrawerContent';
+import Messages from '../screen/Messages';
+import ChatScreen from '../screen/ChatScreen';
+import AttendanceScreen from '../AttendanceScreen';
+import TimetableScreen from '../ClassSchedule';
+import Assignments from '../Assignments';
+import CreateAssignment from '../createAssignment';
+import CreateClasses from '../CreateClasses';
+import StudentForm from '../studentform';
+import GradeSetter from '../gradesetter';
+import PaymentScreen from '../screen/PaymentScreen';
+import TakeAttendance from '../TakeAttendance';
+import SeeAttendanceScreen from '../SeeAttendance';
+import NotificationsScreen from '../screen/Notifications';
+import ClassSchedule from '../ClassSchedule';
+import AddTermScreen from '../TermScreen';
+import PostDetail from '../PostDetail';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import TeacherHome from '../screen/teacherhome';
+import AdminHome from '../screen/adminhome';
+import Announcements from '../screen/announcements';
+import StudentAttendance from '../screen/studentattendance';
+import StudentAssignments from '../studentassignments';
+
+// IMPORT BottomTab
+import BottomTab from '../components/BottomTab';
+
+const MainTab = () => {
+  const [state] = useContext(AuthContext);
+  const authenticatedUser = state?.user && state?.token;
+  const userRole = state?.user?.role;
+
+  const Stack = createStackNavigator();
+  const Drawer = createDrawerNavigator();
+
+  const [fontsLoaded] = useFonts({
+    'merriweather-sans': require('../../assets/fonts/MerriweatherSans-VariableFont_wght.ttf'),
+    'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf'),
+    'Kanit-Medium': require('../../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  // WRAPPER COMPONENTS FOR BOTTOM TAB
+  function TeacherHomeScreen() {
+    return (
+      <View style={{ flex: 1 }}>
+        <TeacherHome />
+        <BottomTab />
+      </View>
+    );
+  }
+
+  function StudentHomeScreen() {
+    return (
+      <View style={{ flex: 1 }}>
+        <Home />
+        <BottomTab />
+      </View>
+    );
+  }
+
+  function AdminHomeScreen() {
+    return (
+      <View style={{ flex: 1 }}>
+        <AdminHome />
+        <BottomTab />
+      </View>
+    );
+  }
+
+  const TeacherStackNavigator = () => (
+    <Stack.Navigator initialRouteName="Home">
+      <Stack.Screen
+        name="Home"
+        component={TeacherHomeScreen} // uses our wrapper
+        options={{
+          headerTitle: () => (
+            <View style={styles.headerContainer}>
+              <Icon name="home" size={24} color="black" style={styles.homeIcon} />
+              <Text style={styles.headerText}>Home</Text>
+            </View>
+          ),
+          headerStyle: { backgroundColor: 'white' },
+          headerTintColor: 'black',
+        }}
+      />
+      <Stack.Screen
+        name="Post"
+        component={Post}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Post',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Messages"
+        component={Messages}
+        options={{ headerBackTitle: 'Back', title: '', headerRight: () => <TopTab /> }}
+      />
+      <Stack.Screen
+        name="About"
+        component={About}
+        options={{ headerBackTitle: 'Back', title: '', headerRight: () => <TopTab /> }}
+      />
+      <Stack.Screen
+        name="Account"
+        component={Account}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Account',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Announcements"
+        component={Announcements}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Announcements',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: 'Notifications',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'white',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="PostDetail"
+        component={PostDetail}
+        options={{ title: 'Post Detail' }}
+      />
+      <Stack.Screen
+        name="MyPosts"
+        component={MyPosts}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'My Posts',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="AttendanceScreen"
+        component={AttendanceScreen}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: '',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+        }}
+      />
+      <Stack.Screen
+        name="ContactUs"
+        component={ContactUs}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Contact Us',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="TakeAttendance"
+        component={TakeAttendance}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Take Attendance',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="SeeAttendance"
+        component={SeeAttendanceScreen}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'See Attendance',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="ClassSchedule"
+        component={ClassSchedule}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Class Schedule',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="TimetableScreen"
+        component={TimetableScreen}
+        options={{ headerBackTitle: 'Back', title: '', headerRight: () => <TopTab /> }}
+      />
+      <Stack.Screen
+        name="ChatScreen"
+        component={ChatScreen}
+        options={{ headerBackTitle: 'Back', title: '', headerRight: () => <TopTab /> }}
+      />
+      <Stack.Screen
+        name="Assignments"
+        component={Assignments}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Your Assignments',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="CreateAssignment"
+        component={CreateAssignment}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Create Assignment',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="CreateClasses"
+        component={CreateClasses}
+        options={{
+          headerBackTitle: 'Back',
+          title: '',
+          headerRight: () => <TopTab />,
+        }}
+      />
+      <Stack.Screen
+        name="StudentForm"
+        component={StudentForm}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: 'Student Enrollment',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'white',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="GradeSetter"
+        component={GradeSetter}
+        options={{
+          headerBackTitle: 'Back',
+          title: '',
+          headerRight: () => <TopTab />,
+        }}
+      />
+    </Stack.Navigator>
+  );
+
+  const StudentStackNavigator = () => (
+    <Stack.Navigator initialRouteName="Home">
+      <Stack.Screen
+        name="Home"
+        component={StudentHomeScreen} // uses our wrapper
+        options={{
+          headerTitle: () => (
+            <View style={styles.headerContainer}>
+              <Icon name="home" size={24} color="black" style={styles.homeIcon} />
+              <Text style={styles.headerText}>Home</Text>
+            </View>
+          ),
+          headerStyle: { backgroundColor: 'white' },
+          headerTintColor: 'black',
+        }}
+      />
+      <Stack.Screen
+        name="PostDetail"
+        component={PostDetail}
+        options={{ title: 'Post Detail' }}
+      />
+      <Stack.Screen
+        name="Messages"
+        component={Messages}
+        options={{ headerBackTitle: 'Back', title: '', headerRight: () => <TopTab /> }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: 'Notifications',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'white',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Announcements"
+        component={Announcements}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Announcements',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Account"
+        component={Account}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Account',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="PaymentScreen"
+        component={PaymentScreen}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Payment Portal',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="StudentAttendance"
+        component={StudentAttendance}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Student Attendance',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="ClassSchedule"
+        component={ClassSchedule}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Class Schedule',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="ContactUs"
+        component={ContactUs}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Contact Us',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="StudentAssignments"
+        component={StudentAssignments}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Your Assignments',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+    </Stack.Navigator>
+  );
+
+  const AdminStackNavigator = () => (
+    <Stack.Navigator initialRouteName="Home">
+      <Stack.Screen
+        name="Home"
+        component={AdminHomeScreen} // uses our wrapper
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Post"
+        component={Post}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Post',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Messages"
+        component={Messages}
+        options={{ headerBackTitle: 'Back', title: '', headerRight: () => <TopTab /> }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: 'Notifications',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'white',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Account"
+        component={Account}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Account',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="ContactUs"
+        component={ContactUs}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Contact Us',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Announcements"
+        component={Announcements}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Announcements',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="PostDetail"
+        component={PostDetail}
+        options={{ title: 'Post Detail' }}
+      />
+      <Stack.Screen
+        name="MyPosts"
+        component={MyPosts}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'My Posts',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="CreateClasses"
+        component={CreateClasses}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          headerTintColor: 'black',
+          title: 'Course Creation',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: '#018749',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="StudentForm"
+        component={StudentForm}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Student Form',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="GradeSetter"
+        component={GradeSetter}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Assign Grade',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="AttendanceScreen"
+        component={AttendanceScreen}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: '',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+        }}
+      />
+      <Stack.Screen
+        name="PaymentScreen"
+        component={PaymentScreen}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: 'Payment Portal',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'white',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="TakeAttendance"
+        component={TakeAttendance}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: 'Take Attendance',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'white',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="SeeAttendance"
+        component={SeeAttendanceScreen}
+        options={{
+          headerStyle: { backgroundColor: 'black' },
+          title: 'See Attendance',
+          headerTintColor: 'white',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'white',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="AddTermScreen"
+        component={AddTermScreen}
+        options={{
+          headerStyle: { backgroundColor: 'white' },
+          title: 'Create Term',
+          headerTintColor: 'black',
+          headerBackTitle: 'Back',
+          headerRight: () => <TopTab />,
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontFamily: 'Kanit-Medium',
+            fontSize: 22,
+            color: 'black',
+          },
+        }}
+      />
+    </Stack.Navigator>
+  );
+
+  const AuthenticationStackNavigator = () => (
+    <Stack.Navigator initialRouteName="Login">
+      <Stack.Screen
+        name="Login"
+        component={LoginPage}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ForgetPassword"
+        component={handleForgetPassword}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+
+  return (
+    <>
+      {authenticatedUser ? (
+        <Drawer.Navigator drawerContent={(props) => <DrawerContent {...props} />}>
+          {userRole === 'teacher' ? (
+            <Drawer.Screen
+              name="Faculty Portal"
+              component={TeacherStackNavigator}
+              options={{
+                headerTitle: () => (
+                  <View style={styles.headerContainer}>
+                    <Image
+                      source={require('./../../assets/lalogo.jpg')}
+                      style={styles.logo}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.headerText}>Faculty Portal</Text>
+                  </View>
+                ),
+                headerStyle: { backgroundColor: 'white' },
+                headerTintColor: 'black',
+              }}
+            />
+          ) : userRole === 'admin' ? (
+            <Drawer.Screen
+              name="Admin Portal"
+              component={AdminStackNavigator}
+              options={{
+                headerTitle: () => (
+                  <View style={styles.headerContainer}>
+                    <Image
+                      source={require('./../../assets/lalogo.jpg')}
+                      style={styles.logo}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.headerText}>Admin Portal</Text>
+                  </View>
+                ),
+                headerStyle: { backgroundColor: 'white' },
+                headerTintColor: 'black',
+              }}
+            />
+          ) : (
+            <Drawer.Screen
+              name="Student Portal"
+              component={StudentStackNavigator}
+              options={{
+                headerTitle: () => (
+                  <View style={styles.headerContainer}>
+                    <Image
+                      source={require('./../../assets/lalogo.jpg')}
+                      style={styles.logo}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.headerText}>Student Portal</Text>
+                  </View>
+                ),
+                headerStyle: { backgroundColor: 'white' },
+                headerTintColor: 'black',
+              }}
+            />
+          )}
+        </Drawer.Navigator>
+      ) : (
+        <AuthenticationStackNavigator />
+      )}
+    </>
+  );
+};
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 60,
+    height: 40,
+    marginRight: 10,
+  },
+  headerText: {
+    fontSize: 24,
+    fontFamily: 'BebasNeue',
+    color: 'black',
+  },
+  homeIcon: {
+    marginRight: 10,
+  },
+});
+
+export default MainTab;
+
+
+
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useContext } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { AuthContext } from '../screen/context/authContext';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
+const BottomTab = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const [state] = useContext(AuthContext);
+  const userRole = state?.user?.role; // Get user role from AuthContext
+
+  console.log("User role is: ", userRole);
+
+  const [fontsLoaded] = useFonts({
+    'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf'),
+    'kanitregular': require('../../assets/fonts/Kanit-Regular.ttf'),
+    'Kanit-Medium': require('../../assets/fonts/Kanit-Medium.ttf'),
+  });
+
+  const onLayoutRootView = React.useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  // Define tabs based on user role
+  const tabs = (() => {
+    if (userRole === 'admin' || userRole === 'teacher') {
+      return [
+        { name: 'Home', icon: 'home' },
+        { name: 'Announcements', icon: 'bullhorn' },
+        { name: 'Post', icon: 'plus-square' },
+        { name: 'Account', icon: 'user' },
+      ];
+    } else if (userRole === 'student') {
+      return [
+        { name: 'Home', icon: 'home' },
+        { name: 'Announcements', icon: 'bullhorn' },
+        { name: 'ClassSchedule', icon: 'calendar-alt' },
+        { name: 'Account', icon: 'user' },
+      ];
+    }
+    return []; // Default to no tabs if role is undefined
+  })();
+
+  return (
+    <View style={styles.container} onLayout={onLayoutRootView}>
+      {tabs.map((tab) => (
+        <TouchableOpacity
+          key={tab.name}
+          onPress={() => navigation.navigate(tab.name)}
+          style={styles.tabButton}
+        >
+          <FontAwesome5
+            name={tab.icon}
+            style={[
+              styles.iconStyle,
+              {
+                color:
+                  route.name === tab.name
+                    ? styles.activeColor.color
+                    : styles.inactiveColor.color,
+              },
+            ]}
+          />
+          <Text
+            style={[
+              route.name === tab.name
+                ? styles.activeText
+                : styles.inactiveText,
+            ]}
+          >
+            {tab.name === 'ClassSchedule' ? 'Schedule' : tab.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    elevation: 5,
+  },
+  tabButton: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconStyle: {
+    fontSize: 24,
+  },
+  activeColor: {
+    color: '#004d40', // Dark Green for Active Tab
+  },
+  inactiveColor: {
+    color: '#757575', // Gray for Inactive Tabs
+  },
+  activeText: {
+    color: '#004d40',
+    fontFamily: 'kanitregular',
+    fontSize: 12,
+  },
+  inactiveText: {
+    color: '#757575',
+    fontFamily: 'kanitregular',
+    fontSize: 12,
+  },
+});
+
+export default BottomTab;
+
+
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import axios from 'axios';
+import moment from 'moment';
+
+const features = [
+  { id: '1', name: 'Course Creation', icon: 'book-open', route: 'CreateClasses', color: 'maroon' },
+  { id: '3', name: 'Grade Setter', icon: 'graduation-cap', route: 'GradeSetter', color: '#0D47A1' },
+  { id: '4', name: 'Create Term', icon: 'calendar-plus', route: 'AddTermScreen', color: '#FF6600' },
+  { id: '5', name: 'Student Enrollment', icon: 'user-plus', route: 'StudentForm', color: '#002147' },
+];
+
+const AdminHome = () => {
+  const navigation = useNavigation();
+  const [latestPost, setLatestPost] = useState(null);
+
+  // Fetch today's latest post
+  const fetchLatestPost = async () => {
+    try {
+      const { data } = await axios.get('/post/get-all-post'); // Use existing API
+      const today = moment().startOf('day'); // Get today's date at midnight
+
+      // Filter posts created today & sort by newest first
+      const todaysPosts = data.posts
+        .filter(post => moment(post.createdAt).isSameOrAfter(today))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      setLatestPost(todaysPosts.length > 0 ? todaysPosts[0] : null);
+    } catch (error) {
+      console.error('Error fetching latest post:', error);
+      Alert.alert('Error', 'Failed to fetch the latest post.');
+    }
+  };
+
+  // Fetch latest post on mount
+  useEffect(() => {
+    fetchLatestPost();
+  }, []);
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate(item.route)}
+    >
+      <View style={styles.iconContainer}>
+        <Icon name={item.icon} size={20} color="#004d40" />
+      </View>
+      <Text style={styles.cardTitle}>{item.name}</Text>
+      <Text style={styles.cardDescription}>Lorem ipsum dolor sit amet, adipiscing...</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* Header Section */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Hello, <Text style={styles.boldText}>Wahaj!</Text></Text>
+          <Text style={styles.roleText}>🎓 Admin</Text>
+        </View>
+        <Image source={require('../../assets/edupic.png')} style={styles.profileImage} />
+      </View>
+
+      {/* Alert Section */}
+      <View style={styles.alertContainer}>
+        <Text style={styles.alertTitle}>Today’s Alert</Text>
+        {latestPost ? (
+          <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
+            <Text style={styles.alertText} numberOfLines={2}>
+              {latestPost.description}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.noAlertText}>No alerts today</Text>
+        )}
+      </View>
+
+      {/* Features Grid */}
+      <FlatList
+        data={features}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.flatListContent}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f4f4f4',
+    paddingHorizontal: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  greeting: {
+    fontSize: 22,
+    color: '#004d40',
+    fontWeight: '400',
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  roleText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  alertContainer: {
+    backgroundColor: '#c8e6c9',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#004d40',
+  },
+  alertText: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 5,
+  },
+  noAlertText: {
+    fontSize: 14,
+    color: '#777',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  flatListContent: {
+    justifyContent: 'center',
+  },
+  row: {
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  card: {
+    width: '47%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+    alignItems: 'center',
+  },
+  iconContainer: {
+    backgroundColor: '#e0f2f1',
+    borderRadius: 50,
+    padding: 10,
+    marginBottom: 10,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#004d40',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+});
+
+export default AdminHome;
 
 
 

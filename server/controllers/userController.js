@@ -17,9 +17,12 @@ const Class = require('../models/classmodel')
 const Subject = require('../models/subjectmodel')
 const ClassSchedule = require('../models/ClassScheduleModel')
 const Term = require('../models/termmodel')
-const moment = require('moment');
+const moment = require('moment-timezone');
 
-const mongoose = require("mongoose");
+const Marks = require('../models/marksmodel')
+const GrowthReport = require('../models/growthreportmodel')
+
+const mongoose = require('mongoose');
 //middleware
 
 const requireSignIn = jwt({
@@ -658,21 +661,6 @@ const getClassUsersByGrade = async (req, res) => {
   }
 };
 
-const getUsersByGradeAndSubject = async (req, res) => {
-  try{
-    const {grade, subjectId} = req.params
-        // Query the database for users in the given grade and registered for the given subject
-    // This query assumes that your User schema has fields for grade and subjects that are arrays or references
-    const users = await User.find({
-      grade: grade,
-      subjects: subjectId
-    })
-    res.status(200).json(users);
-  } catch (error) {
-    console.error('Failed to fetch users:', error);
-    res.status(500).send('Server error');
-  }
-};
 
 const getStudentsByClassAndSubject = async (req, res) => {
   try {
@@ -1257,9 +1245,280 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const submitMarks = async (req, res) => {
+  try {
+    const {
+      studentId,
+      grade,
+      subject,
+      term,
+      midTermMarks,
+      finalTermMarks,
+      comment = '' // optional
+    } = req.body;
+
+    // Optional: enforce 10-word limit in backend as well
+    if (comment) {
+      const wordCount = comment.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount > 10) {
+        return res.status(400).json({
+          success: false,
+          message: 'Comment cannot exceed 10 words'
+        });
+      }
+    }
+
+    const newMarks = await Marks.create({
+      student: new mongoose.Types.ObjectId(studentId),
+      teacher: req.auth?._id, // or however you handle teacher
+      grade,
+      subject: new mongoose.Types.ObjectId(subject),
+      term,
+      midTermMarks,
+      finalTermMarks,
+      comment,
+      createdAt: new Date()
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Marks submitted successfully',
+      marks: newMarks
+    });
+  } catch (error) {
+    console.error('Error in submitMarks:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to submit marks',
+      error: error.message
+    });
+  }
+};
+
+// PUT /auth/marks - Update existing marks record
+const updateMarks = async (req, res) => {
+  try {
+    const {
+      studentId,
+      grade,
+      subject,
+      term,
+      midTermMarks,
+      finalTermMarks,
+      comment = ''
+    } = req.body;
+
+    // Optional: enforce 10-word limit in backend as well
+    if (comment) {
+      const wordCount = comment.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount > 10) {
+        return res.status(400).json({
+          success: false,
+          message: 'Comment cannot exceed 10 words'
+        });
+      }
+    }
+
+    const filter = {
+      student: new mongoose.Types.ObjectId(studentId),
+      grade,
+      subject: new mongoose.Types.ObjectId(subject),
+      term
+    };
+
+    // Build update object conditionally (so we don't overwrite comment with empty string if not provided)
+    const updateObj = {};
+    if (typeof midTermMarks !== 'undefined') updateObj.midTermMarks = midTermMarks;
+    if (typeof finalTermMarks !== 'undefined') updateObj.finalTermMarks = finalTermMarks;
+    if (comment !== '') updateObj.comment = comment;
+
+    const updated = await Marks.findOneAndUpdate(filter, updateObj, { new: true });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Marks record not found.' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Marks updated successfully',
+      marks: updated
+    });
+  } catch (error) {
+    console.error('Error in updateMarks:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update marks',
+      error: error.message
+    });
+  }
+};
+
+// GET /auth/marks - Fetch marks for a specific student, grade, subject, term
+const fetchMarks = async (req, res) => {
+  try {
+    const { studentId, grade, subject, term } = req.query;
+    const filter = {};
+
+    if (studentId) filter.student = new mongoose.Types.ObjectId(studentId);
+    if (grade) filter.grade = grade;
+    if (subject) filter.subject = new mongoose.Types.ObjectId(subject);
+    if (term) filter.term = term;
+
+    const marks = await Marks.find(filter)
+      .populate('student', 'name')
+      .populate('subject', 'name')
+      .populate('teacher', 'name');
+
+    return res.status(200).json(marks);
+  } catch (error) {
+    console.error('Error fetching marks:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch marks',
+      error: error.message
+    });
+  }
+};
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile }
+const getUsersByGradeAndSubject = async (req, res) => {
+  try{
+    const {grade, subjectId} = req.params
+        // Query the database for users in the given grade and registered for the given subject
+    // This query assumes that your User schema has fields for grade and subjects that are arrays or references
+    const users = await User.find({
+      grade: grade,
+      subjects: subjectId
+    })
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+    res.status(500).send('Server error');
+  }
+};
+
+
+const fetchUsersByGradeAndSubject = async (req, res) => {
+  const { grade, subjectId } = req.params;
+  try {
+    // 1) Find the class object for this grade
+    const classObj = await Class.findOne({ grade: grade });
+    if (!classObj) {
+      return res.status(404).json({ message: "No class found for this grade." });
+    }
+
+    // 2) Find users in that class who have subjectId in their "subjects" array
+    const users = await User.find({
+      classId: classObj._id,
+      subjects: mongoose.Types.ObjectId(subjectId)
+    }).populate('classId', 'grade');
+
+    res.json(users);
+  } catch (error) {
+    console.error("Error in fetchUsersByGradeAndSubject:", error);
+    res.status(500).json({
+      message: "Failed to fetch users for the specified grade and subject.",
+      error: error.message
+    });
+  }
+};
+
+const submitGrowthReport = async (req, res) => {
+  try {
+    // Expected payload: { studentId, grade, subject, term, personalDevelopment }
+    const { studentId, grade, subject, term, personalDevelopment } = req.body;
+
+    const newGrowthReport = await GrowthReport.create({
+      student: studentId,
+      teacher: req.auth._id,
+      grade,
+      subject: new mongoose.Types.ObjectId(subject),
+      term,
+      personalDevelopment,
+      createdAt: new Date()
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Growth report submitted successfully",
+      growthReport: newGrowthReport
+    });
+  } catch (error) {
+    console.error("Error in submitGrowthReport:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to submit growth report",
+      error: error.message
+    });
+  }
+};
+
+// GET /auth/transcripts - Fetch marks & growth reports for transcript
+const getTranscriptReports = async (req, res) => {
+  try {
+    const { term, grade, subject, studentName, studentId } = req.query;
+    let marksFilter = {};
+    let growthFilter = {};
+
+    if (term) {
+      marksFilter.term = term;
+      growthFilter.term = term;
+    }
+    if (grade) {
+      marksFilter.grade = grade;
+      growthFilter.grade = grade;
+    }
+    if (subject) {
+      marksFilter.subject = subject;
+      growthFilter.subject = subject;
+    }
+    if (studentId) {
+      marksFilter.student = studentId;
+      growthFilter.student = studentId;
+    }
+
+    // Fetch marks and growth reports
+    const marksReports = await Marks.find(marksFilter)
+      .populate('student', 'name')
+      .populate('subject', 'name')
+      .populate('teacher', 'name');
+
+    const growthReports = await GrowthReport.find(growthFilter)
+      .populate('student', 'name')
+      .populate('subject', 'name')
+      .populate('teacher', 'name');
+
+    // Optionally filter by studentName
+    const filteredMarks = studentName
+      ? marksReports.filter(report =>
+          report.student &&
+          report.student.name.toLowerCase().includes(studentName.toLowerCase())
+        )
+      : marksReports;
+
+    const filteredGrowth = studentName
+      ? growthReports.filter(report =>
+          report.student &&
+          report.student.name.toLowerCase().includes(studentName.toLowerCase())
+        )
+      : growthReports;
+
+    return res.status(200).json({
+      success: true,
+      marksReports: filteredMarks,
+      growthReports: filteredGrowth
+    });
+  } catch (error) {
+    console.error('Error in getTranscriptReports:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transcript reports',
+      error: error.message
+    });
+  }
+};
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile, submitMarks, fetchUsersByGradeAndSubject, submitGrowthReport, getTranscriptReports, fetchMarks, updateMarks }
 
 
 

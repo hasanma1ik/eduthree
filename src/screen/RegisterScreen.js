@@ -5,13 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ImageBackground,
+  Image,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthContext } from './context/authContext';
 
 export default function RegisterScreen({ navigation }) {
@@ -32,7 +31,6 @@ export default function RegisterScreen({ navigation }) {
         return;
       }
 
-      // Include role and verificationCode in the POST request
       const payload = { name, email, password, role };
       if (role === 'teacher' || role === 'admin') {
         payload.verificationCode = verificationCode;
@@ -42,7 +40,7 @@ export default function RegisterScreen({ navigation }) {
 
       if (data.success) {
         Alert.alert('Success', 'Registration successful! Please log in.');
-        navigation.navigate('Login1'); // Navigate to Login screen after registration
+        navigation.navigate('Login');
       } else {
         Alert.alert('Registration Failed', data.message || 'An error occurred during registration.');
       }
@@ -50,194 +48,198 @@ export default function RegisterScreen({ navigation }) {
       setLoading(false);
     } catch (error) {
       Alert.alert('Registration Error', error.response?.data?.message || 'An unexpected error occurred.');
-      console.error('Registration error:', error);
       setLoading(false);
     }
   };
 
-  // Dynamic button color based on input validation
-  const buttonColor =
-    name.length > 0 && email.length > 0 && password.length > 0 && role.length > 0
-      ? '#ff0000' // Active: Red
-      : 'black'; // Inactive: Maroon
-
   return (
-    <ImageBackground
-      source={require('../../assets/edupic2.png')}
-      style={styles.fullScreenBackground}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <Text style={styles.mainTitle}>Learn Academy</Text>
-          <Text style={styles.title}>Register</Text>
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <Image source={require('../../assets/edupic2.png')} style={styles.image} />
 
-          {/* Name Input */}
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Full Name"
-            placeholderTextColor="#ccc"
-            autoCapitalize="words"
-          />
-
-          {/* Email Input */}
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Email"
-            placeholderTextColor="#ccc"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          {/* Password Input */}
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-            secureTextEntry={true}
-            placeholderTextColor="#ccc"
-          />
-
-          {/* Role Picker */}
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={role}
-              onValueChange={(itemValue) => setRole(itemValue)}
-              style={styles.picker}
-              dropdownIconColor="#fff"
-              mode="dropdown"
-            >
-              <Picker.Item label="Select Role" value="" />
-              <Picker.Item label="Student" value="student" />
-              <Picker.Item label="Teacher" value="teacher" />
-              <Picker.Item label="Admin" value="admin" />
-            </Picker>
-          </View>
-
-          {/* Conditionally render verification code input for teachers and admins */}
-          {(role === 'teacher' || role === 'admin') && (
-            <TextInput
-              style={styles.input}
-              value={verificationCode}
-              onChangeText={setVerificationCode}
-              placeholder="Verification Code"
-              placeholderTextColor="#ccc"
-              autoCapitalize="none"
-            />
-          )}
-
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: buttonColor }]}
-            onPress={handleRegister}
-            disabled={loading || !(name && email && password && role)}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Register</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Link to Login */}
-          <TouchableOpacity onPress={() => navigation.navigate("Login1")}>
-            <Text style={styles.textLink}>
-              Already Registered? <Text style={styles.link}>LOGIN</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <View style={styles.logoContainer}>
+                  <Image 
+                    source={require('../../assets/learn-logo-transparent.png')} 
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.heading}>Learn Academy</Text>
+                </View>
       </View>
-    </ImageBackground>
+
+      <View style={styles.formContainer}>
+        <Text style={styles.title}>CREATE AN ACCOUNT</Text>
+
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder="Full Name"
+          placeholderTextColor="#aaa"
+        />
+
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Email"
+          placeholderTextColor="#aaa"
+          keyboardType="email-address"
+        />
+
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+          secureTextEntry
+          placeholderTextColor="#aaa"
+        />
+
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={role}
+            onValueChange={(itemValue) => setRole(itemValue)}
+            style={styles.picker}
+            dropdownIconColor="#555"
+          >
+            <Picker.Item label="Select Role" value="" />
+            <Picker.Item label="Student" value="student" />
+            <Picker.Item label="Teacher" value="teacher" />
+            <Picker.Item label="Admin" value="admin" />
+          </Picker>
+        </View>
+
+        {(role === 'teacher' || role === 'admin') && (
+          <TextInput
+            style={styles.input}
+            value={verificationCode}
+            onChangeText={setVerificationCode}
+            placeholder="Verification Code"
+            placeholderTextColor="#aaa"
+          />
+        )}
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleRegister}
+          disabled={loading || !(name && email && password && role)}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>REGISTER NOW</Text>
+          )}
+        </TouchableOpacity>
+
+        <Text style={styles.footerText}>
+          Already have an account?{' '}
+          <Text style={styles.link} onPress={() => navigation.navigate('Login')}>
+            Log in
+          </Text>
+        </Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fullScreenBackground: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Dark overlay for readability
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   container: {
-    width: '90%',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    // backgroundColor: 'rgba(255, 255, 255, 0.1)', // Slightly transparent container
+    flex: 1,
+    backgroundColor: '#013220',
   },
-  mainTitle: {
-    fontSize: 42,
-    color: '#fff', // White color for title text
-    marginBottom: 30,
-    textAlign: 'center',
-    fontFamily: 'Kanit-Medium',
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: -30, 
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  formContainer: {
+    flex: 1.3,
+    backgroundColor: '#024b30',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    overflow: 'hidden',  // Ensures the curved effect stays clean
   },
   title: {
     fontSize: 24,
+    fontWeight: 'bold',
     color: '#fff',
     marginBottom: 20,
-    textAlign: 'center',
-    fontFamily: 'BebasNeue',
   },
   input: {
     width: '100%',
-    marginVertical: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#fff',
-    borderRadius: 5,
-    color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 15,
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    fontSize: 16,
+    color: '#333',
   },
   pickerContainer: {
     width: '100%',
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: '#fff',
-    borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    marginBottom: 15,
+    paddingHorizontal: 10,
   },
   picker: {
     height: 50,
-    width: '100%',
-    color: '#fff',
+    color: '#333',
   },
   button: {
-    padding: 12,
-    borderRadius: 5,
+    backgroundColor: '#00A651',
+    padding: 15,
+    borderRadius: 10,
+    width: '100%',
     alignItems: 'center',
     marginTop: 10,
-    width: '100%',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  orStyle: {
-    color: '#fff', // White color for "or" text
-    fontSize: 16,
-    fontFamily: 'outfit-bold',
-    marginVertical: 10,
-  },
-  textLink: {
+  footerText: {
     color: '#fff',
-    fontSize: 14,
-    marginTop: 10,
-    textAlign: 'center',
-    fontFamily: 'Kanit-Medium',
-    textDecorationLine: 'underline',
+    marginTop: 20,
+    fontSize: 16,
   },
   link: {
-    color: '#ff0000', // Red color for link text
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
+
+  logoContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+  logoText: {
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  
 });
+

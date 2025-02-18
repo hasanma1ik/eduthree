@@ -1,17 +1,24 @@
 import React, { useContext, useState } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import moment from 'moment';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  TouchableOpacity, 
+  Alert 
+} from "react-native";
+import moment from "moment";
 import axios from 'axios';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import { useNavigation } from "@react-navigation/native";
+import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
 import { AuthContext } from "./screen/context/authContext";
-
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PostCard = ({ post, myPostScreen }) => {
-  const [loading, setLoading] = useState(false);
-  const navigation = useNavigation();
   const [state] = useContext(AuthContext);
   const { user } = state;
+  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   const handleDeletePrompt = (id) => {
     Alert.alert(
@@ -39,76 +46,128 @@ const PostCard = ({ post, myPostScreen }) => {
   };
 
   const canDelete = () => {
-    if (user.role === 'admin') return true;
-    if (user.role === 'teacher' && post?.postedBy?._id === user._id) return true;
+    if (user.role === "admin") return true;
+    if (user.role === "teacher" && post?.postedBy?._id === user._id) return true;
     return false;
   };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.content}>
-        <Image
-          source={{ uri: post?.postedBy?.profilePicture || 'https://blog-uploads.imgix.net/2021/08/what-is-sample-size-Sonarworks-blog.jpg?auto=compress%2Cformat' }}
-          style={styles.profilePicture}
-        />
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{post?.postedBy?.name}</Text>
-          <Text style={styles.postDate}>{moment(post?.createdAt).format('DD:MM:YYYY')}</Text>
-          <Text style={styles.desc}>{post?.description}</Text>
+    <TouchableOpacity 
+      onPress={() => navigation.navigate("PostDetail", { post })}
+    >
+      <View style={styles.card}>
+        <View style={styles.headerRow}>
+          <Image
+            source={{
+              uri:
+                post?.postedBy?.profilePicture ||
+                "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            }}
+            style={styles.profilePicture}
+          />
+
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{post?.postedBy?.name}</Text>
+            <Text style={styles.postDate}>
+              {moment(post?.createdAt).format("DD MMM YYYY")}
+            </Text>
+          </View>
+
+          {(canDelete() || myPostScreen) && (
+  <TouchableOpacity
+    onPress={() =>
+      Alert.alert("Delete Post", "Are you sure?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          onPress: () => handleDeletePrompt(post?._id),
+        },
+      ])
+    }
+  >
+    <FontAwesome5 name="ellipsis-h" size={22} color={"#7B7D7D"} />
+  </TouchableOpacity>
+)}
+
         </View>
-        {(canDelete() || myPostScreen) && (
-          <TouchableOpacity onPress={() => handleDeletePrompt(post?._id)}>
-            <FontAwesome5 name="trash" size={14} color={"red"} />
-          </TouchableOpacity>
-        )}
+
+        {/* Description container with fixed height and gradient overlay */}
+        {post?.description && post.description.length > 100 ? (
+  <View style={styles.descContainer}>
+    <Text style={styles.desc} numberOfLines={4} ellipsizeMode="tail">
+      {post?.description}
+    </Text>
+    <LinearGradient
+      colors={["transparent", "white"]}
+      style={styles.gradientOverlay}
+    />
+  </View>
+) : (
+  <Text style={styles.desc}>
+    {post?.description}
+  </Text>
+)}
+
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'white',
-    borderRadius: 15,
+    backgroundColor: "white",
+    // borderTopLeftRadius: 12,
+    // borderTopRightRadius: 12,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 0,
+    // marginBottom: 15,
+    elevation: 3,
   },
-  content: {
-    flexDirection: 'row',
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
   },
   profilePicture: {
-    width: 70,
-    height: 100,
-    borderRadius: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 15,
   },
   userInfo: {
     flex: 1,
-    justifyContent: 'center',
     
   },
   userName: {
-    // fontWeight: 'bold',
-      color: "#228B22",
-    fontFamily: 'Kanit-Medium',
     fontSize: 16,
-    marginBottom: 5,
+    // fontWeight: "bold",
+    color: "#006A4E",
+    fontFamily: "Kanit-Medium",
   },
   postDate: {
-    color: 'black',
     fontSize: 12,
+    color: "#7B7D7D",
     marginBottom: 5,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: "Kanit-Medium",
+  },
+  descContainer: {
+    height: 70, // Adjust this height as needed to display 3 full lines plus a faded fourth
+    overflow: "hidden",
+    position: "relative",
   },
   desc: {
     fontSize: 14,
-    color: 'black',
-    fontFamily: 'Kanit-Medium'
+    color: "#333",
+    fontFamily: "Kanit-Medium",
+    lineHeight: 18,
+  },
+  gradientOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 20, // Height of the fade effect
   },
 });
 

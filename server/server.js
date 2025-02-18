@@ -6,7 +6,7 @@ const dotenv = require('dotenv');
 const colors = require('colors');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
-const startScheduledTasks = require('./scheduledTasks');
+// const startScheduledTasks = require('./scheduledTasks');
 
 dotenv.config();
 connectDB();
@@ -28,17 +28,23 @@ app.get('/api/v1/', (req, res) => {
   res.send('API V1 Home');
 });
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:8080"],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(morgan("dev"));
 
 app.use("/api/v1/auth", require("./routes/userRoutes"));
 app.use("/api/v1/post", require('./routes/postRoutes'));
 
+
+
 const PORT = process.env.PORT || 8080;
 
 // Replace 'app.listen' with 'server.listen'
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`.bgGreen.white);
-  startScheduledTasks(io); // Pass the io instance to your scheduled tasks
+  // startScheduledTasks(io); // Pass the io instance to your scheduled tasks
 });

@@ -1,36 +1,95 @@
-// AdminHome.js
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import axios from 'axios';
+import moment from 'moment';
+import { AuthContext } from './context/authContext';
 
 const features = [
   { id: '1', name: 'Course Creation', icon: 'book-open', route: 'CreateClasses', color: 'maroon' },
-  { id: '2', name: 'Announcements', icon: 'bullhorn', route: 'Announcements', color: '#1B5E20' },
   { id: '3', name: 'Grade Setter', icon: 'graduation-cap', route: 'GradeSetter', color: '#0D47A1' },
   { id: '4', name: 'Create Term', icon: 'calendar-plus', route: 'AddTermScreen', color: '#FF6600' },
   { id: '5', name: 'Student Enrollment', icon: 'user-plus', route: 'StudentForm', color: '#002147' },
-  { id: '6', name: 'Post', icon: 'user-plus', route: 'Post', color: '#006064' },
-  { id: '7', name: 'My Posts', icon: 'pen', route: 'MyPosts', color: 'black' },
-  { id: '8', name: 'Contact Us', icon: 'envelope', route: 'ContactUs', color: '#F9A825' },
 ];
 
 const AdminHome = () => {
   const navigation = useNavigation();
+  const [latestPost, setLatestPost] = useState(null);
+  const [state] = useContext (AuthContext)
+
+  const fullName = state?.user?.name || 'Admin'
+const firstName = fullName.split(' ')[0]
+
+const profilePicture = state?.user?.profilePicture || 
+    'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png';
+
+  // Fetch today's latest post
+  const fetchLatestPost = async () => {
+    try {
+      const { data } = await axios.get('/post/get-all-post'); // Use existing API
+      const today = moment().startOf('day'); // Get today's date at midnight
+
+      // Filter posts created today & sort by newest first
+      const todaysPosts = data.posts
+        .filter(post => moment(post.createdAt).isSameOrAfter(today))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      setLatestPost(todaysPosts.length > 0 ? todaysPosts[0] : null);
+    } catch (error) {
+      console.error('Error fetching latest post:', error);
+      Alert.alert('Error', 'Failed to fetch the latest post.');
+    }
+  };
+
+  // Fetch latest post on mount
+  useEffect(() => {
+    fetchLatestPost();
+  }, []);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: item.color }]}
+      style={styles.card}
       onPress={() => navigation.navigate(item.route)}
     >
-      <Icon name={item.icon} size={40} color="white" />
-      <Text style={styles.cardText}>{item.name}</Text>
+      <View style={styles.iconContainer}>
+        <Icon name={item.icon} size={20} color="#004d40" />
+      </View>
+      <Text style={styles.cardTitle}>{item.name}</Text>
+      <Text style={styles.cardDescription}>Lorem ipsum dolor sit amet, adipiscing...</Text>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>Admin Portal</Text> */}
+      {/* Header Section */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Hello, <Text style={styles.boldText}>{firstName}!</Text></Text>
+          <Text style={styles.roleText}>🎓 Admin</Text>
+        </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Account')}>
+          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+        </TouchableOpacity>
+      </View>
+
+      
+
+      {/* Alert Section */}
+      <View style={styles.alertContainer}>
+        <Text style={styles.alertTitle}>Today’s Alert</Text>
+        {latestPost ? (
+          <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
+            <Text style={styles.alertText} numberOfLines={2}>
+              {latestPost.description}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.noAlertText}>No alerts today</Text>
+        )}
+      </View>
+
+      {/* Features Grid */}
       <FlatList
         data={features}
         renderItem={renderItem}
@@ -44,38 +103,92 @@ const AdminHome = () => {
 };
 
 const styles = StyleSheet.create({
-  // Same styles as your Home component
   container: {
     flex: 1,
-    backgroundColor: '#E0E0E0', // Light gray background
-    padding: 10,
+    backgroundColor: '#f4f4f4',
+    paddingHorizontal: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  greeting: {
+    fontSize: 22,
+    color: '#004d40',
+    fontWeight: '400',
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  roleText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  alertContainer: {
+    backgroundColor: '#c8e6c9',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#004d40',
+  },
+  alertText: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 5,
+  },
+  noAlertText: {
+    fontSize: 14,
+    color: '#777',
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   flatListContent: {
     justifyContent: 'center',
-    paddingVertical: 20,
   },
   row: {
     justifyContent: 'space-between',
     marginBottom: 20,
   },
   card: {
-    width: '45%', // Cards will take up 45% of the row
-    paddingVertical: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
+    width: '47%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.1,
     shadowRadius: 5,
+    elevation: 3,
+    alignItems: 'center',
   },
-  cardText: {
-    color: 'white',
-    marginTop: 10,
-    fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+  iconContainer: {
+    backgroundColor: '#e0f2f1',
+    borderRadius: 50,
+    padding: 10,
+    marginBottom: 10,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#004d40',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#666',
     textAlign: 'center',
+    marginTop: 5,
   },
 });
 

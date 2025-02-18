@@ -55,6 +55,14 @@ const {
      deleteAssignment,
      getTeacherData,
      logUser,
+     fetchUsersByGradeAndSubject,
+     submitGrades,
+     submitMarks,
+     updateMarks,
+     fetchMarks,
+     getProgressReports,
+     submitGrowthReport,
+     getTranscriptReports
    
     
     
@@ -205,7 +213,20 @@ router.get('/profile', requireSignIn, getUserProfile);
 
 
 
+router.post('/marks', requireSignIn, submitMarks);
 
+// Update marks
+router.put('/marks', requireSignIn, updateMarks);
+
+// Fetch marks
+router.get('/marks', requireSignIn, fetchMarks);
+
+// Route for fetching users by grade and subject
+// Example URL: /class/grade/10/subject/60f1234567890abc12345678/users
+router.get('/class/grade/:grade/subject/:subjectId/users', requireSignIn, fetchUsersByGradeAndSubject);
+router.post('/growthreports', requireSignIn, submitGrowthReport);
+
+router.get('/transcripts', requireSignIn, getTranscriptReports);
 
 //export p
 module.exports = router;

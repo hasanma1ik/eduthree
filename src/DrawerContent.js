@@ -9,6 +9,14 @@ const DrawerContent = (props) => {
   const [state, setState] = useContext(AuthContext);
   const userRole = state?.user?.role;
 
+  // Get First Name
+  const fullName = state?.user?.name || 'User';
+  const firstName = fullName.split(' ')[0];
+
+  // Get Profile Picture (Fallback to Default)
+  const profilePicture = state?.user?.profilePicture ||
+    'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png';
+
   // Logout Functionality
   const handleLogOut = async () => {
     setState({ token: "", user: null });
@@ -21,12 +29,9 @@ const DrawerContent = (props) => {
       <DrawerContentScrollView {...props}>
         {/* Header with User Info */}
         <View style={styles.header}>
-          <Image
-            source={{
-              uri: state?.user?.profilePicture || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png',
-            }}
-            style={styles.profileImage}
-          />
+          <TouchableOpacity onPress={() => props.navigation.navigate('Account')}>
+            <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+          </TouchableOpacity>
           <Text style={styles.userName}>{state?.user?.name || 'User'}</Text>
           <Text style={styles.userRole}>{userRole ? userRole.toUpperCase() : ''}</Text>
         </View>
@@ -34,35 +39,35 @@ const DrawerContent = (props) => {
         {/* Divider */}
         <View style={styles.divider} />
 
-        {/* Common drawer content for all roles */}
+        {/* Drawer Items */}
         <DrawerItem
           label="Home"
           onPress={() => props.navigation.navigate('Home')}
           labelStyle={styles.drawerLabel}
-          icon={() => <Icon name="home" size={20} color="#4E9F3D" />}
+          icon={() => <Icon name="home" size={20} color="#018749" />}
         />
         <DrawerItem
           label="Account"
           onPress={() => props.navigation.navigate('Account')}
           labelStyle={styles.drawerLabel}
-          icon={() => <Icon name="user" size={20} color="#3F72AF" />}
+          icon={() => <Icon name="user" size={20} color="#0077B6" />}
         />
         <DrawerItem
           label="Change Password"
           onPress={() => props.navigation.navigate('ChangePasswordScreen')}
           labelStyle={styles.drawerLabel}
-          icon={() => <Icon name="lock" size={20} color="#FF5722" />}
+          icon={() => <Icon name="lock" size={20} color="#F4A261" />}
         />
         <DrawerItem
           label="My Posts"
           onPress={() => props.navigation.navigate('MyPosts')}
           labelStyle={styles.drawerLabel}
-          icon={() => <Icon name="pencil-alt" size={20} color="#FF5722" />}
+          icon={() => <Icon name="pencil-alt" size={20} color="#E63946" />}
         />
       </DrawerContentScrollView>
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={() => handleLogOut()}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogOut}>
         <Icon name="sign-out-alt" size={20} color="white" />
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
@@ -73,19 +78,24 @@ const DrawerContent = (props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F4F6F8',
   },
   header: {
-    backgroundColor: '#1F8A70',
+    backgroundColor: '#018749',
     paddingVertical: 40,
     paddingHorizontal: 20,
     alignItems: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   profileImage: {
     width: 90,
     height: 90,
     borderRadius: 45,
+    borderWidth: 3,
+    borderColor: 'white',
     backgroundColor: '#FFFFFF',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   userName: {
     fontSize: 22,
@@ -95,12 +105,13 @@ const styles = StyleSheet.create({
   userRole: {
     fontSize: 14,
     fontFamily: 'Kanit-Medium',
-    color: 'white',
+    color: '#CFF4D2',
     marginTop: 5,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#D3D3D3',
+    marginVertical: 10,
   },
   drawerLabel: {
     fontFamily: 'Kanit-Medium',
@@ -113,6 +124,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#D7263D',
     paddingVertical: 15,
     paddingHorizontal: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   logoutText: {
     fontFamily: 'Kanit-Medium',

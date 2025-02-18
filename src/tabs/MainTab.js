@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import React, { useContext, useCallback } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
@@ -38,6 +38,15 @@ import AdminHome from '../screen/adminhome';
 import Announcements from '../screen/announcements';
 import StudentAttendance from '../screen/studentattendance';
 import StudentAssignments from '../studentassignments';
+import BottomTab from './bottomTab';
+import Grades from '../Grades';
+import StudentProgressReport from '../MarkSheet'
+import Results from '../Results';
+import PND from '../P&D';
+import GrowthReport from '../GrowthReport';
+import MarkSheet from '../MarkSheet';
+import Transcript from '../Transcripts';
+
 
 
 
@@ -51,7 +60,9 @@ const Drawer = createDrawerNavigator();
 
 const [fontsLoaded] = useFonts({
   'merriweather-sans': require('../../assets/fonts/MerriweatherSans-VariableFont_wght.ttf'),
-  'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf')
+  'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf'),
+  'Kanit-Medium': require('../../assets/fonts/Kanit-Medium.ttf'),
+  
 });
 
 const onLayoutRootView = useCallback(async () => {
@@ -64,6 +75,36 @@ if (!fontsLoaded) {
   return null;
 }
 
+function TeacherHomeScreen() {
+  return (
+    <View style={{ flex: 1}}>
+      <TeacherHome />
+      <BottomTab />
+
+    </View>
+  )
+}
+
+function StudentHomeScreen() {
+  return (
+    <View style={{flex : 1}}>
+      <Home />
+      <BottomTab />
+
+    </View>
+  )
+}
+
+function AdminHomeScreen(){
+  return (
+    <View style={{flex:1}}>
+      <AdminHome />
+      <BottomTab />
+
+    </View>
+  )
+}
+
 
 
   const TeacherStackNavigator = () => (
@@ -71,17 +112,9 @@ if (!fontsLoaded) {
           {/* Teacher specific screens */}
           <Stack.Screen
       name="Home"
-      component={TeacherHome}
-      options={{
-        headerTitle: () => (
-          <View style={styles.headerContainer}>
-            <Icon name="home" size={24} color="black" style={styles.homeIcon} />
-            <Text style={styles.headerText}>Home</Text>
-          </View>
-        ),
-        headerStyle: { backgroundColor: 'white' },
-        headerTintColor: 'black',
-      }}
+      component={BottomTab}
+      
+      options={{ headerShown: false }} 
     />
     <Stack.Screen name="Post" component={Post} options={{
     headerStyle: { backgroundColor: 'white' },
@@ -89,7 +122,7 @@ if (!fontsLoaded) {
     headerTintColor: 'black',
     headerBackTitle: 'Back',
     headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
+   
     headerTitleAlign: 'center', // Center-aligns the title
     headerTitleStyle: { 
       fontFamily: 'Kanit-Medium', 
@@ -225,7 +258,94 @@ if (!fontsLoaded) {
     }
   }}
 /> 
-    
+<Stack.Screen name="Grades" component={Grades}options={{
+    headerStyle: { backgroundColor: 'white' },
+    title: 'Enter Grades',
+    headerTintColor: 'black',
+    headerBackTitle: 'Back',
+    headerRight: () => <TopTab />,
+    headerTitleAlign: 'center', // Center-aligns the title
+    headerTitleStyle: { 
+      fontFamily: 'Kanit-Medium', 
+      fontSize: 22, 
+      color: 'black' 
+    }
+  }}
+/> 
+<Stack.Screen name="MarkSheet" component={MarkSheet}options={{
+    headerStyle: { backgroundColor: 'white' },
+    title: 'MarkSheet',
+    headerTintColor: 'black',
+    headerBackTitle: 'Back',
+    headerRight: () => <TopTab />,
+    headerTitleAlign: 'center', // Center-aligns the title
+    headerTitleStyle: { 
+      fontFamily: 'Kanit-Medium', 
+      fontSize: 22, 
+      color: 'black' 
+    }
+  }}
+/> 
+<Stack.Screen name="PND" component={PND}options={{
+    headerStyle: { backgroundColor: 'white' },
+    title: 'Growth Report',
+    headerTintColor: 'black',
+    headerBackTitle: 'Back',
+    headerRight: () => <TopTab />,
+    headerTitleAlign: 'center', // Center-aligns the title
+    headerTitleStyle: { 
+      fontFamily: 'Kanit-Medium', 
+      fontSize: 22, 
+      color: 'black' 
+    }
+  }}
+/> 
+<Stack.Screen name="GrowthReport" component={GrowthReport}options={{
+    headerStyle: { backgroundColor: 'white' },
+    title: 'Growth Report',
+    headerTintColor: 'black',
+    headerBackTitle: 'Back',
+    headerRight: () => <TopTab />,
+    headerTitleAlign: 'center', // Center-aligns the title
+    headerTitleStyle: { 
+      fontFamily: 'Kanit-Medium', 
+      fontSize: 22, 
+      color: 'black' 
+    }
+  }}
+/> 
+
+<Stack.Screen name="Results" component={Results}options={{
+    headerStyle: { backgroundColor: 'white' },
+    title: 'Results',
+    headerTintColor: 'black',
+    headerBackTitle: 'Back',
+    headerRight: () => <TopTab />,
+    headerTitleAlign: 'center', // Center-aligns the title
+    headerTitleStyle: { 
+      fontFamily: 'Kanit-Medium', 
+      fontSize: 22, 
+      color: 'black' 
+    }
+  }}
+/> 
+<Stack.Screen name="Transcripts" component={Transcript}options={{
+    headerStyle: { backgroundColor: 'white' },
+    title: 'Progress Report',
+    headerTintColor: 'black',
+    headerBackTitle: 'Back',
+    headerRight: () => <TopTab />,
+    headerTitleAlign: 'center', // Center-aligns the title
+    headerTitleStyle: { 
+      fontFamily: 'Kanit-Medium', 
+      fontSize: 22, 
+      color: 'black' 
+    }
+  }}
+/> 
+
+
+
 
     <Stack.Screen name="TimetableScreen" component={TimetableScreen} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     {/* <Stack.Screen name="CalendarScreen" component={CalendarScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
@@ -283,20 +403,12 @@ if (!fontsLoaded) {
 
   const StudentStackNavigator = () => (
     <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen
-        name="Home"
-        component={Home}
-        options={{
-          headerTitle: () => (
-            <View style={styles.headerContainer}>
-              <Icon name="home" size={24} color="black" style={styles.homeIcon} />
-              <Text style={styles.headerText}>Home</Text>
-            </View>
-          ),
-          headerStyle: { backgroundColor: 'white' },
-          headerTintColor: 'black',
-        }}
-      />
+     <Stack.Screen
+  name="Home"
+  component={BottomTab}
+  options={{ headerShown: false }} 
+/>
+
           <Stack.Screen name="PostDetail" component={PostDetail} options={{ title: 'Post Detail' }} />
           <Stack.Screen name="Messages" component={Messages} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} options={{
@@ -431,28 +543,18 @@ if (!fontsLoaded) {
   );
 
   const AdminStackNavigator = () => (
-    <Stack.Navigator initialRouteName="Home">
+    <Stack.Navigator initialRouteName="AdminHome">
         {/* Student specific screens */}
         <Stack.Screen
       name="Home"
-      component={AdminHome}
-      options={{
-        headerTitle: () => (
-          <View style={styles.headerContainer}>
-            <Icon name="home" size={24} color="black" style={styles.homeIcon} />
-            <Text style={styles.headerText}>Home</Text>
-          </View>
-        ),
-        headerStyle: { backgroundColor: 'white' },
-        headerTintColor: 'black',
-      }}
+      component={BottomTab}
+     options={{ headerShown: false }} 
     />
         <Stack.Screen name="Post" component={Post} options={{
     headerStyle: { backgroundColor: 'white' },
     title: 'Post',
     headerTintColor: 'black',
     headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
     headerRight: () => <TopTab />,
     headerTitleAlign: 'center', // Center-aligns the title
     headerTitleStyle: { 
@@ -487,7 +589,7 @@ if (!fontsLoaded) {
     headerTintColor: 'black',
     headerBackTitle: 'Back',
     headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
+    
     headerTitleAlign: 'center', // Center-aligns the title
     headerTitleStyle: { 
       fontFamily: 'Kanit-Medium', 
@@ -654,7 +756,7 @@ if (!fontsLoaded) {
   const AuthenticationStackNavigator = () => (
       <Stack.Navigator initialRouteName="Login">
           <Stack.Screen name="Login" component={LoginPage} options={{ headerShown: false }}  />
-          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false}} />
          
     <Stack.Screen name="ForgetPassword" component={handleForgetPassword } options={{ headerShown: false }} />
 
@@ -670,59 +772,21 @@ if (!fontsLoaded) {
             <Drawer.Screen
               name="Faculty Portal"
               component={TeacherStackNavigator}
-              options={{
-                headerTitle: () => (
-                  <View style={styles.headerContainer}>
-                    <Image
-                      source={require('./../../assets/lalogo.jpg')}
-                      style={styles.logo}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.headerText}>Faculty Portal</Text>
-                  </View>
-                ),
-                headerStyle: { backgroundColor: 'white' },
-                headerTintColor: 'black',
-              }}
+              options={{ headerShown: false }}
             />
           ) : userRole === 'admin' ? (
             <Drawer.Screen
               name="Admin Portal"
               component={AdminStackNavigator}
-              options={{
-                headerTitle: () => (
-                  <View style={styles.headerContainer}>
-                    <Image
-                      source={require('./../../assets/lalogo.jpg')}
-                      style={styles.logo}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.headerText}>Admin Portal</Text>
-                  </View>
-                ),
-                headerStyle: { backgroundColor: 'white' },
-                headerTintColor: 'black',
-              }}
+              options={{ headerShown: false }}
             />
           ) : (
             <Drawer.Screen
-              name="Student Portal"
-              component={StudentStackNavigator}
-              options={{
-                headerTitle: () => (
-                  <View style={styles.headerContainer}>
-                    <Image
-                      source={require('./../../assets/lalogo.jpg')}
-                      style={styles.logo}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.headerText}>Student Portal</Text>
-                  </View>
-                ),
-                headerStyle: { backgroundColor: 'white' },
-                headerTintColor: 'black',
-              }}
-            />
+            name="Student Portal"
+            component={StudentStackNavigator}
+            options={{ headerShown: false }}
+          />
+          
           )}
         </Drawer.Navigator>
       ) : (

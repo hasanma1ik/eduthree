@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "@clerk/clerk-expo": "^1.2.9",
+    "@expo/cli": "^0.10.17",
     "@expo/config-plugins": "~7.2.2",
     "@expo/webpack-config": "~19.0.1",
     "@react-native-async-storage/async-storage": "1.18.2",
     "@react-native-community/datetimepicker": "7.2.0",
     "@react-native-masked-view/masked-view": "0.2.9",
     "@react-native-picker/picker": "2.4.10",
+    "@react-native-vector-icons/fontawesome5": "^5.15.4",
     "@react-navigation/bottom-tabs": "^6.5.11",
     "@react-navigation/drawer": "^6.6.6",
     "@react-navigation/native": "^6.1.9",
@@ -45,6 +47,7 @@
     "react-native-date-picker": "^4.4.0",
     "react-native-gesture-handler": "~2.12.0",
     "react-native-gifted-charts": "^1.4.47",
+    "react-native-html-to-pdf": "^0.12.0",
     "react-native-image-picker": "^7.1.2",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-paper": "^5.12.3",
@@ -57,7 +60,11 @@
     "react-native-web": "~0.19.10",
     "react-native-webview": "13.2.2",
     "socket.io-client": "^4.7.5",
-    "typescript": "~5.3.3"
+    "typescript": "~5.3.3",
+    "expo-print": "~12.4.2",
+    "expo-sharing": "~11.5.0",
+    "expo-file-system": "~15.4.5",
+    "expo-asset": "~8.10.1"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

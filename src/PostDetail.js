@@ -1,60 +1,68 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import moment from 'moment';
 
 const PostDetail = ({ route }) => {
   const { post } = route.params;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Image source={{ uri: post?.postedBy?.profilePicture || 'https://via.placeholder.com/50' }} style={styles.profilePicture} />
+        <Image
+          source={{ uri: post?.postedBy?.profilePicture || 'https://via.placeholder.com/50' }}
+          style={styles.profilePicture}
+        />
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{post?.postedBy?.name}</Text>
-          <Text style={styles.postDate}>{moment(post?.createdAt).format('DD:MM:YYYY')}</Text>
+          <Text style={styles.postDate}>{moment(post?.createdAt).format('DD MMM YYYY')}</Text>
         </View>
       </View>
-      <Text style={styles.desc}>{post?.description}</Text>
-    </View>
+      <View style={styles.descContainer}>
+        <Text style={styles.desc}>{post?.description}</Text>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: '#ffffff',
     flex: 1,
+    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    padding: 20,
+    borderBottomColor: '#e0e0e0',
+    borderBottomWidth: 1,
   },
   profilePicture: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10,
+    marginRight: 15,
   },
   userInfo: {
-    flexDirection: 'column',
+    flex: 1,
   },
   userName: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#2ecc71',
-    fontSize: 16,
+    color: '#006A4E',
+    fontFamily: 'Kanit-Medium',
   },
   postDate: {
+    fontSize: 14,
     color: 'gray',
-    fontSize: 12,
+  },
+  descContainer: {
+    padding: 20,
   },
   desc: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#333',
-    marginTop: 10,
-    backgroundColor: '#e6ffe6',
-    padding: 10,
-    borderRadius: 10,
+    lineHeight: 24,
+    fontFamily: 'Kanit-Medium',
   },
 });
 

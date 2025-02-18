@@ -1,109 +1,125 @@
-// react-native icons directory
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React, { useContext } from 'react';
-import { useNavigation, useRoute } from '@react-navigation/native'
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
-import { MaterialIcons } from '@expo/vector-icons';
-import { AntDesign } from '@expo/vector-icons';
+import { TouchableOpacity, View, Text, Image } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthContext } from '../screen/context/authContext';
-import NotificationIcon from '../bellicon';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen'
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import AdminHome from '../screen/adminhome';
+import TeacherHome from '../screen/teacherhome';
+import Home from '../screen/Home';
+import Announcements from '../screen/announcements';
+import Post from '../screen/Post';
+import Account from '../screen/Account';
+import ClassSchedule from '../ClassSchedule';
 
-const BottomTab = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const [state, setState] = useContext(AuthContext);
+const Tab = createBottomTabNavigator();
+
+export default function BottomTab() {
+  const [state] = useContext(AuthContext);
   const userRole = state?.user?.role;
 
-  // Debugging log to check the user role
-  console.log("User role is: ", userRole);
-
-  const [fontsLoaded] = useFonts({
-    'BebasNeue': require('../../assets/fonts/BebasNeue-Regular.ttf'),
-    'kanitregular': require('../../assets/fonts/Kanit-Regular.ttf'),
-    'Kanit-Medium': require('../../assets/fonts/Kanit-Medium.ttf')
-
-  })
-
-const onLayoutRootView = React.useCallback(async () =>{
-  if (fontsLoaded){
-    await SplashScreen.hideAsync()
-  }
-}, [fontsLoaded]);
-
-if(!fontsLoaded) {
-  return null
-}
+  // Define role-specific tabs
+  const getTabs = () => {
+    if (userRole === 'admin') {
+      return [
+        { name: 'AdminHome', title: 'Home', component: AdminHome, icon: 'home' },
+        { name: 'Announcements', component: Announcements, icon: 'bullhorn' },
+        { name: 'Post', component: Post, icon: 'plus-square' },
+        { name: 'Account', component: Account, icon: 'user' },
+      ];
+    } else if (userRole === 'teacher') {
+      return [
+        { name: 'TeacherHome', title: 'Home', component: TeacherHome, icon: 'home' },
+        { name: 'Announcements', component: Announcements, icon: 'bullhorn' },
+        { name: 'Post', component: Post, icon: 'plus-square' },
+        { name: 'Account', component: Account, icon: 'user' },
+      ];
+    } else if (userRole === 'student') {
+      return [
+        { name: 'StudentHome', title: 'Home', component: Home, icon: 'home' },
+        { name: 'Announcements', component: Announcements, icon: 'bullhorn' },
+        { name: 'Schedule', component: ClassSchedule, icon: 'calendar-alt' },
+        { name: 'Account', component: Account, icon: 'user' },
+      ];
+    }
+    return [];
+  };
 
   return (
-    <View style={styles.container} onLayout={onLayoutRootView}>
-      <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-        <FontAwesome5 
-          name="home" 
-          style={styles.iconStyle} 
-          color={route.name === "Home" ? styles.activeColor.color : styles.inactiveColor.color} 
+    <Tab.Navigator
+      screenOptions={({ route, navigation }) => ({
+        headerShown: true,
+        // For home screens, align title to left; otherwise center.
+        headerTitleAlign: (
+          (userRole === 'student' && route.name === 'StudentHome') ||
+          (userRole === 'admin' && route.name === 'AdminHome') ||
+          (userRole === 'teacher' && route.name === 'TeacherHome')
+        ) ? 'left' : 'center',
+        // For non-home screens, set header background.
+        headerStyle: (
+          (userRole === 'student' && route.name === 'StudentHome') ||
+          (userRole === 'admin' && route.name === 'AdminHome') ||
+          (userRole === 'teacher' && route.name === 'TeacherHome')
+        ) ? {} : { backgroundColor: '#006A4E' },
+        headerLeft: () => {
+          // For home screens, drawer icon is black; otherwise white.
+          const isHome =
+            (userRole === 'student' && route.name === 'StudentHome') ||
+            (userRole === 'admin' && route.name === 'AdminHome') ||
+            (userRole === 'teacher' && route.name === 'TeacherHome');
+          const drawerIconColor = isHome ? 'black' : 'white';
+          return (
+            <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
+              <Icon name="bars" size={20} color={drawerIconColor} style={{ marginLeft: 10 }} />
+            </TouchableOpacity>
+          );
+        },
+        headerTitle: () => {
+          const tab = getTabs().find((t) => t.name === route.name);
+          if (
+            (userRole === 'student' && route.name === 'StudentHome') ||
+            (userRole === 'admin' && route.name === 'AdminHome') ||
+            (userRole === 'teacher' && route.name === 'TeacherHome')
+          ) {
+            let title;
+            if (userRole === 'student') title = 'Student Portal';
+            else if (userRole === 'admin') title = 'Admin Portal';
+            else if (userRole === 'teacher') title = 'Faculty Portal';
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image
+                  source={require('./../../assets/lalogo.jpg')}
+                  style={{ width: 60, height: 40, marginRight: 10 }}
+                  resizeMode="contain"
+                />
+                <Text style={{ fontSize: 24, fontFamily: 'BebasNeue', color: 'green' }}>
+                  {title}
+                </Text>
+              </View>
+            );
+          }
+          return (
+            <Text style={{ fontSize: 24, color: 'white', fontFamily: 'BebasNeue' }}>
+              {tab?.title || route.name}
+            </Text>
+          );
+        },
+        tabBarIcon: ({ color, size }) => {
+          const tab = getTabs().find((t) => t.name === route.name);
+          return tab ? <FontAwesome5 name={tab.icon} size={size} color={color} /> : null;
+        },
+        tabBarActiveTintColor: '#004d40', // Active tab color
+        tabBarInactiveTintColor: '#757575', // Inactive tab color
+      })}
+    >
+      {getTabs().map((tab) => (
+        <Tab.Screen
+          key={tab.name}
+          name={tab.name}
+          component={tab.component}
+          options={{ title: tab.title || tab.name }}
         />
-        <Text style={[route.name === "Home" ? styles.activeColor : styles.inactiveColor, styles.labelStyle]}>Home</Text>
-      </TouchableOpacity>
-
-      {(userRole === 'teacher' || userRole === 'student') && (
-      <TouchableOpacity onPress={() => navigation.navigate('Assignments')}>
-        <MaterialIcons
-          name="assignment" 
-          style={styles.iconStyle} 
-          color={route.name === "Assignments" ? styles.activeColor.color : styles.inactiveColor.color} 
-        />
-        <Text style={[route.name === "Assignments" ? styles.activeColor : styles.inactiveColor, styles.labelStyle]}>Assignments</Text>
-      </TouchableOpacity>
-       )}
-
-      {(userRole === 'teacher' || userRole === 'admin') && (
-        <TouchableOpacity onPress={() => navigation.navigate('Post')}>
-          <FontAwesome5 
-            name="plus-square" 
-            style={styles.iconStyle} 
-            color={route.name === "Post" ? styles.activeColor.color : styles.inactiveColor.color} 
-          />
-          <Text style={[route.name === "Post" ? styles.activeColor : styles.inactiveColor, styles.labelStyle]}>Post</Text>
-        </TouchableOpacity>
-      )}
-
-      <NotificationIcon navigation={navigation} />
-
-      <TouchableOpacity onPress={() => navigation.navigate('Account')}>
-        <FontAwesome5 
-          name="user" 
-          style={styles.iconStyle} 
-          color={route.name === "Account" ? styles.activeColor.color : styles.inactiveColor.color} 
-        />
-        <Text style={[route.name === "Account" ? styles.activeColor : styles.inactiveColor, styles.labelStyle]}>Account</Text>
-      </TouchableOpacity>
-    </View>
+      ))}
+    </Tab.Navigator>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    margin: 10,
-    justifyContent: "space-between",
-  },
-  iconStyle: {
-    marginBottom: 3,
-    alignSelf: "center",
-    fontSize: 25,
-  },
-  activeColor: {
-    color: 'red', // vibrant green
-  },
-  inactiveColor: {
-    color: 'white', // black for inactive icons and labels
-  },
-labelStyle: {
-  fontFamily: 'kanitregular',
-  fontSize: 14,
-},
-});
-
-export default BottomTab;
+}

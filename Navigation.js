@@ -9,6 +9,7 @@ const RootNavigation = () => {
     
       <AuthProvider>
         <PostProvider >
+          
         <MainTab />
         </PostProvider>
        
