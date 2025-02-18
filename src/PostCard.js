@@ -143,13 +143,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     // fontWeight: "bold",
     color: "#006A4E",
-    fontFamily: "Kanit-Medium",
+    fontFamily: "Ubuntu-Bold",
   },
   postDate: {
     fontSize: 12,
     color: "#7B7D7D",
     marginBottom: 5,
-    fontFamily: "Kanit-Medium",
+    fontFamily: "Ubuntu-Regular",
   },
   descContainer: {
     height: 70, // Adjust this height as needed to display 3 full lines plus a faded fourth
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   desc: {
     fontSize: 14,
     color: "#333",
-    fontFamily: "Kanit-Medium",
+    fontFamily: "Ubuntu-Regular",
     lineHeight: 18,
   },
   gradientOverlay: {

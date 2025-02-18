@@ -141,11 +141,11 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     color: "#006A4E",
-    fontFamily: "Kanit-Medium",
+    fontFamily: "Ubuntu-Bold",
   },
   activeTabText: {
     color: "#FFFFFF",
-    fontFamily: "Kanit-Medium",
+    fontFamily: "Ubuntu-Bold",
   },
   noPostsText: {
     fontSize: 16,

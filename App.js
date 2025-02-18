@@ -63,6 +63,9 @@ export default function App() {
     'BebasNeue': require('./assets/fonts/BebasNeue-Regular.ttf'),
     'Kanit-Medium': require('./assets/fonts/Kanit-Medium.ttf'),
     'kanitmedium1': require('./assets/fonts/Kanit-Regular.ttf'),
+    'Ubuntu-Light': require('./assets/fonts/Ubuntu-Light.ttf'),
+    'Ubuntu-Regular': require('./assets/fonts/Ubuntu-Regular.ttf'),
+    'Ubuntu-Bold': require('./assets/fonts/Ubuntu-Bold.ttf')
 
   });
 

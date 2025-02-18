@@ -92,14 +92,14 @@ export default function BottomTab() {
                   style={{ width: 60, height: 40, marginRight: 10 }}
                   resizeMode="contain"
                 />
-                <Text style={{ fontSize: 24, fontFamily: 'BebasNeue', color: 'green' }}>
+                <Text style={{ fontSize: 18, fontFamily: 'Ubuntu-Bold', color: 'green' }}>
                   {title}
                 </Text>
               </View>
             );
           }
           return (
-            <Text style={{ fontSize: 24, color: 'white', fontFamily: 'BebasNeue' }}>
+            <Text style={{ fontSize: 18, color: 'white', fontFamily: 'Ubuntu-Bold' }}>
               {tab?.title || route.name}
             </Text>
           );

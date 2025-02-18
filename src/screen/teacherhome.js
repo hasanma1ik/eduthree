@@ -6,51 +6,49 @@ import axios from 'axios';
 import moment from 'moment';
 import { AuthContext } from './context/authContext';
 
+// Shortened some names so they fit on one line more easily
 const features = [
   { id: '1', name: 'Attendance', icon: 'clipboard-list', route: 'AttendanceScreen', color: 'maroon' },
   { id: '2', name: 'Assignments', icon: 'tasks', route: 'Assignments', color: '#0D47A1' },
-  { id: '3', name: 'Create Assignment', icon: 'plus-circle', route: 'CreateAssignment', color: '#FF6600' },
-  { id: '3', name: 'Grades', icon: 'plus-circle', route: 'Grades', color: '#FF6600' },
-  { id: '4', name: 'Post', icon: 'edit', route: 'Post', color: '#002147' },
-  { id: '5', name: 'Class Schedule', icon: 'calendar-alt', route: 'ClassSchedule', color: '#006064' },
-  { id: '6', name: 'Results', icon: 'calendar-alt', route: 'Results', color: '#006064' },
-  { id: '7', name: 'Growth Report', icon: 'calendar-alt', route: 'PND', color: '#006064' },
-  { id: '8', name: 'Contact Us', icon: 'envelope', route: 'ContactUs', color: '#F9A825' },
+  { id: '3', name: 'Create Assign', icon: 'plus-circle', route: 'CreateAssignment', color: '#FF6600' },
+  { id: '4', name: 'Grades', icon: 'plus-circle', route: 'Grades', color: '#FF6600' },
+  { id: '5', name: 'Post', icon: 'edit', route: 'Post', color: '#002147' },
+  { id: '6', name: 'Class Schedule', icon: 'calendar-alt', route: 'ClassSchedule', color: '#006064' },
+  { id: '7', name: 'Results', icon: 'calendar-alt', route: 'Results', color: '#006064' },
+  { id: '8', name: 'Growth Report', icon: 'calendar-alt', route: 'PND', color: '#006064' },
+  { id: '9', name: 'Contact Us', icon: 'envelope', route: 'ContactUs', color: '#F9A825' },
 ];
 
 const TeacherHome = () => {
   const navigation = useNavigation();
   const [latestPost, setLatestPost] = useState(null);
-  const [state] = useContext(AuthContext)
+  const [state] = useContext(AuthContext);
 
+  const fullName = state?.user?.name || 'Teacher';
+  const firstName = fullName.split(' ')[0];
 
-const fullName = state?.user?.name || 'Teacher'
-const firstName = fullName.split(' ')[0]
-
-const profilePicture = state?.user?.profilePicture || 
-'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png';
-
-
+  const profilePicture =
+    state?.user?.profilePicture ||
+    'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png';
 
   // Fetch today's latest teacher post
   const fetchLatestPost = async () => {
     try {
-      const { data } = await axios.get('/post/get-all-post'); // Existing API
-      const today = moment().startOf('day'); // Get today's date at midnight
+      const { data } = await axios.get('/post/get-all-post');
+      const today = moment().startOf('day');
 
       // Filter teacher's posts created today
       const todaysPosts = data.posts
-              .filter(post => moment(post.createdAt).isSameOrAfter(today))
-              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
-            setLatestPost(todaysPosts.length > 0 ? todaysPosts[0] : null);
-          } catch (error) {
-            console.error('Error fetching latest post:', error);
-            Alert.alert('Error', 'Failed to fetch the latest post.');
-          }
-        };
+        .filter(post => moment(post.createdAt).isSameOrAfter(today))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-  // Fetch latest post on mount
+      setLatestPost(todaysPosts.length > 0 ? todaysPosts[0] : null);
+    } catch (error) {
+      console.error('Error fetching latest post:', error);
+      Alert.alert('Error', 'Failed to fetch the latest post.');
+    }
+  };
+
   useEffect(() => {
     fetchLatestPost();
   }, []);
@@ -63,7 +61,14 @@ const profilePicture = state?.user?.profilePicture ||
       <View style={styles.iconContainer}>
         <Icon name={item.icon} size={20} color="#004d40" />
       </View>
-      <Text style={styles.cardTitle}>{item.name}</Text>
+      <Text
+        style={styles.cardTitle}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+      >
+        {item.name}
+      </Text>
       <Text style={styles.cardDescription}>Lorem ipsum dolor sit amet...</Text>
     </TouchableOpacity>
   );
@@ -73,12 +78,14 @@ const profilePicture = state?.user?.profilePicture ||
       {/* Header Section */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Hello, <Text style={styles.boldText}>{firstName}</Text></Text>
+          <Text style={styles.greeting}>
+            Hello, <Text style={styles.boldText}>{firstName}</Text>
+          </Text>
           <Text style={styles.roleText}>📚 Educator</Text>
         </View>
-         <TouchableOpacity onPress={() => navigation.navigate('Account')}>
-                  <Image source={{ uri: profilePicture }} style={styles.profileImage} />
-                </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Account')}>
+          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+        </TouchableOpacity>
       </View>
 
       {/* Alert Section */}
@@ -124,14 +131,15 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 22,
     color: '#004d40',
-    fontWeight: '400',
+    fontFamily: 'Ubuntu-Regular',
   },
   boldText: {
-    fontWeight: 'bold',
+    fontFamily: 'Ubuntu-Bold',
   },
   roleText: {
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Ubuntu-Regular',
   },
   profileImage: {
     width: 50,
@@ -145,14 +153,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontFamily: 'Ubuntu-Bold',
     color: '#004d40',
   },
   alertText: {
     fontSize: 14,
     color: '#333',
     marginTop: 5,
+    fontFamily: 'Ubuntu-Light',
   },
   noAlertText: {
     fontSize: 14,
@@ -187,14 +196,15 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#004d40',
+    fontFamily: 'Ubuntu-Bold',
+    color: '#106547',
   },
   cardDescription: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
     marginTop: 5,
+    fontFamily: 'Ubuntu-Light',
   },
 });
 

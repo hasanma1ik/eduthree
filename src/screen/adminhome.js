@@ -1,5 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  FlatList, 
+  Image, 
+  Alert 
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import axios from 'axios';
@@ -8,33 +16,31 @@ import { AuthContext } from './context/authContext';
 
 const features = [
   { id: '1', name: 'Course Creation', icon: 'book-open', route: 'CreateClasses', color: 'maroon' },
-  { id: '3', name: 'Grade Setter', icon: 'graduation-cap', route: 'GradeSetter', color: '#0D47A1' },
-  { id: '4', name: 'Create Term', icon: 'calendar-plus', route: 'AddTermScreen', color: '#FF6600' },
-  { id: '5', name: 'Student Enrollment', icon: 'user-plus', route: 'StudentForm', color: '#002147' },
+  { id: '2', name: 'Grade Setter', icon: 'graduation-cap', route: 'GradeSetter', color: '#0D47A1' },
+  { id: '3', name: 'Create Term', icon: 'calendar-plus', route: 'AddTermScreen', color: '#FF6600' },
+  { id: '4', name: 'Enroll Students', icon: 'user-plus', route: 'StudentForm', color: '#002147' },
 ];
 
 const AdminHome = () => {
   const navigation = useNavigation();
   const [latestPost, setLatestPost] = useState(null);
-  const [state] = useContext (AuthContext)
+  const [state] = useContext(AuthContext);
 
-  const fullName = state?.user?.name || 'Admin'
-const firstName = fullName.split(' ')[0]
+  const fullName = state?.user?.name || 'Admin';
+  const firstName = fullName.split(' ')[0];
 
-const profilePicture = state?.user?.profilePicture || 
+  const profilePicture =
+    state?.user?.profilePicture ||
     'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png';
 
   // Fetch today's latest post
   const fetchLatestPost = async () => {
     try {
       const { data } = await axios.get('/post/get-all-post'); // Use existing API
-      const today = moment().startOf('day'); // Get today's date at midnight
-
-      // Filter posts created today & sort by newest first
+      const today = moment().startOf('day');
       const todaysPosts = data.posts
         .filter(post => moment(post.createdAt).isSameOrAfter(today))
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
       setLatestPost(todaysPosts.length > 0 ? todaysPosts[0] : null);
     } catch (error) {
       console.error('Error fetching latest post:', error);
@@ -42,7 +48,6 @@ const profilePicture = state?.user?.profilePicture ||
     }
   };
 
-  // Fetch latest post on mount
   useEffect(() => {
     fetchLatestPost();
   }, []);
@@ -55,8 +60,17 @@ const profilePicture = state?.user?.profilePicture ||
       <View style={styles.iconContainer}>
         <Icon name={item.icon} size={20} color="#004d40" />
       </View>
-      <Text style={styles.cardTitle}>{item.name}</Text>
-      <Text style={styles.cardDescription}>Lorem ipsum dolor sit amet, adipiscing...</Text>
+      <Text 
+        style={styles.cardTitle} 
+        numberOfLines={1} 
+        adjustsFontSizeToFit 
+        minimumFontScale={0.8}
+      >
+        {item.name}
+      </Text>
+      <Text style={styles.cardDescription}>
+        Lorem ipsum dolor sit amet, adipiscing...
+      </Text>
     </TouchableOpacity>
   );
 
@@ -65,15 +79,15 @@ const profilePicture = state?.user?.profilePicture ||
       {/* Header Section */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Hello, <Text style={styles.boldText}>{firstName}!</Text></Text>
+          <Text style={styles.greeting}>
+            Hello, <Text style={styles.boldText}>{firstName}!</Text>
+          </Text>
           <Text style={styles.roleText}>🎓 Admin</Text>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Account')}>
           <Image source={{ uri: profilePicture }} style={styles.profileImage} />
         </TouchableOpacity>
       </View>
-
-      
 
       {/* Alert Section */}
       <View style={styles.alertContainer}>
@@ -118,14 +132,15 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 22,
     color: '#004d40',
-    fontWeight: '400',
+    fontFamily: 'Ubuntu-Regular',
   },
   boldText: {
-    fontWeight: 'bold',
+    fontFamily: 'Ubuntu-Bold',
   },
   roleText: {
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Ubuntu-Regular',
   },
   profileImage: {
     width: 50,
@@ -139,14 +154,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontFamily: 'Ubuntu-Bold',
     color: '#004d40',
   },
   alertText: {
     fontSize: 14,
     color: '#333',
     marginTop: 5,
+    fontFamily: 'Ubuntu-Light',
   },
   noAlertText: {
     fontSize: 14,
@@ -181,14 +197,15 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#004d40',
+    fontFamily: 'Ubuntu-Bold',
+    color: '#106547',
   },
   cardDescription: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
     marginTop: 5,
+    fontFamily: 'Ubuntu-Light',
   },
 });
 
