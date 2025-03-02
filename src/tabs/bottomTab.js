@@ -48,68 +48,13 @@ export default function BottomTab() {
   return (
     <Tab.Navigator
       screenOptions={({ route, navigation }) => ({
-        headerShown: true,
-        // For home screens, align title to left; otherwise center.
-        headerTitleAlign: (
-          (userRole === 'student' && route.name === 'StudentHome') ||
-          (userRole === 'admin' && route.name === 'AdminHome') ||
-          (userRole === 'teacher' && route.name === 'TeacherHome')
-        ) ? 'left' : 'center',
-        // For non-home screens, set header background.
-        headerStyle: (
-          (userRole === 'student' && route.name === 'StudentHome') ||
-          (userRole === 'admin' && route.name === 'AdminHome') ||
-          (userRole === 'teacher' && route.name === 'TeacherHome')
-        ) ? {} : { backgroundColor: '#006A4E' },
-        headerLeft: () => {
-          // For home screens, drawer icon is black; otherwise white.
-          const isHome =
-            (userRole === 'student' && route.name === 'StudentHome') ||
-            (userRole === 'admin' && route.name === 'AdminHome') ||
-            (userRole === 'teacher' && route.name === 'TeacherHome');
-          const drawerIconColor = isHome ? 'black' : 'white';
-          return (
-            <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
-              <Icon name="bars" size={20} color={drawerIconColor} style={{ marginLeft: 10 }} />
-            </TouchableOpacity>
-          );
-        },
-        headerTitle: () => {
-          const tab = getTabs().find((t) => t.name === route.name);
-          if (
-            (userRole === 'student' && route.name === 'StudentHome') ||
-            (userRole === 'admin' && route.name === 'AdminHome') ||
-            (userRole === 'teacher' && route.name === 'TeacherHome')
-          ) {
-            let title;
-            if (userRole === 'student') title = 'Student Portal';
-            else if (userRole === 'admin') title = 'Admin Portal';
-            else if (userRole === 'teacher') title = 'Faculty Portal';
-            return (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image
-                  source={require('./../../assets/lalogo.jpg')}
-                  style={{ width: 60, height: 40, marginRight: 10 }}
-                  resizeMode="contain"
-                />
-                <Text style={{ fontSize: 18, fontFamily: 'Ubuntu-Bold', color: 'green' }}>
-                  {title}
-                </Text>
-              </View>
-            );
-          }
-          return (
-            <Text style={{ fontSize: 18, color: 'white', fontFamily: 'Ubuntu-Bold' }}>
-              {tab?.title || route.name}
-            </Text>
-          );
-        },
+        header: () => null, // Remove header completely
         tabBarIcon: ({ color, size }) => {
           const tab = getTabs().find((t) => t.name === route.name);
           return tab ? <FontAwesome5 name={tab.icon} size={size} color={color} /> : null;
         },
-        tabBarActiveTintColor: '#004d40', // Active tab color
-        tabBarInactiveTintColor: '#757575', // Inactive tab color
+        tabBarActiveTintColor: '#004d40',
+        tabBarInactiveTintColor: '#757575',
       })}
     >
       {getTabs().map((tab) => (

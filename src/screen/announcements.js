@@ -6,12 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image
 } from "react-native";
 import axios from "axios";
 import { AuthContext } from "./context/authContext";
 import PostCard from "../PostCard";
+import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
 
-const Announcements = () => {
+const Announcements = ({ navigation }) => {
   const [state] = useContext(AuthContext);
   const currentUser = state.user;
 
@@ -31,7 +33,6 @@ const Announcements = () => {
             subjects: currentUser.subjects,
           },
         });
-
         setAdminPosts(response.data.adminPosts || []);
         setTeacherPosts(response.data.teacherPosts || []);
       } catch (error) {
@@ -45,19 +46,9 @@ const Announcements = () => {
     fetchAnnouncements();
   }, [currentUser]);
 
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <Text style={styles.loaderText}>Loading Announcements...</Text>
-      </View>
-    );
-  }
-
   const renderPosts = (posts) => {
     return posts.length > 0 ? (
-      posts.map((post, index) => (
-        <PostCard key={index} post={post} />
-      ))
+      posts.map((post, index) => <PostCard key={index} post={post} />)
     ) : (
       <Text style={styles.noPostsText}>
         No {activeTab} announcements available.
@@ -67,37 +58,74 @@ const Announcements = () => {
 
   return (
     <View style={styles.container}>
-      {/* Tabs Section */}
-      <View style={styles.tabsContainer}>
+      {/* Custom Header Styled Like StudentAssignments Header */}
+      <View style={styles.header}>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === "Admin" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("Admin")}
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
         >
-          <Text style={[styles.tabText, activeTab === "Admin" && styles.activeTabText]}>
-            Admin 
-          </Text>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Announcements</Text>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === "Teacher" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("Teacher")}
+          style={styles.profileContainer}
+          onPress={() => navigation.navigate("Account")}
         >
-          <Text style={[styles.tabText, activeTab === "Teacher" && styles.activeTabText]}>
-            Teacher 
-          </Text>
+          <Image
+            source={{
+              uri:
+                currentUser?.profilePicture ||
+                "https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png",
+            }}
+            style={styles.profileImage}
+          />
         </TouchableOpacity>
       </View>
 
-      {/* Posts Section */}
-      <ScrollView>
-        {activeTab === "Admin" && renderPosts(adminPosts)}
-        {activeTab === "Teacher" && renderPosts(teacherPosts)}
-      </ScrollView>
+      {/* Content */}
+      <View style={styles.contentContainer}>
+        {/* Tabs Section */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "Admin" && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab("Admin")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "Admin" && styles.activeTabText,
+              ]}
+            >
+              Admin
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "Teacher" && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab("Teacher")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "Teacher" && styles.activeTabText,
+              ]}
+            >
+              Teacher
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Posts Section */}
+        <ScrollView style={styles.postsContainer}>
+          {activeTab === "Admin" && renderPosts(adminPosts)}
+          {activeTab === "Teacher" && renderPosts(teacherPosts)}
+        </ScrollView>
+      </View>
     </View>
   );
 };
@@ -106,19 +134,52 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    padding: 15,
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: "center",
+  // Header styled like StudentAssignments topHalf
+  header: {
+    width: 393,
+    height: 128,
+    backgroundColor: "#006446",
+    alignSelf: "center",
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
     alignItems: "center",
-    backgroundColor: "white",
+    justifyContent: "center",
+    position: "relative",
   },
-  loaderText: {
+  backButton: {
+    position: "absolute",
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  profileContainer: {
+    position: "absolute",
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  headerTitle: {
     fontSize: 18,
-    color: "#018749",
-    fontWeight: "bold",
-    fontFamily: "Kanit-Medium",
+    color: "#FFFFFF",
+    fontFamily: "Ubuntu-Bold",
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 15,
   },
   tabsContainer: {
     flexDirection: "row",
@@ -131,7 +192,6 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 5,
     backgroundColor: "white",
-    marginHorizontal: 0,
     borderWidth: 1,
     borderColor: "#006A4E",
   },
@@ -147,6 +207,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "Ubuntu-Bold",
   },
+  postsContainer: {
+    flex: 1,
+  },
   noPostsText: {
     fontSize: 16,
     color: "#7B7D7D",
@@ -157,4 +220,3 @@ const styles = StyleSheet.create({
 });
 
 export default Announcements;
-

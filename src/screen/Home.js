@@ -63,7 +63,7 @@ const Home = () => {
       <View style={styles.iconContainer}>
         <Icon name={item.icon} size={20} color="#004d40" />
       </View>
-      <Text 
+      <Text
         style={styles.cardTitle}
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -71,55 +71,73 @@ const Home = () => {
       >
         {item.name}
       </Text>
-      <Text style={styles.cardDescription}>
-        Lorem ipsum dolor sit amet...
-      </Text>
+      <Text style={styles.cardDescription}>Lorem ipsum dolor sit amet...</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
-            Hello, <Text style={styles.boldText}>{firstName}!</Text>
-          </Text>
-          <Text style={styles.roleText}>🎓 Student</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('Account')}>
-          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Alert Section */}
-      <View style={styles.alertContainer}>
-        <Text style={styles.alertTitle}>Today’s Alert</Text>
-        {latestPost ? (
-          <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
-            <Text style={styles.alertText} numberOfLines={2}>
-              {latestPost.description}
+    <View style={styles.screen}>
+      {/* Header Section with fixed size */}
+      <View style={styles.headerWrapper}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>
+              Hello, <Text style={styles.boldText}>{firstName}!</Text>
             </Text>
+            <Text style={styles.roleText}>🎓 Student</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Account')}>
+            <Image source={{ uri: profilePicture }} style={styles.profileImage} />
           </TouchableOpacity>
-        ) : (
-          <Text style={styles.noAlertText}>No alerts today</Text>
-        )}
+        </View>
       </View>
 
-      {/* Features Grid */}
-      <FlatList
-        data={features}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.flatListContent}
-      />
+      {/* Main Content */}
+      <View style={styles.container}>
+        {/* Alert Section */}
+        <View style={styles.alertContainer}>
+          <Text style={styles.alertTitle}>Today’s Alert</Text>
+          {latestPost ? (
+            <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
+              <Text style={styles.alertText} numberOfLines={2}>
+                {latestPost.description}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={styles.noAlertText}>No alerts today</Text>
+          )}
+        </View>
+
+        {/* Features Grid */}
+        <FlatList
+          data={features}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.flatListContent}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  headerWrapper: {
+    width: 393,
+    height: 162,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 27,
+    marginTop: 36,
+    marginBottom: 20,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f4f4f4',
@@ -129,26 +147,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: 35,
+
   },
   greeting: {
     fontSize: 22,
-    color: '#004d40',
-    fontFamily: 'Ubuntu-Regular', // Updated font
+    color: '#fff',
+    fontFamily: 'Ubuntu-Regular',
   },
   boldText: {
-    fontFamily: 'Ubuntu-Bold', // Updated font
+    fontFamily: 'Ubuntu-Bold',
   },
   roleText: {
     fontSize: 16,
-    color: '#666',
-    fontFamily: 'Ubuntu-Regular', // Updated font
+    color: '#fff',
+    fontFamily: 'Ubuntu-Regular',
   },
   profileImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   alertContainer: {
     backgroundColor: '#c8e6c9',
@@ -158,14 +178,14 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: 20,
-    fontFamily: 'Ubuntu-Bold', // Updated font
+    fontFamily: 'Ubuntu-Bold',
     color: '#004d40',
   },
   alertText: {
     fontSize: 14,
     color: '#333',
     marginTop: 5,
-    fontFamily: 'Ubuntu-Light', // Updated font
+    fontFamily: 'Ubuntu-Light',
   },
   noAlertText: {
     fontSize: 14,
@@ -201,7 +221,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontFamily: 'Ubuntu-Bold', // Updated font
+    fontFamily: 'Ubuntu-Bold',
     color: '#004d40',
   },
   cardDescription: {
@@ -209,7 +229,7 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 5,
-    fontFamily: 'Ubuntu-Light', // Updated font
+    fontFamily: 'Ubuntu-Light',
   },
 });
 

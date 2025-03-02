@@ -1,8 +1,19 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  Image, 
+  Alert 
+} from 'react-native';
 import { WebView } from 'react-native-webview';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
 
 const PaymentScreen = () => {
+  const navigation = useNavigation();
+
   const paymentFormHTML = `
   <!DOCTYPE html>
   <html lang="en">
@@ -11,26 +22,24 @@ const PaymentScreen = () => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment</title>
     <style>
-      /* Import Kanit-Medium font from Google Fonts */
       @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@500&display=swap');
-
       body {
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
-        background-color: #F9F9F9; /* Light background */
+        background-color: #F9F9F9;
         font-family: 'Kanit', Arial, sans-serif;
         margin: 0;
       }
       .payform {
-        background-color: #FFFFFF; /* White background */
+        background-color: #FFFFFF;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         border-radius: 12px;
         padding: 30px;
         width: 90%;
         max-width: 450px;
-        color: #34495E; /* Dark text */
+        color: #34495E;
       }
       .payform input, .payform button {
         width: 100%;
@@ -38,36 +47,35 @@ const PaymentScreen = () => {
         margin-top: 15px;
         box-sizing: border-box;
         border-radius: 8px;
-        border: 1px solid #CCC; /* Light border */
+        border: 1px solid #CCC;
         font-size: 16px;
-        background-color: #F3F4F6; /* Light input background */
-        color: #34495E; /* Dark text */
+        background-color: #F3F4F6;
+        color: #34495E;
         transition: border-color 0.3s, background-color 0.3s;
-        font-family: 'Kanit', Arial, sans-serif; /* Apply Kanit font */
+        font-family: 'Kanit', Arial, sans-serif;
       }
       .payform input::placeholder {
-        color: #7F8C8D; /* Neutral placeholder */
+        color: #7F8C8D;
         font-style: italic;
       }
       .payform input:focus, .payform button:focus {
         outline: none;
-        border-color: #2ECC71; /* Green accent color on focus */
-        background-color: #E8F5E9; /* Slightly lighter background on focus */
+        border-color: #2ECC71;
+        background-color: #E8F5E9;
       }
       .payform button {
-        background: #2ECC71; /* Green button */
+        background: #2ECC71;
         border: none;
         cursor: pointer;
         font-weight: bold;
         text-transform: uppercase;
         transition: background 0.3s;
-        font-family: 'Kanit', Arial, sans-serif; /* Apply Kanit font */
-        color: #FFFFFF; /* White text */
+        font-family: 'Kanit', Arial, sans-serif;
+        color: #FFFFFF;
       }
       .payform button:hover {
-        background: #27AE60; /* Darker green on hover */
+        background: #27AE60;
       }
-      /* Responsive adjustments */
       @media (max-width: 500px) {
         .payform {
           padding: 20px;
@@ -97,27 +105,90 @@ const PaymentScreen = () => {
     </script>
   </body>
   </html>
-  `; // Ensure proper escaping or use template literals
+  `;
 
   return (
-    <WebView
-      originWhitelist={['*']}
-      source={{ html: paymentFormHTML }}
-      style={styles.webView}
-      javaScriptEnabled={true}
-      domStorageEnabled={true}
-      scalesPageToFit={true}
-      startInLoadingState={true}
-      renderLoading={() => (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading Payment Form...</Text>
-        </View>
-      )}
-    />
+    <View style={styles.container}>
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Payment</Text>
+        <TouchableOpacity 
+          style={styles.profileContainer} 
+          onPress={() => navigation.navigate('Account')}
+        >
+          <Image
+            source={{ uri: 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+      </View>
+      <WebView
+        originWhitelist={['*']}
+        source={{ html: paymentFormHTML }}
+        style={styles.webView}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        scalesPageToFit={true}
+        startInLoadingState={true}
+        renderLoading={() => (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading Payment Form...</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
+  header: {
+    width: '100%',
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginTop: 30,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  profileContainer: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
   webView: {
     flex: 1,
   },
@@ -125,17 +196,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9', /* Match the light background */
+    backgroundColor: '#F9F9F9',
   },
   loadingText: {
-    color: '#34495E', /* Dark text */
+    color: '#34495E',
     fontSize: 18,
-    fontFamily: 'Kanit-Medium', /* Use Kanit font for loading text */
+    fontFamily: 'Kanit-Medium',
   },
 });
 
 export default PaymentScreen;
-
 
 
 

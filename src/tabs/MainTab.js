@@ -205,20 +205,7 @@ function AdminHomeScreen(){
 <Stack.Screen
   name="ContactUs"
   component={ContactUs}
-  options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Contact Us',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+  options={{ headerShown: false }} 
 /> 
     <Stack.Screen name="TakeAttendance" component={TakeAttendance}  options={{
     headerStyle: { backgroundColor: 'white' },
@@ -244,19 +231,7 @@ function AdminHomeScreen(){
       fontSize: 22, 
       color: 'black' 
     } }} />  
-    <Stack.Screen name="ClassSchedule" component={ClassSchedule}options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Class Schedule',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+    <Stack.Screen name="ClassSchedule" component={ClassSchedule}  options={{ headerShown: false }} 
 /> 
 <Stack.Screen name="Grades" component={Grades}options={{
     headerStyle: { backgroundColor: 'white' },
@@ -458,71 +433,19 @@ function AdminHomeScreen(){
   }}
 /> 
 
-<Stack.Screen name="PaymentScreen" component={PaymentScreen} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Payment Portal',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+<Stack.Screen name="PaymentScreen" component={PaymentScreen}      options={{ headerShown: false }} 
 /> 
-<Stack.Screen name="StudentAttendance" component={StudentAttendance} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Student Attendance',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+<Stack.Screen name="StudentAttendance" component={StudentAttendance}   options={{ headerShown: false }} 
 /> 
-    <Stack.Screen name="ClassSchedule" component={ClassSchedule}  options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Class Schedule',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+    <Stack.Screen name="ClassSchedule" component={ClassSchedule}  options={{ headerShown: false }} 
 /> 
 <Stack.Screen
   name="ContactUs"
   component={ContactUs}
-  options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Contact Us',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+  options={{ headerShown: false }} 
 /> 
       <Stack.Screen name="StudentAssignments" component={StudentAssignments} options={{
-    headerStyle: { backgroundColor: 'white' },
+    headerShown: false,
     title: 'Your Assignments',
     headerTintColor: 'black',
     headerBackTitle: 'Back',
@@ -602,20 +525,7 @@ function AdminHomeScreen(){
 <Stack.Screen
   name="ContactUs"
   component={ContactUs}
-  options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Contact Us',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+  options={{ headerShown: false }} 
 /> 
 <Stack.Screen name="Announcements" component={Announcements} options={{
     headerStyle: { backgroundColor: 'white' },
@@ -699,20 +609,7 @@ function AdminHomeScreen(){
     
   }}
 />
-      <Stack.Screen name="PaymentScreen" component={PaymentScreen} options={{
-    headerStyle: { backgroundColor: 'black' },
-    title: 'Payment Portal',
-    headerTintColor: 'white',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'white' 
-    }
-  }}
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen}      options={{ headerShown: false }} 
 /> 
       <Stack.Screen name="TakeAttendance" component={TakeAttendance}  options={{
     headerStyle: { backgroundColor: 'black' },

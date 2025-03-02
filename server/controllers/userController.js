@@ -783,14 +783,15 @@ const createAssignment = async (req, res) => {
 
 
 
+// controllers/assignmentController.js
+
 const submitAssignment = async (req, res) => {
   try {
-    const { assignmentId, userId, filePath } = req.body;
-
-    if (!assignmentId || !userId || !filePath) {
+    const { assignmentId, userId, filePath, fileName, fileType } = req.body;
+    if (!assignmentId || !userId || !filePath || !fileName || !fileType) {
       return res.status(400).json({ message: 'All fields are required' });
     }
-
+    
     // Check if the assignment exists
     const assignmentExists = await Assignment.findById(assignmentId);
     if (!assignmentExists) {
@@ -803,16 +804,71 @@ const submitAssignment = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create and save the submission
-    const submission = new Submission({ assignmentId, userId, filePath });
-    await submission.save();
+    // Update the submission if one exists; otherwise create a new one.
+    // Ensure your Submission schema has a unique index on { assignmentId, userId }.
+    const submission = await Submission.findOneAndUpdate(
+      { assignmentId, userId },
+      { filePath, fileName, fileType },
+      { new: true, upsert: true, setDefaultsOnInsert: true, runValidators: true }
+    );
 
-    res.status(201).json({ message: 'Assignment submitted successfully', data: submission });
+    return res.status(200).json({
+      message: 'Assignment submitted successfully',
+      data: submission,
+    });
   } catch (error) {
-    console.error(error); // Better error handling for debugging
-    res.status(500).json({ message: 'Failed to submit assignment', error: error.message });
+    console.error(error);
+    res.status(500).json({
+      message: 'Failed to submit assignment',
+      error: error.message,
+    });
   }
 };
+
+
+
+const getSubmissions = async (req, res) => {
+  try {
+    const { userId, subject } = req.query;
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    // Populate the assignment details (assuming assignmentId is a reference)
+    let submissions = await Submission.find({ userId }).populate({
+      path: 'assignmentId',
+      select: 'subject',
+      match: subject ? { subject } : {}
+    });
+    // If subject filtering is applied, filter out submissions where assignmentId is null.
+    if (subject) {
+      submissions = submissions.filter(sub => sub.assignmentId);
+    }
+    res.status(200).json({ submissions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch submissions', error: error.message });
+  }
+};
+const showSubmissions = async (req, res) => {
+  try {
+    const { assignmentId } = req.query;
+    if (!assignmentId) {
+      return res.status(400).json({ message: 'Assignment ID is required' });
+    }
+    // Find all submissions for the given assignmentId and populate the student's name
+    const submissions = await Submission.find({ assignmentId }).populate({
+      path: 'userId',
+      select: 'name'
+    });
+    res.status(200).json({ submissions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch submissions', error: error.message });
+  }
+};
+
+
+
 const getAssignmentById = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
@@ -1518,7 +1574,7 @@ const getTranscriptReports = async (req, res) => {
   }
 };
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile, submitMarks, fetchUsersByGradeAndSubject, submitGrowthReport, getTranscriptReports, fetchMarks, updateMarks }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile, submitMarks, getSubmissions, fetchUsersByGradeAndSubject, submitGrowthReport, showSubmissions, getTranscriptReports, fetchMarks, updateMarks }
 
 
 

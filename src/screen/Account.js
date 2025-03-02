@@ -1,19 +1,33 @@
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import React, { useContext, useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  ActivityIndicator, 
+  Alert 
+} from 'react-native';
 import { AuthContext } from './context/authContext';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
 
 const Account = () => {
   const [state, setState] = useContext(AuthContext);
   const { user, token } = state;
+  const navigation = useNavigation();
 
   const [name, setName] = useState(user?.name || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [email] = useState(user?.email || '');
-  const [country, setCountry] = useState(user?.country || 'Pakistan'); // Default country
+  const [country, setCountry] = useState(user?.country || 'Pakistan');
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState(user?.profilePicture || '');
 
@@ -115,20 +129,40 @@ const Account = () => {
 
       alert('Profile updated successfully!');
     } catch (error) {
+      console.error(error);
       alert(error.response?.data?.message || error.message);
       setLoading(false);
-      console.error(error);
     }
+  };
+
+  const handleLogOut = async () => {
+    setState({ token: "", user: null });
+    await AsyncStorage.removeItem("@auth");
+    alert("Logged Out Successfully");
   };
 
   return (
     <View style={styles.container}>
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Account</Text>
+        <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
+          <Image
+            source={{ uri: imageUri || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={selectImage}>
             <Image
               source={{ uri: imageUri || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
-              style={styles.profileImage}
+              style={styles.profileImageLarge}
             />
           </TouchableOpacity>
           <Text style={styles.editText}>Tap to change picture</Text>
@@ -204,11 +238,15 @@ const Account = () => {
             <Text style={styles.updateBtnText}>Update Profile</Text>
           )}
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogOut}>
+          <Icon name="sign-out-alt" size={20} color="white" />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -218,14 +256,55 @@ const styles = StyleSheet.create({
   scrollContainer: {
     alignItems: 'center',
     padding: 20,
-    
   },
+  /* Custom Header (same as StudentAssignments topHalf) */
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  profileContainer: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
+  /* Larger Profile Image for the body */
   imageContainer: {
     alignItems: 'center',
     marginBottom: 20,
-    
   },
-  profileImage: {
+  profileImageLarge: {
     height: 120,
     width: 120,
     borderRadius: 60,
@@ -238,10 +317,10 @@ const styles = StyleSheet.create({
     color: '#018749',
     fontFamily: 'Kanit-Medium',
   },
+  /* Input styles */
   inputContainer: {
     width: '100%',
     marginBottom: 15,
-    
   },
   inputLabel: {
     fontSize: 16,
@@ -263,6 +342,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     borderColor: '#EEE',
   },
+  picker: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: 'Kanit-Medium',
+    color: '#333',
+  },
   updateBtn: {
     width: '100%',
     backgroundColor: '#018749',
@@ -278,6 +367,22 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontFamily: 'Kanit-Medium',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D7263D',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: 30,
+  },
+  logoutText: {
+    fontFamily: 'Kanit-Medium',
+    fontSize: 16,
+    color: 'white',
+    marginLeft: 10,
   },
 });
 

@@ -6,29 +6,45 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
   Dimensions,
+  Image,
+  Platform
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
 import { AuthContext } from './context/authContext';
+import { useNavigation } from '@react-navigation/native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { BarChart } from 'react-native-chart-kit'; // Import BarChart
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+const { width } = Dimensions.get('window');
 
 const StudentAttendance = () => {
   const [state] = useContext(AuthContext);
   const currentUser = state.user;
-
+  const navigation = useNavigation();
+  
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [attendanceStats, setAttendanceStats] = useState({
     present: 0,
     absent: 0,
     late: 0,
   });
 
+  // For the date picker card
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Profile Picture
+  const profilePicture = currentUser?.profilePicture ||
+    'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png';
+
+  /* ===================== FETCH SUBJECTS ON MOUNT ===================== */
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
@@ -39,10 +55,10 @@ const StudentAttendance = () => {
         Alert.alert('Error', 'Failed to fetch subjects');
       }
     };
-
     fetchSubjects();
   }, []);
 
+  /* ===================== FETCH ATTENDANCE ===================== */
   const fetchAttendance = async (subjectId) => {
     if (!subjectId) return;
 
@@ -62,9 +78,10 @@ const StudentAttendance = () => {
       // Calculate attendance stats
       const stats = { present: 0, absent: 0, late: 0 };
       records.forEach((record) => {
-        if (record.status.toLowerCase() === 'present') stats.present += 1;
-        else if (record.status.toLowerCase() === 'absent') stats.absent += 1;
-        else if (record.status.toLowerCase() === 'late') stats.late += 1;
+        const status = record.status.toLowerCase();
+        if (status === 'present') stats.present += 1;
+        else if (status === 'absent') stats.absent += 1;
+        else if (status === 'late') stats.late += 1;
       });
       setAttendanceStats(stats);
     } catch (error) {
@@ -75,12 +92,14 @@ const StudentAttendance = () => {
     }
   };
 
+  // Re-fetch attendance whenever subject changes
   useEffect(() => {
     if (selectedSubject) {
       fetchAttendance(selectedSubject);
     }
   }, [selectedSubject]);
 
+  // If user data is missing
   if (!currentUser) {
     return (
       <View style={styles.container}>
@@ -91,213 +110,392 @@ const StudentAttendance = () => {
     );
   }
 
+  // Compute stats
+  const totalClasses = attendanceStats.present + attendanceStats.absent + attendanceStats.late;
+  const attendancePercentage = totalClasses > 0
+    ? Math.round((attendanceStats.present / totalClasses) * 100)
+    : 0;
+
+  /* ===================== DATE PICKER LOGIC ===================== */
+  const onPressView = () => {
+    setShowDatePicker(true);
+  };
+
+  const onChangeDate = (event, newDate) => {
+    // On Android, user can press "Cancel" => newDate = undefined
+    setShowDatePicker(false);
+    if (newDate) {
+      setSelectedDate(newDate);
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.heading}>{currentUser.name}</Text>
-      <Text style={styles.gradeText}>Grade: {currentUser.grade}</Text>
-      <View style={styles.pickerWrapper}>
-        <RNPickerSelect
-          onValueChange={(value) => setSelectedSubject(value)}
-          items={subjects.map((subject) => ({
-            label: subject.name,
-            value: subject._id,
-          }))}
-          placeholder={{ label: 'Select a subject', value: null }}
-          style={pickerSelectStyles}
-          useNativeAndroidPickerStyle={false}
-          Icon={() => {
-            return (
+    <View style={styles.screen}>
+      {/* ================= TOP BAR ================= */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
+          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>My Attendance</Text>
+      </View>
+
+      {/* ================= SCROLL CONTENT ================= */}
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        {/* ========== "My Attendance" Date Picker Card ========== */}
+        <View style={styles.datePickerCard}>
+          <View style={styles.datePickerLeft}>
+            <FontAwesome5 name="calendar" size={24} color="#006446" />
+            <Text style={styles.datePickerText}>My Attendance</Text>
+          </View>
+          <TouchableOpacity style={styles.viewButton} onPress={onPressView}>
+            <Text style={styles.viewButtonText}>VIEW</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Render the native date picker if showDatePicker is true */}
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={onChangeDate}
+          />
+        )}
+
+        {/* === Subject Picker === */}
+        <View style={styles.pickerWrapper}>
+          <RNPickerSelect
+            onValueChange={(value) => setSelectedSubject(value)}
+            items={subjects.map((subject) => ({
+              label: subject.name,
+              value: subject._id,
+            }))}
+            placeholder={{ label: 'Select a subject', value: null }}
+            style={pickerSelectStyles}
+            useNativeAndroidPickerStyle={false}
+            Icon={() => (
               <MaterialIcons
                 name="arrow-drop-down"
                 size={24}
                 color="#34495e"
               />
-            );
-          }}
-        />
-      </View>
-
-      {selectedSubject && (
-        <View>
-          <Text style={styles.chartTitle}>Attendance Statistics</Text>
-          <BarChart
-            data={{
-              labels: ['Present', 'Absent', 'Late'],
-              datasets: [
-                {
-                  data: [
-                    attendanceStats.present,
-                    attendanceStats.absent,
-                    attendanceStats.late,
-                  ],
-                  colors: [
-                    () => '#2ecc71', // Green for Present
-                    () => '#e74c3c', // Red for Absent
-                    () => '#34495e', // Black for Late
-                  ],
-                },
-              ],
-            }}
-            width={Dimensions.get('window').width - 40} // Adjust chart width
-            height={220}
-            yAxisLabel=""
-            chartConfig={{
-              backgroundColor: '#f4f4f4',
-              backgroundGradientFrom: '#f4f4f4',
-              backgroundGradientTo: '#f4f4f4',
-              decimalPlaces: 0,
-              color: (opacity = 1, index) => {
-                const colors = ['#2ecc71', '#e74c3c', '#34495e']; // Green, Red, Black
-                return colors[index];
-              },
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              style: {
-                borderRadius: 16,
-              },
-              barPercentage: 0.7,
-            }}
-            style={{
-              marginVertical: 8,
-              borderRadius: 16,
-              alignSelf: 'center',
-            }}
+            )}
           />
-
-<Text style={styles.totalsText}>
-            <Text style={styles.presentText}>Present: {attendanceStats.present}</Text>,{' '}
-            <Text style={styles.absentText}>Absent: {attendanceStats.absent}</Text>,{' '}
-            <Text style={styles.lateText}>Late: {attendanceStats.late}</Text>
-          </Text>
         </View>
-      )}
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#FF6347" />
-      ) : (
-        <View style={styles.attendanceList}>
-          {attendanceRecords.length > 0 ? (
-            attendanceRecords.map((record, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.recordCard,
-                  record.status.toLowerCase() === 'present'
-                    ? styles.present
-                    : record.status.toLowerCase() === 'late'
-                    ? styles.late
-                    : styles.absent,
-                ]}
-              >
+        {/* === Big Date Card === */}
+        <View style={styles.dateCard}>
+          <Text style={styles.bigDateText}>12<Text style={styles.thText}>th</Text></Text>
+          <Text style={styles.dayText}>Wednesday</Text>
+          <Text style={styles.monthYearText}>February 2025</Text>
+          <Text style={styles.thisWeekStatus}>This week status</Text>
+
+          {/* Example M T W T F row */}
+          <View style={styles.weekRow}>
+            <View style={styles.dayCircle}>
+              <Text style={styles.dayLabel}>Mon</Text>
+              <Text style={styles.checkIcon}>✓</Text>
+            </View>
+            <View style={styles.dayCircle}>
+              <Text style={styles.dayLabel}>Tue</Text>
+              <Text style={styles.checkIcon}>✓</Text>
+            </View>
+            <View style={styles.dayCircle}>
+              <Text style={styles.dayLabel}>Wed</Text>
+              <Text style={[styles.checkIcon, { color: 'red' }]}>A</Text>
+            </View>
+            <View style={styles.dayCircle}>
+              <Text style={styles.dayLabel}>Thu</Text>
+              <Text style={styles.checkIcon}>✓</Text>
+            </View>
+            <View style={styles.dayCircle}>
+              <Text style={styles.dayLabel}>Fri</Text>
+              <Text style={styles.checkIcon}>✓</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* === Stats Row (Attendance %, Leaves, Ongoing Days) === */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{attendancePercentage}%</Text>
+            <Text style={styles.statLabel}>Attendance</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>
+              {attendanceStats.absent < 10
+                ? `0${attendanceStats.absent}`
+                : attendanceStats.absent}
+            </Text>
+            <Text style={styles.statLabel}>Leaves Taken</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>
+              {totalClasses < 10 ? `0${totalClasses}` : totalClasses}
+            </Text>
+            <Text style={styles.statLabel}>Ongoing Days</Text>
+          </View>
+        </View>
+
+        {/* === ASK LEAVE Button === */}
+        <TouchableOpacity style={styles.askLeaveButton}>
+          <Text style={styles.askLeaveButtonText}>ASK LEAVE</Text>
+        </TouchableOpacity>
+
+        {/* === Loading Indicator === */}
+        {loading && (
+          <ActivityIndicator size="large" color="#FF6347" style={{ marginTop: 20 }} />
+        )}
+
+        {/* === Attendance Records (if any) === */}
+        {attendanceRecords.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            {attendanceRecords.map((record, index) => (
+              <View key={index} style={styles.recordCard}>
                 <Text style={styles.recordText}>Date: {record.date}</Text>
                 <Text style={styles.recordText}>
                   Status: {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
                 </Text>
               </View>
-            ))
-          ) : (
-            <Text style={styles.noRecordsText}>
-              No attendance records available.
-            </Text>
-          )}
-        </View>
-      )}
-    </ScrollView>
+            ))}
+          </View>
+        )}
+        {(!loading && attendanceRecords.length === 0 && selectedSubject) && (
+          <Text style={styles.noRecordsText}>
+            No attendance records available.
+          </Text>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
+/* -------------------- STYLES -------------------- */
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: '#f0f4f7',
-    padding: 20,
   },
-  heading: {
-    fontSize: 28,
-    fontFamily: 'Kanit-Medium',
-    color: '#00308F',
-    marginBottom: 10,
-    textAlign: 'center',
+  /* Top Bar */
+  topBar: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
   },
-  gradeText: {
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  profileContainer: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  topBarTitle: {
     fontSize: 18,
-    fontFamily: 'Kanit-Medium',
-    color: '#00308F',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+    position: 'absolute',
+    top: 10,
+    left: 120,
+    marginTop: 60,
   },
+
+  /* Main Content Container */
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+
+  /* "My Attendance" Date Picker Card */
+  datePickerCard: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  datePickerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  datePickerText: {
+    marginLeft: 10,
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#006446',
+  },
+  viewButton: {
+    backgroundColor: '#006446',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 6,
+  },
+  viewButtonText: {
+    fontSize: 14,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#fff',
+  },
+
+  /* Subject Picker */
   pickerWrapper: {
     marginBottom: 20,
   },
-  chartTitle: {
-    fontSize: 20,
-    fontFamily: 'Kanit-Medium',
-    color: '#00308F',
-    textAlign: 'center',
-    marginVertical: 10,
-  },
-  totalsText: {
-    fontSize: 16,
-    fontFamily: 'Kanit-Medium',
-    color: '#00308F',
-    textAlign: 'center',
+
+  /* Big Date Card */
+  dateCard: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
     marginBottom: 20,
   },
-  presentText: {
-    color: '#2ecc71', // Green
+  bigDateText: {
+    fontSize: 48,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#006446',
+    lineHeight: 48,
   },
-  absentText: {
-    color: '#e74c3c', // Red
+  thText: {
+    fontSize: 24,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#006446',
   },
-  lateText: {
-    color: 'black', // Yellow
+  dayText: {
+    fontSize: 24,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#333',
   },
-  attendanceList: {
-    marginTop: 10,
+  monthYearText: {
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#666',
+    marginBottom: 10,
   },
+  thisWeekStatus: {
+    fontSize: 14,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#777',
+    marginBottom: 10,
+  },
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '80%',
+  },
+  dayCircle: {
+    alignItems: 'center',
+  },
+  dayLabel: {
+    fontSize: 14,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#333',
+  },
+  checkIcon: {
+    fontSize: 16,
+    color: '#006446',
+    fontFamily: 'Ubuntu-Bold',
+  },
+
+  /* Stats Row */
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#fff',
+    marginHorizontal: 5,
+    borderRadius: 15,
+    padding: 15,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#006446',
+    marginBottom: 5,
+  },
+  statLabel: {
+    fontSize: 14,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#333',
+  },
+
+  /* ASK LEAVE Button */
+  askLeaveButton: {
+    backgroundColor: '#006446',
+    borderRadius: 15,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  askLeaveButtonText: {
+    fontSize: 18,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#fff',
+  },
+
+  /* Detailed Attendance Records (Optional) */
   recordCard: {
+    backgroundColor: '#018749',
     padding: 15,
     borderRadius: 10,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
-    flexDirection: 'column',
+    marginBottom: 10,
   },
   recordText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
     color: '#ffffff',
-  },
-  present: {
-    backgroundColor: '#006400',
-  },
-  late: {
-    backgroundColor: 'black',
-  },
-  absent: {
-    backgroundColor: 'maroon',
   },
   noRecordsText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
     color: '#95a5a6',
     textAlign: 'center',
     marginTop: 20,
   },
   errorText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
     color: '#e74c3c',
     textAlign: 'center',
+    marginTop: 20,
   },
 });
 
+/* RNPickerSelect Styles */
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderWidth: 1,
@@ -309,7 +507,7 @@ const pickerSelectStyles = StyleSheet.create({
   },
   inputAndroid: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderWidth: 1,
@@ -321,7 +519,7 @@ const pickerSelectStyles = StyleSheet.create({
   },
   placeholder: {
     color: '#999',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
   },
 });
 

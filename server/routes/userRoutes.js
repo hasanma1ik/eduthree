@@ -6,6 +6,7 @@ const {
      loginController,
      updateUserController,
      requireSignIn,
+     getSubmissions,
      getUserProfile,
      searchController,
      getStudentAttendance,
@@ -62,7 +63,8 @@ const {
      fetchMarks,
      getProgressReports,
      submitGrowthReport,
-     getTranscriptReports
+     getTranscriptReports,
+     showSubmissions
    
     
     
@@ -129,10 +131,12 @@ router.post('/upload', upload.single('file'), (req, res) => {
   }
 });
 
-router.post('/submission', (req, res) => {
-  console.log("Received submission:", req.body);
-  submitAssignment(req, res);
-});
+// routes/assignmentRoutes.js
+router.post('/submit-assignment', submitAssignment);
+
+router.get('/submissions', getSubmissions);
+router.get('/submission', showSubmissions);
+
 
 
 // Route for creating a new assignment

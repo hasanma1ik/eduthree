@@ -14,6 +14,10 @@ import { Picker } from '@react-native-picker/picker';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { AuthContext } from './screen/context/authContext';
 
+// IMPORTANT: If you want to open local files, or handle downloads from remote URLs:
+import * as FileSystem from 'expo-file-system';
+import * as IntentLauncher from 'expo-intent-launcher';
+
 const Assignments = () => {
   const [state] = useContext(AuthContext);
   const currentUser = state.user;
@@ -25,6 +29,9 @@ const Assignments = () => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [gradeSubjectMap, setGradeSubjectMap] = useState({});
 
+  const [expandedAssignment, setExpandedAssignment] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+
   const [fontsLoaded] = useFonts({
     'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
   });
@@ -35,11 +42,11 @@ const Assignments = () => {
     }
   }, [fontsLoaded]);
 
+  // Fetch teacher data (grades & subjects).
   useEffect(() => {
     const fetchTeacherData = async () => {
       try {
         const response = await axios.get(`/auth/teacher/${currentUser._id}/data`);
-
         if (response.data) {
           setGrades(response.data.grades || []);
           setGradeSubjectMap(response.data.gradeSubjectMap || {});
@@ -49,32 +56,30 @@ const Assignments = () => {
         Alert.alert('Error', 'Failed to fetch teacher data');
       }
     };
-
     fetchTeacherData();
   }, [currentUser]);
 
+  // When grade changes, load subjects for that grade
   useEffect(() => {
     if (selectedGrade && gradeSubjectMap[selectedGrade]) {
       setSubjects(gradeSubjectMap[selectedGrade]);
-      setSelectedSubject(''); // Reset subject dropdown when grade changes
+      setSelectedSubject('');
     } else {
       setSubjects([]);
       setSelectedSubject('');
     }
   }, [selectedGrade, gradeSubjectMap]);
 
+  // Fetch assignments by grade & subject
   useEffect(() => {
     const fetchAssignments = async () => {
       if (!selectedGrade || !selectedSubject) {
         setAssignments([]);
         return;
       }
-
       try {
         const response = await axios.get(
-          `/auth/assignments?grade=${encodeURIComponent(
-            selectedGrade
-          )}&subject=${encodeURIComponent(selectedSubject)}`
+          `/auth/assignments?grade=${encodeURIComponent(selectedGrade)}&subject=${encodeURIComponent(selectedSubject)}`
         );
         setAssignments(response.data || []);
       } catch (error) {
@@ -82,10 +87,10 @@ const Assignments = () => {
         Alert.alert('Error', 'Failed to fetch assignments');
       }
     };
-
     fetchAssignments();
   }, [selectedGrade, selectedSubject]);
 
+  // Delete assignment
   const deleteAssignment = async (assignmentId) => {
     Alert.alert(
       'Confirm Deletion',
@@ -97,9 +102,7 @@ const Assignments = () => {
           onPress: async () => {
             try {
               await axios.delete(`/auth/assignments/${assignmentId}`);
-              setAssignments((prev) =>
-                prev.filter((a) => a._id !== assignmentId)
-              );
+              setAssignments((prev) => prev.filter((a) => a._id !== assignmentId));
               Alert.alert('Success', 'Assignment deleted successfully');
             } catch (error) {
               Alert.alert('Error', 'Failed to delete assignment');
@@ -109,6 +112,70 @@ const Assignments = () => {
       ],
       { cancelable: false }
     );
+  };
+
+  // Expand assignment to load submissions
+  const toggleExpandAssignment = async (assignmentId) => {
+    if (expandedAssignment === assignmentId) {
+      // Collapse if already expanded
+      setExpandedAssignment(null);
+      setSubmissions([]);
+    } else {
+      setExpandedAssignment(assignmentId);
+      try {
+        const response = await axios.get(`/auth/submission?assignmentId=${assignmentId}`);
+        setSubmissions(response.data.submissions || []);
+      } catch (error) {
+        console.error('Failed to fetch submissions:', error);
+        Alert.alert('Error', 'Failed to fetch submissions for this assignment');
+      }
+    }
+  };
+
+  /**
+   * Attempt to "download" or open file. 
+   * - If filePath starts with "http", we do a real download to device cache, then open it via an Intent (Android).
+   * - If filePath is "file://", we try to open the local file. (This only works if that file actually exists on the teacher's device.)
+   * - If no scheme is recognized, fallback to opening as-is with an Intent.
+   */
+  const handleDownloadFile = async (filePath, fileName, fileType = 'application/octet-stream') => {
+    try {
+      if (filePath.startsWith('http')) {
+        // Remote URL: Download to device's cache
+        const downloadResumable = FileSystem.createDownloadResumable(
+          filePath,
+          FileSystem.cacheDirectory + fileName
+        );
+        const { uri } = await downloadResumable.downloadAsync();
+
+        // Then open the downloaded file using an external viewer
+        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+          data: uri,
+          flags: 1,
+          type: fileType,
+        });
+
+      } else if (filePath.startsWith('file://')) {
+        // Local file on teacher's device? Convert to content URI, then open
+        const contentUri = await FileSystem.getContentUriAsync(filePath);
+        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+          data: contentUri,
+          flags: 1,
+          type: fileType,
+        });
+
+      } else {
+        // Fallback to opening as-is
+        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+          data: filePath,
+          flags: 1,
+          type: fileType,
+        });
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Download Failed', `Could not open file: ${error.message}`);
+    }
   };
 
   if (!fontsLoaded) {
@@ -156,28 +223,55 @@ const Assignments = () => {
       {/* Assignments List */}
       {assignments.length > 0 ? (
         assignments.map((assignment) => (
-          <View key={assignment._id} style={styles.assignmentItem}>
+          <TouchableOpacity
+            key={assignment._id}
+            style={styles.assignmentItem}
+            onPress={() => toggleExpandAssignment(assignment._id)}
+          >
             <View style={styles.assignmentHeader}>
               <Text style={styles.assignmentTitle}>{assignment.title}</Text>
-              <TouchableOpacity
-                onPress={() => deleteAssignment(assignment._id)}
-              >
+              <TouchableOpacity onPress={() => deleteAssignment(assignment._id)}>
                 <FontAwesome5 name="trash" size={14} color="red" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.assignmentDescription}>
-              {assignment.description}
-            </Text>
-            <Text style={styles.assignmentMetaText}>
-              Due Date: {assignment.dueDate}
-            </Text>
-            <Text style={styles.assignmentMetaText}>
-              Grade: {assignment.grade}
-            </Text>
+            <Text style={styles.assignmentDescription}>{assignment.description}</Text>
+            <Text style={styles.assignmentMetaText}>Due Date: {assignment.dueDate}</Text>
+            <Text style={styles.assignmentMetaText}>Grade: {assignment.grade}</Text>
             <Text style={styles.assignmentMetaText}>
               Subject: {assignment.subject.name || assignment.subject}
             </Text>
-          </View>
+
+            {/* Display submissions if this assignment is expanded */}
+            {expandedAssignment === assignment._id && (
+              <View style={styles.submissionsContainer}>
+                {submissions.length > 0 ? (
+                  submissions.map((sub) => (
+                    <View key={sub._id} style={styles.submissionItem}>
+                      <Text style={styles.submissionText}>
+                        Student: {sub.userId && sub.userId.name ? sub.userId.name : 'Unknown Student'}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleDownloadFile(sub.filePath, sub.fileName, sub.fileType)}
+                      >
+                        <Text
+                          style={[
+                            styles.submissionText,
+                            { textDecorationLine: 'underline', color: 'blue' },
+                          ]}
+                        >
+                          File: {sub.fileName}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.noSubmissionsText}>
+                    No submissions for this assignment.
+                  </Text>
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
         ))
       ) : (
         <Text style={styles.noAssignmentsText}>
@@ -191,7 +285,7 @@ const Assignments = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E0E0E0', // Softer background color for better contrast
+    backgroundColor: '#E0E0E0',
     padding: 20,
   },
   pickerWrapper: {
@@ -201,12 +295,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     marginBottom: 20,
     overflow: 'hidden',
-    // iOS Shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    // Android Shadow
     elevation: 3,
   },
   picker: {
@@ -222,12 +314,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#EEEEEE',
-    // iOS Shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    // Android Shadow
     elevation: 2,
   },
   assignmentHeader: {
@@ -240,8 +330,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Kanit-Medium',
     color: '#333333',
-    flex: 1, // Ensures the title takes up available space
-    marginRight: 10, // Space between title and trash icon
+    flex: 1,
+    marginRight: 10,
   },
   assignmentDescription: {
     fontSize: 15,
@@ -251,7 +341,7 @@ const styles = StyleSheet.create({
   },
   assignmentMetaText: {
     fontSize: 13,
-    color: 'red', // Slightly brighter red for better visibility
+    color: 'red',
     fontFamily: 'Kanit-Medium',
   },
   noAssignmentsText: {
@@ -261,31 +351,31 @@ const styles = StyleSheet.create({
     marginTop: 30,
     fontFamily: 'Kanit-Medium',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  submissionsContainer: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#555555',
+  submissionItem: {
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  submissionText: {
+    fontSize: 14,
     fontFamily: 'Kanit-Medium',
+    color: '#333333',
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    color: '#FF6B6B',
+  noSubmissionsText: {
+    fontSize: 14,
+    fontFamily: 'Kanit-Medium',
+    color: '#AAAAAA',
     textAlign: 'center',
-    fontFamily: 'Kanit-Medium',
+    marginTop: 10,
   },
 });
-
 
 export default Assignments;

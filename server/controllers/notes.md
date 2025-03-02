@@ -8014,6 +8014,1555 @@ const styles = StyleSheet.create({
 
 export default AdminHome;
 
+import React, { useState, useEffect, useContext } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+} from 'react-native';
+import RNPickerSelect from 'react-native-picker-select';
+import axios from 'axios';
+import { AuthContext } from './context/authContext';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { BarChart } from 'react-native-chart-kit'; // Import BarChart
+
+const StudentAttendance = () => {
+  const [state] = useContext(AuthContext);
+  const currentUser = state.user;
+
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [attendanceStats, setAttendanceStats] = useState({
+    present: 0,
+    absent: 0,
+    late: 0,
+  });
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const response = await axios.get('/auth/subjects');
+        setSubjects(response.data.subjects);
+      } catch (error) {
+        console.error('Failed to fetch subjects:', error);
+        Alert.alert('Error', 'Failed to fetch subjects');
+      }
+    };
+
+    fetchSubjects();
+  }, []);
+
+  const fetchAttendance = async (subjectId) => {
+    if (!subjectId) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.get('/auth/attendance/student-attendance', {
+        params: {
+          studentId: currentUser._id,
+          grade: currentUser.grade,
+          subjectId,
+        },
+      });
+
+      const records = response.data.attendance;
+      setAttendanceRecords(records);
+
+      // Calculate attendance stats
+      const stats = { present: 0, absent: 0, late: 0 };
+      records.forEach((record) => {
+        if (record.status.toLowerCase() === 'present') stats.present += 1;
+        else if (record.status.toLowerCase() === 'absent') stats.absent += 1;
+        else if (record.status.toLowerCase() === 'late') stats.late += 1;
+      });
+      setAttendanceStats(stats);
+    } catch (error) {
+      console.error('Failed to fetch attendance:', error);
+      Alert.alert('Error', 'Failed to fetch attendance records.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedSubject) {
+      fetchAttendance(selectedSubject);
+    }
+  }, [selectedSubject]);
+
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>
+          Unable to load attendance. User data is missing.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.heading}>{currentUser.name}</Text>
+      <Text style={styles.gradeText}>Grade: {currentUser.grade}</Text>
+      <View style={styles.pickerWrapper}>
+        <RNPickerSelect
+          onValueChange={(value) => setSelectedSubject(value)}
+          items={subjects.map((subject) => ({
+            label: subject.name,
+            value: subject._id,
+          }))}
+          placeholder={{ label: 'Select a subject', value: null }}
+          style={pickerSelectStyles}
+          useNativeAndroidPickerStyle={false}
+          Icon={() => {
+            return (
+              <MaterialIcons
+                name="arrow-drop-down"
+                size={24}
+                color="#34495e"
+              />
+            );
+          }}
+        />
+      </View>
+
+      {selectedSubject && (
+        <View>
+          <Text style={styles.chartTitle}>Attendance Statistics</Text>
+          <BarChart
+            data={{
+              labels: ['Present', 'Absent', 'Late'],
+              datasets: [
+                {
+                  data: [
+                    attendanceStats.present,
+                    attendanceStats.absent,
+                    attendanceStats.late,
+                  ],
+                  colors: [
+                    () => '#2ecc71', // Green for Present
+                    () => '#e74c3c', // Red for Absent
+                    () => '#34495e', // Black for Late
+                  ],
+                },
+              ],
+            }}
+            width={Dimensions.get('window').width - 40} // Adjust chart width
+            height={220}
+            yAxisLabel=""
+            chartConfig={{
+              backgroundColor: '#f4f4f4',
+              backgroundGradientFrom: '#f4f4f4',
+              backgroundGradientTo: '#f4f4f4',
+              decimalPlaces: 0,
+              color: (opacity = 1, index) => {
+                const colors = ['#2ecc71', '#e74c3c', '#34495e']; // Green, Red, Black
+                return colors[index];
+              },
+              labelColor: (opacity = 1) => rgba(0, 0, 0, ${opacity}),
+              style: {
+                borderRadius: 16,
+              },
+              barPercentage: 0.7,
+            }}
+            style={{
+              marginVertical: 8,
+              borderRadius: 16,
+              alignSelf: 'center',
+            }}
+          />
+
+<Text style={styles.totalsText}>
+            <Text style={styles.presentText}>Present: {attendanceStats.present}</Text>,{' '}
+            <Text style={styles.absentText}>Absent: {attendanceStats.absent}</Text>,{' '}
+            <Text style={styles.lateText}>Late: {attendanceStats.late}</Text>
+          </Text>
+        </View>
+      )}
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#FF6347" />
+      ) : (
+        <View style={styles.attendanceList}>
+          {attendanceRecords.length > 0 ? (
+            attendanceRecords.map((record, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.recordCard,
+                  record.status.toLowerCase() === 'present'
+                    ? styles.present
+                    : record.status.toLowerCase() === 'late'
+                    ? styles.late
+                    : styles.absent,
+                ]}
+              >
+                <Text style={styles.recordText}>Date: {record.date}</Text>
+                <Text style={styles.recordText}>
+                  Status: {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noRecordsText}>
+              No attendance records available.
+            </Text>
+          )}
+        </View>
+      )}
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f4f7',
+    padding: 20,
+  },
+  heading: {
+    fontSize: 28,
+    fontFamily: 'Kanit-Medium',
+    color: '#00308F',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  gradeText: {
+    fontSize: 18,
+    fontFamily: 'Kanit-Medium',
+    color: '#00308F',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  pickerWrapper: {
+    marginBottom: 20,
+  },
+  chartTitle: {
+    fontSize: 20,
+    fontFamily: 'Kanit-Medium',
+    color: '#00308F',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  totalsText: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#00308F',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  presentText: {
+    color: '#2ecc71', // Green
+  },
+  absentText: {
+    color: '#e74c3c', // Red
+  },
+  lateText: {
+    color: 'black', // Yellow
+  },
+  attendanceList: {
+    marginTop: 10,
+  },
+  recordCard: {
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+    flexDirection: 'column',
+  },
+  recordText: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#ffffff',
+  },
+  present: {
+    backgroundColor: '#006400',
+  },
+  late: {
+    backgroundColor: 'black',
+  },
+  absent: {
+    backgroundColor: 'maroon',
+  },
+  noRecordsText: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#95a5a6',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#e74c3c',
+    textAlign: 'center',
+  },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    color: '#34495e',
+    backgroundColor: '#ffffff',
+    paddingRight: 40,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    color: '#34495e',
+    backgroundColor: '#ffffff',
+    paddingRight: 40,
+  },
+  placeholder: {
+    color: '#999',
+    fontFamily: 'Kanit-Medium',
+  },
+});
+
+export default StudentAttendance;
+
+
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  Image
+} from 'react-native';
+import axios from 'axios';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Picker } from '@react-native-picker/picker';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { AuthContext } from './screen/context/authContext';
+
+const StudentAssignments = () => {
+  const [state] = useContext(AuthContext);
+  const currentUser = state.user;
+
+  const [assignments, setAssignments] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null); // For toggling assignment selection
+
+  const [fontsLoaded] = useFonts({
+    'Ubuntu-Light': require('../assets/fonts/Ubuntu-Light.ttf'),
+    'Ubuntu-Regular': require('../assets/fonts/Ubuntu-Regular.ttf'),
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf')
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  /* ============ Fetch Subjects ============ */
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const response = await axios.get('/auth/subjects');
+        setSubjects(response.data.subjects || []);
+      } catch (error) {
+        console.error('Failed to fetch subjects:', error);
+        Alert.alert('Error', 'Failed to fetch subjects');
+      }
+    };
+    fetchSubjects();
+  }, []);
+
+  /* ============ Fetch Assignments ============ */
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      if (!selectedSubject) {
+        setAssignments([]);
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `/auth/assignments?grade=${encodeURIComponent(
+            currentUser.grade
+          )}&subject=${encodeURIComponent(selectedSubject)}`
+        );
+        // Mark "isSubmitted" as false by default
+        const dataWithSubmissionFlag = (response.data || []).map(a => ({
+          ...a,
+          isSubmitted: false,
+        }));
+        setAssignments(dataWithSubmissionFlag);
+      } catch (error) {
+        console.error('Failed to fetch assignments:', error);
+        Alert.alert('Error', 'Failed to fetch assignments');
+      }
+    };
+    fetchAssignments();
+  }, [selectedSubject]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  /* ============ Select / Submit Logic ============ */
+  const handleSelectAssignment = (assignmentId) => {
+    setSelectedAssignmentId(prev => (prev === assignmentId ? null : assignmentId));
+  };
+
+  const handleSubmitAssignment = (assignmentId) => {
+    setAssignments(prev =>
+      prev.map(a => {
+        if (a._id === assignmentId) {
+          return { ...a, isSubmitted: true };
+        }
+        return a;
+      })
+    );
+    Alert.alert('Success', 'Assignment submitted!');
+  };
+
+  return (
+    <ScrollView style={styles.screen} onLayout={onLayoutRootView}>
+      {/* ======== TOP HALF (fixed 393x127) ======== */}
+      <View style={styles.topHalf}>
+        <Text style={styles.pageTitle}>My Assignments</Text>
+        <Image
+          source={require('../assets/logo7.png')} // placeholder icon
+          style={styles.bigIcon}
+        />
+        <Text style={styles.addAssignmentTitle}>Add Your Assignment</Text>
+        <Text style={styles.addAssignmentSub}>
+          Lorem ipsum dolor sit amet, adip iscing ipsum dolor sit amet,psum dolor sit amet.
+        </Text>
+
+        {/* Row of icons for scanning/uploading */}
+        <View style={styles.iconsRow}>
+          <TouchableOpacity style={styles.iconButton}>
+            <FontAwesome5 name="camera" size={24} color="#006446" />
+            <Text style={styles.iconLabel}>Scan</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <FontAwesome5 name="file-pdf" size={24} color="#006446" />
+            <Text style={styles.iconLabel}>PDF</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <FontAwesome5 name="file-word" size={24} color="#006446" />
+            <Text style={styles.iconLabel}>Word</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <FontAwesome5 name="image" size={24} color="#006446" />
+            <Text style={styles.iconLabel}>Image</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ======== "My Assignments" + Arrow ======== */}
+      <View style={styles.assignmentsHeader}>
+        <Text style={styles.assignmentsHeaderText}>My Assignments</Text>
+        <FontAwesome5 name="chevron-right" size={18} color="#006446" />
+      </View>
+
+      {/* ======== Subject Picker ======== */}
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={selectedSubject}
+          onValueChange={(itemValue) => setSelectedSubject(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Select a Subject" value="" />
+          {subjects.map((subject) => (
+            <Picker.Item
+              key={subject._id}
+              label={subject.name}
+              value={subject._id}
+            />
+          ))}
+        </Picker>
+      </View>
+
+      {/* ======== Assignments List ======== */}
+      {assignments.length > 0 ? (
+        assignments.map((assignment) => {
+          const isSelected = assignment._id === selectedAssignmentId;
+          return (
+            <TouchableOpacity
+              key={assignment._id}
+              style={[
+                styles.assignmentItem,
+                isSelected && styles.assignmentItemSelected
+              ]}
+              onPress={() => handleSelectAssignment(assignment._id)}
+            >
+              <View style={styles.assignmentHeader}>
+                <Text style={styles.assignmentTitle}>
+                  {assignment.isSubmitted ? '✓ ' : ''}
+                  {assignment.title}
+                </Text>
+              </View>
+              <Text style={styles.assignmentDescription}>
+                {assignment.description}
+              </Text>
+              <Text style={styles.assignmentMetaText}>
+                Due Date: {assignment.dueDate}
+              </Text>
+
+              {/* If selected & not submitted => show "Submit" button */}
+              {isSelected && !assignment.isSubmitted && (
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={() => handleSubmitAssignment(assignment._id)}
+                >
+                  <Text style={styles.submitButtonText}>Submit</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* If submitted => show "Submitted" */}
+              {assignment.isSubmitted && (
+                <Text style={styles.submittedLabel}>Submitted</Text>
+              )}
+            </TouchableOpacity>
+          );
+        })
+      ) : (
+        <Text style={styles.noAssignmentsText}>
+          No assignments found for the selected subject.
+        </Text>
+      )}
+    </ScrollView>
+  );
+};
+
+export default StudentAssignments;
+
+/* ===================== STYLES ===================== */
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#E0E0E0',
+  },
+
+  /* 
+    Top Half with:
+    - fixed width: 393
+    - fixed height: 127
+    - background color #006446
+  */
+  topHalf: {
+    width: 393,
+    height: 127,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+    position: 'absolute',
+    top: 10,
+    left: 20,
+  },
+  bigIcon: {
+    width: 70,
+    height: 70,
+    marginTop: 25, // so it sits below the pageTitle
+    marginBottom: 10,
+  },
+  addAssignmentTitle: {
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  addAssignmentSub: {
+    fontSize: 12,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#F0F0F0',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  iconsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  iconButton: {
+    alignItems: 'center',
+    padding: 5,
+  },
+  iconLabel: {
+    fontSize: 11,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#FFFFFF',
+    marginTop: 3,
+  },
+
+  /* "My Assignments" heading + arrow */
+  assignmentsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 20,
+    justifyContent: 'space-between',
+  },
+  assignmentsHeaderText: {
+    fontSize: 18,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#006446',
+  },
+
+  /* Subject Picker */
+  pickerWrapper: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: 15,
+    overflow: 'hidden',
+    // iOS Shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    // Android Shadow
+    elevation: 3,
+  },
+  picker: {
+    height: 50,
+    color: '#333333',
+    fontSize: 16,
+    paddingHorizontal: 10,
+  },
+
+  /* Assignments List */
+  assignmentItem: {
+    marginTop: 20,
+    marginHorizontal: 20,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    // iOS Shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    // Android Shadow
+    elevation: 2,
+  },
+  assignmentItemSelected: {
+    borderColor: '#006446',
+    borderWidth: 2,
+  },
+  assignmentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    
+  },
+  assignmentTitle: {
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#333333',
+    flex: 1,
+    marginRight: 10,
+  },
+  assignmentDescription: {
+    fontSize: 14,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#555555',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  assignmentMetaText: {
+    fontSize: 13,
+    color: '#888',
+    fontFamily: 'Ubuntu-Regular',
+    marginBottom: 2,
+  },
+  noAssignmentsText: {
+    textAlign: 'center',
+    color: '#AAAAAA',
+    fontSize: 16,
+    marginTop: 30,
+    fontFamily: 'Ubuntu-Regular',
+    paddingHorizontal: 20,
+  },
+
+  /* Submit Button */
+  submitButton: {
+    marginTop: 10,
+    backgroundColor: '#006446',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontFamily: 'Ubuntu-Bold',
+    fontSize: 14,
+  },
+  submittedLabel: {
+    marginTop: 10,
+    color: '#006446',
+    fontFamily: 'Ubuntu-Bold',
+    fontSize: 14,
+  },
+});
+
+import React, { useState, useEffect, useContext } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import axios from "axios";
+import { AuthContext } from "./context/authContext";
+import PostCard from "../PostCard";
+
+const Announcements = () => {
+  const [state] = useContext(AuthContext);
+  const currentUser = state.user;
+
+  const [adminPosts, setAdminPosts] = useState([]);
+  const [teacherPosts, setTeacherPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("Admin");
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await axios.get("/post/get-announcements", {
+          params: {
+            role: currentUser.role,
+            userId: currentUser._id,
+            grade: currentUser.grade,
+            subjects: currentUser.subjects,
+          },
+        });
+
+        setAdminPosts(response.data.adminPosts || []);
+        setTeacherPosts(response.data.teacherPosts || []);
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+        Alert.alert("Error", "Failed to load announcements.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, [currentUser]);
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <Text style={styles.loaderText}>Loading Announcements...</Text>
+      </View>
+    );
+  }
+
+  const renderPosts = (posts) => {
+    return posts.length > 0 ? (
+      posts.map((post, index) => (
+        <PostCard key={index} post={post} />
+      ))
+    ) : (
+      <Text style={styles.noPostsText}>
+        No {activeTab} announcements available.
+      </Text>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Tabs Section */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "Admin" && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab("Admin")}
+        >
+          <Text style={[styles.tabText, activeTab === "Admin" && styles.activeTabText]}>
+            Admin 
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "Teacher" && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab("Teacher")}
+        >
+          <Text style={[styles.tabText, activeTab === "Teacher" && styles.activeTabText]}>
+            Teacher 
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Posts Section */}
+      <ScrollView>
+        {activeTab === "Admin" && renderPosts(adminPosts)}
+        {activeTab === "Teacher" && renderPosts(teacherPosts)}
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    padding: 15,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  loaderText: {
+    fontSize: 18,
+    color: "#018749",
+    fontWeight: "bold",
+    fontFamily: "Kanit-Medium",
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 15,
+  },
+  tabButton: {
+    width: "52%",
+    alignItems: "center",
+    paddingVertical: 5,
+    borderRadius: 5,
+    backgroundColor: "white",
+    marginHorizontal: 0,
+    borderWidth: 1,
+    borderColor: "#006A4E",
+  },
+  activeTab: {
+    backgroundColor: "#006A4E",
+  },
+  tabText: {
+    fontSize: 14,
+    color: "#006A4E",
+    fontFamily: "Ubuntu-Bold",
+  },
+  activeTabText: {
+    color: "#FFFFFF",
+    fontFamily: "Ubuntu-Bold",
+  },
+  noPostsText: {
+    fontSize: 16,
+    color: "#7B7D7D",
+    textAlign: "center",
+    marginTop: 10,
+    fontFamily: "Kanit-Medium",
+  },
+});
+
+export default Announcements;
+
+import React, { useState, useEffect, useContext } from 'react';
+import {
+    View, Text, StyleSheet, ScrollView, TouchableOpacity,
+    Alert, Platform
+} from 'react-native';
+import axios from 'axios';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import moment from 'moment-timezone';
+import { MaterialIcons } from '@expo/vector-icons';
+import { AuthContext } from './screen/context/authContext';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
+const ClassSchedule = () => {
+    const [state] = useContext(AuthContext);
+    const { user } = state;
+
+    const [classSchedules, setClassSchedules] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+
+    const [fontsLoaded] = useFonts({
+        'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+    });
+
+    const onLayoutRootView = React.useCallback(async () => {
+        if (fontsLoaded) {
+            await SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded]);
+
+    // Function to get the last 5 days (including today)
+    const getRecentDates = () => {
+        let dates = [];
+        for (let i = -2; i <= 2; i++) {
+            let newDate = moment().add(i, 'days');
+            dates.push({
+                day: newDate.format('ddd'),
+                date: newDate.format('DD'),
+                fullDate: newDate.toDate()
+            });
+        }
+        return dates;
+    };
+
+    const [recentDates, setRecentDates] = useState(getRecentDates());
+
+    const getTimezoneFromCountry = (country) => {
+        switch (country) {
+            case "Pakistan":
+                return "Asia/Karachi";
+            case "Saudi Arabia":
+                return "Asia/Riyadh";
+            case "United Arab Emirates":
+                return "Asia/Dubai";
+            default:
+                return "UTC";
+        }
+    };
+
+    const convertToLocalTime = (utcTime, timezone) => {
+        return moment.tz(utcTime, 'HH:mm', 'UTC').tz(timezone).format('h:mm A');
+    };
+
+    // Modified fetchClassSchedules to add startMoment and endMoment
+    const fetchClassSchedules = async (date) => {
+        const formattedDate = moment(date).format('YYYY-MM-DD');
+        try {
+            const response = await axios.get(`/auth/class-schedules/logged-in-user?date=${formattedDate}`);
+            const timezone = getTimezoneFromCountry(user?.country);
+
+            const schedulesWithLocalTimes = response.data.classSchedules.map(schedule => {
+                const localStartTime = convertToLocalTime(schedule.startTime, timezone);
+                const localEndTime = convertToLocalTime(schedule.endTime, timezone);
+                const startMoment = moment(`${formattedDate} ${localStartTime}`, "YYYY-MM-DD h:mm A");
+                const endMoment = moment(`${formattedDate} ${localEndTime}`, "YYYY-MM-DD h:mm A");
+                return {
+                    ...schedule,
+                    startTime: localStartTime,
+                    endTime: localEndTime,
+                    startMoment,
+                    endMoment,
+                };
+            });
+            setClassSchedules(schedulesWithLocalTimes || []);
+        } catch (error) {
+            console.error('Failed to fetch class schedules:', error);
+            Alert.alert("Error", "Failed to fetch class schedules");
+        }
+    };
+
+    const handleDateSelection = (date) => {
+        setSelectedDate(date);
+        fetchClassSchedules(date);
+    };
+
+    const toggleDatePicker = () => setShowDatePicker(!showDatePicker);
+
+    useEffect(() => {
+        fetchClassSchedules(selectedDate);
+    }, []);
+
+    // Helper function to format duration
+    const formatDuration = (duration) => {
+        const hours = Math.floor(duration.asHours());
+        const minutes = Math.floor(duration.asMinutes()) % 60;
+        if (hours > 0) {
+            return `${hours} hr ${minutes} min`;
+        } else {
+            return `${minutes} min`;
+        }
+    };
+
+    // Compute ongoing class (only if selected date is today)
+    const now = moment();
+    let ongoingClass = null;
+    if (moment(selectedDate).isSame(now, 'day')) {
+        for (let schedule of classSchedules) {
+            if (schedule.startMoment && schedule.endMoment && now.isBetween(schedule.startMoment, schedule.endMoment)) {
+                ongoingClass = schedule;
+                break;
+            }
+        }
+    }
+
+    if (!fontsLoaded) {
+        return null;
+    }
+
+    return (
+        <View style={styles.container} onLayout={onLayoutRootView}>
+            {/* Ongoing Class Feature */}
+            <View style={styles.ongoingContainer}>
+                {ongoingClass ? (
+                    <View style={styles.ongoingClassBox}>
+                        <Text style={styles.ongoingTitle}>Ongoing Class</Text>
+                        <Text style={styles.ongoingInfo}>Course: {ongoingClass.subject.name}</Text>
+                        <Text style={styles.ongoingInfo}>👩‍🏫 {ongoingClass.teacher.name}</Text>
+<Text style={styles.ongoingInfo}>Time: {ongoingClass.startTime} - {ongoingClass.endTime}</Text>
+
+                        <Text style={styles.ongoingInfo}>
+                            Elapsed: {formatDuration(moment.duration(now.diff(ongoingClass.startMoment)))}
+                        </Text>
+                        <Text style={styles.ongoingInfo}>
+                            Left: {formatDuration(moment.duration(ongoingClass.endMoment.diff(now)))}
+                        </Text>
+                    </View>
+                ) : (
+                    <View style={styles.ongoingClassBox}>
+                        <Text style={styles.noOngoing}>No ongoing class</Text>
+                    </View>
+                )}
+            </View>
+
+            {/* Class Schedule Heading and Date Picker */}
+            <View style={styles.headerRow}>
+                <Text style={styles.scheduleTitle}>Class Schedule</Text>
+                <TouchableOpacity onPress={toggleDatePicker} style={styles.monthYearPicker}>
+                    <Text style={styles.monthYearText}>{moment(selectedDate).format("MMM YYYY")}</Text>
+                    <MaterialIcons name="arrow-drop-down" size={20} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            {showDatePicker && (
+                <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display="default"
+                    onChange={(event, newDate) => {
+                        if (newDate) {
+                            setSelectedDate(newDate);
+                            fetchClassSchedules(newDate);
+                        }
+                        setShowDatePicker(false);
+                    }}
+                />
+            )}
+
+            {/* Date Selection Row */}
+            <View style={styles.dateRow}>
+                {recentDates.map((item, index) => (
+                    <TouchableOpacity
+                        key={index}
+                        style={[
+                            styles.dateBox,
+                            selectedDate.toDateString() === item.fullDate.toDateString() && styles.selectedDate
+                        ]}
+                        onPress={() => handleDateSelection(item.fullDate)}
+                    >
+                        <Text style={[
+                            styles.dayText,
+                            selectedDate.toDateString() === item.fullDate.toDateString() && styles.selectedDayText
+                        ]}>
+                            {item.day}
+                        </Text>
+                        <Text style={[
+                            styles.dateText,
+                            selectedDate.toDateString() === item.fullDate.toDateString() && styles.selectedDateText
+                        ]}>
+                            {item.date}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            {/* Schedule List */}
+            <ScrollView style={styles.scheduleList}>
+                {classSchedules.length > 0 ? classSchedules.map((schedule, index) => (
+                    <View key={index} style={styles.scheduleItem}>
+                        <Text style={styles.subject}>{schedule.subject.name}</Text>
+                        <Text style={styles.info}>🕒 {schedule.startTime} - {schedule.endTime}</Text>
+                        <Text style={styles.info}>👩‍🏫 {schedule.teacher.name}</Text>
+                    </View>
+                )) : (
+                    <Text style={styles.noSchedules}>No class schedules found for the selected date.</Text>
+                )}
+            </ScrollView>
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: 'white', padding: 15 },
+    /* Ongoing Class Feature */
+    ongoingContainer: {
+        marginVertical: 20,
+    },
+    ongoingClassBox: {
+        backgroundColor: '#DFF5E1',
+        padding: 15,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        marginBottom: 20,
+    },
+    ongoingTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        fontFamily: 'Kanit-Medium',
+        color: '#018749',
+    },
+    ongoingInfo: {
+        fontSize: 16,
+        color: '#555',
+        marginBottom: 5,
+        fontFamily: 'Kanit-Medium',
+    },
+    noOngoing: {
+        fontSize: 16,
+        color: '#888',
+        textAlign: 'center',
+        fontFamily: 'Kanit-Medium',
+    },
+    /* Header Row */
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    scheduleTitle: {
+        fontSize: 20,
+        color: '#018749',
+        fontFamily: 'Kanit-Medium'
+    },
+    monthYearPicker: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        backgroundColor: '#E0E0E0',
+        borderRadius: 5,
+    },
+    monthYearText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: 'black',
+        marginRight: 5,
+    },
+    /* Date Selection Row */
+    dateRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 15,
+    },
+    dateBox: {
+        width: 60,
+        height: 75,
+        backgroundColor: '#F0F0F0',
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 5,
+    },
+    selectedDate: {
+        backgroundColor: '#006A4E',
+    },
+    dayText: {
+        fontSize: 14,
+        color: '#666',
+        fontFamily: 'Kanit-Medium',
+    },
+    selectedDayText: {
+        color: 'white',
+    },
+    dateText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: 'black',
+    },
+    selectedDateText: {
+        color: 'white',
+    },
+    /* Schedule List */
+    scheduleList: { marginTop: 10 },
+    scheduleItem: {
+        backgroundColor: '#F8F8F8',
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    subject: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
+    info: { fontSize: 14, color: '#555', marginBottom: 3 },
+    noSchedules: { textAlign: 'center', marginTop: 10, color: '#888' },
+});
+
+export default ClassSchedule;
+import React, { useContext, useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  ActivityIndicator, 
+  Alert 
+} from 'react-native';
+import { AuthContext } from './context/authContext';
+import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
+import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+
+const Account = () => {
+  const [state, setState] = useContext(AuthContext);
+  const { user, token } = state;
+
+  const [name, setName] = useState(user?.name || '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email] = useState(user?.email || '');
+  const [country, setCountry] = useState(user?.country || 'Pakistan');
+  const [loading, setLoading] = useState(false);
+  const [imageUri, setImageUri] = useState(user?.profilePicture || '');
+
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile();
+    }
+  }, [token]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const timestamp = Date.now();
+      const { data } = await axios.get(`/auth/profile?t=${timestamp}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setState((prev) => {
+        if (JSON.stringify(prev.user) !== JSON.stringify(data.user)) {
+          return { ...prev, user: data.user };
+        }
+        return prev;
+      });
+
+      setName(data.user.name || '');
+      setImageUri(data.user.profilePicture || '');
+      setCountry(data.user.country || 'Pakistan');
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+      alert("Failed to fetch user profile");
+    }
+  };
+
+  const updateProfilePicture = async (uri) => {
+    try {
+      setLoading(true);
+      const { data } = await axios.put('/auth/update-user',
+        { name, email, profilePicture: uri, country },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLoading(false);
+
+      setState((prev) => {
+        if (JSON.stringify(prev.user) !== JSON.stringify(data.updatedUser)) {
+          return { ...prev, user: data.updatedUser };
+        }
+        return prev;
+      });
+
+      setImageUri(data.updatedUser.profilePicture);
+      alert('Profile picture updated successfully!');
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+      setLoading(false);
+      alert(error.response?.data?.message || error.message);
+    }
+  };
+
+  const selectImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!pickerResult.canceled) {
+      const asset = pickerResult.assets[0];
+      setImageUri(asset.uri);
+      await updateProfilePicture(asset.uri);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.put('/auth/update-user',
+        { name, password, email, profilePicture: imageUri, country },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLoading(false);
+
+      setState((prev) => {
+        if (JSON.stringify(prev.user) !== JSON.stringify(data.updatedUser)) {
+          return { ...prev, user: data.updatedUser };
+        }
+        return prev;
+      });
+
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || error.message);
+      setLoading(false);
+    }
+  };
+
+  // Logout functionality similar to Drawer
+  const handleLogOut = async () => {
+    setState({ token: "", user: null });
+    await AsyncStorage.removeItem("@auth");
+    alert("Logged Out Successfully");
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.imageContainer}>
+          <TouchableOpacity onPress={selectImage}>
+            <Image
+              source={{ uri: imageUri || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
+          <Text style={styles.editText}>Tap to change picture</Text>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Name</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter your name"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Email</Text>
+          <TextInput
+            style={[styles.inputBox, styles.disabledInput]}
+            value={email}
+            editable={false}
+            placeholder="Email"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Country</Text>
+          <Picker
+            selectedValue={country}
+            onValueChange={(itemValue) => setCountry(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Pakistan" value="Pakistan" />
+            <Picker.Item label="Saudi Arabia" value="Saudi Arabia" />
+            <Picker.Item label="United Arab Emirates" value="United Arab Emirates" />
+          </Picker>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={true}
+            placeholder="Enter new password (if changing)"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Confirm Password</Text>
+          <TextInput
+            style={styles.inputBox}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={true}
+            placeholder="Enter new password again"
+            placeholderTextColor="#aaa"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.updateBtn, loading && styles.disabledBtn]}
+          onPress={handleUpdate}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text style={styles.updateBtnText}>Update Profile</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogOut}>
+          <Icon name="sign-out-alt" size={20} color="white" />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F4F6F8',
+  },
+  scrollContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileImage: {
+    height: 120,
+    width: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#018749',
+  },
+  editText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#018749',
+    fontFamily: 'Kanit-Medium',
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 15,
+  },
+  inputLabel: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Kanit-Medium',
+    marginBottom: 5,
+  },
+  inputBox: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: 'Kanit-Medium',
+    color: '#333',
+  },
+  disabledInput: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#EEE',
+  },
+  picker: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: 'Kanit-Medium',
+    color: '#333',
+  },
+  updateBtn: {
+    width: '100%',
+    backgroundColor: '#018749',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  disabledBtn: {
+    backgroundColor: '#A9A9A9',
+  },
+  updateBtnText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D7263D',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: 30,
+  },
+  logoutText: {
+    fontFamily: 'Kanit-Medium',
+    fontSize: 16,
+    color: 'white',
+    marginLeft: 10,
+  },
+});
+
+export default Account;
+
 
 
 ```

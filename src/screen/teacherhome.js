@@ -6,7 +6,6 @@ import axios from 'axios';
 import moment from 'moment';
 import { AuthContext } from './context/authContext';
 
-// Shortened some names so they fit on one line more easily
 const features = [
   { id: '1', name: 'Attendance', icon: 'clipboard-list', route: 'AttendanceScreen', color: 'maroon' },
   { id: '2', name: 'Assignments', icon: 'tasks', route: 'Assignments', color: '#0D47A1' },
@@ -36,12 +35,9 @@ const TeacherHome = () => {
     try {
       const { data } = await axios.get('/post/get-all-post');
       const today = moment().startOf('day');
-
-      // Filter teacher's posts created today
       const todaysPosts = data.posts
         .filter(post => moment(post.createdAt).isSameOrAfter(today))
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
       setLatestPost(todaysPosts.length > 0 ? todaysPosts[0] : null);
     } catch (error) {
       console.error('Error fetching latest post:', error);
@@ -74,48 +70,68 @@ const TeacherHome = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
-            Hello, <Text style={styles.boldText}>{firstName}</Text>
-          </Text>
-          <Text style={styles.roleText}>📚 Educator</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('Account')}>
-          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Alert Section */}
-      <View style={styles.alertContainer}>
-        <Text style={styles.alertTitle}>Today’s Alert</Text>
-        {latestPost ? (
-          <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
-            <Text style={styles.alertText} numberOfLines={2}>
-              {latestPost.description}
+    <View style={styles.screen}>
+      {/* Full-width Header Wrapper with fixed size */}
+      <View style={styles.headerWrapper}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>
+              Hello, <Text style={styles.boldText}>{firstName}</Text>
             </Text>
+            <Text style={styles.roleText}>📚 Educator</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Account')}>
+            <Image source={{ uri: profilePicture }} style={styles.profileImage} />
           </TouchableOpacity>
-        ) : (
-          <Text style={styles.noAlertText}>No alerts today</Text>
-        )}
+        </View>
       </View>
 
-      {/* Features Grid */}
-      <FlatList
-        data={features}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.flatListContent}
-      />
+      {/* Main Content */}
+      <View style={styles.container}>
+        {/* Alert Section */}
+        <View style={styles.alertContainer}>
+          <Text style={styles.alertTitle}>Today’s Alert</Text>
+          {latestPost ? (
+            <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
+              <Text style={styles.alertText} numberOfLines={2}>
+                {latestPost.description}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={styles.noAlertText}>No alerts today</Text>
+          )}
+        </View>
+
+        {/* Features Grid */}
+        <FlatList
+          data={features}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.flatListContent}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  headerWrapper: {
+    width: 393,
+    height: 162,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 27,
+    marginTop: 36,
+    marginBottom: 20,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f4f4f4',
@@ -125,12 +141,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: 35,
   },
   greeting: {
     fontSize: 22,
-    color: '#004d40',
+    color: '#fff',
     fontFamily: 'Ubuntu-Regular',
   },
   boldText: {
@@ -138,13 +153,15 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: 16,
-    color: '#666',
+    color: '#fff',
     fontFamily: 'Ubuntu-Regular',
   },
   profileImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   alertContainer: {
     backgroundColor: '#c8e6c9',
@@ -168,6 +185,7 @@ const styles = StyleSheet.create({
     color: '#777',
     fontStyle: 'italic',
     textAlign: 'center',
+    fontFamily: 'Ubuntu-Light',
   },
   flatListContent: {
     justifyContent: 'center',
@@ -197,7 +215,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontFamily: 'Ubuntu-Bold',
-    color: '#106547',
+    color: '#004d40',
   },
   cardDescription: {
     fontSize: 14,
