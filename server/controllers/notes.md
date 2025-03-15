@@ -9562,7 +9562,629 @@ const styles = StyleSheet.create({
 });
 
 export default Account;
+import React, { useState, useEffect, useContext } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  Alert, 
+  Image 
+} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import { AuthContext } from './context/authContext';
+import axios from 'axios';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
+const Post = ({ navigation }) => {
+  const [state] = useContext(AuthContext);
+  const currentUser = state.user;
+
+  const [description, setDescription] = useState('');
+  const [grades, setGrades] = useState([]);
+  const [gradeSubjectMap, setGradeSubjectMap] = useState({});
+  const [subjects, setSubjects] = useState([]);
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+
+  useEffect(() => {
+    const fetchTeacherData = async () => {
+      if (currentUser.role === 'teacher') {
+        try {
+          const { data } = await axios.get(`/post/teacher/${currentUser._id}/data`);
+          setGrades(data.grades || []);
+          setGradeSubjectMap(data.gradeSubjectMap || {});
+        } catch (error) {
+          Alert.alert('Error', 'Failed to fetch grades and subjects.');
+        }
+      }
+    };
+
+    if (currentUser && currentUser.role === 'teacher') {
+      fetchTeacherData();
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (selectedGrade) {
+      setSubjects(gradeSubjectMap[selectedGrade] || []);
+    } else {
+      setSubjects([]);
+    }
+    setSelectedSubject('');
+  }, [selectedGrade, gradeSubjectMap]);
+
+  const handlePost = async () => {
+    if (!description.trim()) {
+      Alert.alert('Validation Error', 'Please add a description.');
+      return;
+    }
+
+    if (currentUser.role === 'teacher' && (!selectedGrade || !selectedSubject)) {
+      Alert.alert('Validation Error', 'Please select a grade and subject.');
+      return;
+    }
+
+    try {
+      const postData = {
+        description,
+        grade: currentUser.role === 'teacher' ? selectedGrade : undefined,
+        subject: currentUser.role === 'teacher' ? selectedSubject : undefined,
+      };
+
+      await axios.post('/post/create-post', postData);
+      Alert.alert('Success', 'Post created successfully.');
+      navigation.navigate('Announcements');
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to create post.');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Create a Post</Text>
+        <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
+          <Image
+            source={{ uri: currentUser?.profilePicture || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
+        
+
+        <TextInput
+          style={styles.textInput}
+          placeholder="Write your post here..."
+          placeholderTextColor="#aaa"
+          value={description}
+          onChangeText={setDescription}
+          multiline
+        />
+
+        {currentUser && currentUser.role === 'teacher' && (
+          <>
+            <View style={styles.pickerContainer}>
+              <Text style={styles.label}>Select Grade:</Text>
+              <Picker
+                selectedValue={selectedGrade}
+                onValueChange={(value) => setSelectedGrade(value)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select Grade" value="" />
+                {grades.map((grade) => (
+                  <Picker.Item label={grade} value={grade} key={grade} />
+                ))}
+              </Picker>
+            </View>
+
+            <View style={styles.pickerContainer}>
+              <Text style={styles.label}>Select Subject:</Text>
+              <Picker
+                selectedValue={selectedSubject}
+                onValueChange={(value) => setSelectedSubject(value)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select Subject" value="" />
+                {subjects.map((subject) => (
+                  <Picker.Item label={subject.name} value={subject._id} key={subject._id} />
+                ))}
+              </Picker>
+            </View>
+          </>
+        )}
+
+        <TouchableOpacity style={styles.button} onPress={handlePost}>
+          <Text style={styles.buttonText}>Post</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F4F6F8',
+  },
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  profileContainer: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
+  content: {
+    padding: 20,
+  },
+  title: {
+    fontSize: 26,
+    fontFamily: 'Kanit-Medium',
+    color: '#34495E',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  textInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DADADA',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#333',
+    marginBottom: 20,
+  },
+  pickerContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontFamily: 'Kanit-Medium',
+    color: '#34495E',
+    marginBottom: 8,
+  },
+  picker: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DADADA',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#006446',
+    borderRadius: 8,
+    paddingVertical: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontFamily: 'Kanit-Medium',
+  },
+});
+
+export default Post;
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Alert, 
+  SafeAreaView, 
+  TouchableOpacity 
+} from 'react-native';
+import RNPickerSelect from 'react-native-picker-select';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import axios from 'axios';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+
+const TakeAttendance = () => {
+  const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [users, setUsers] = useState([]);
+  const [userAttendance, setUserAttendance] = useState({});
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
+  });
+
+  const navigation = useNavigation();
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  useEffect(() => {
+    if (selectedGrade && selectedSubject) {
+      fetchUsersByGradeAndSubject();
+    }
+  }, [selectedGrade, selectedSubject]);
+
+  const fetchSubjects = async () => {
+    try {
+      const response = await axios.get('/auth/subjects');
+      setSubjects(response.data.subjects.map(subject => ({ label: subject.name, value: subject._id })));
+    } catch (error) {
+      console.error('Failed to fetch subjects:', error);
+      Alert.alert("Error", "Failed to fetch subjects");
+    }
+  };
+
+  const fetchUsersByGradeAndSubject = async () => {
+    try {
+      const response = await axios.get(`/auth/class/grade/${selectedGrade}/subject/${selectedSubject}/users`);
+      setUsers(response.data);
+      const initialAttendance = response.data.reduce((acc, user) => ({ ...acc, [user._id]: '' }), {});
+      setUserAttendance(initialAttendance);
+    } catch (error) {
+      console.error(`Failed to fetch users:`, error);
+      Alert.alert("Error", `Failed to fetch users`);
+    }
+  };
+
+  const submitAttendance = async () => {
+    // Validation: Ensure all users have a status selected
+    for (let userId in userAttendance) {
+      if (userAttendance[userId] === '') {
+        Alert.alert("Validation Error", "Please mark attendance for all users.");
+        return;
+      }
+    }
+
+    try {
+      await axios.post('/auth/attendance', {
+        date: formatDate(date),
+        grade: selectedGrade,
+        subject: selectedSubject,
+        attendance: Object.entries(userAttendance).map(([userId, status]) => ({ userId, status }))
+      });
+      Alert.alert("Success", "Attendance submitted successfully!");
+      // Reset the form
+      setSelectedGrade('');
+      setSelectedSubject('');
+      setDate(new Date());
+      setUserAttendance({});
+      setUsers([]);
+    } catch (error) {
+      console.error("Failed to submit attendance:", error);
+      Alert.alert("Error", "Failed to submit attendance.");
+    }
+  };
+
+  const onChangeDate = (event, selectedDate) => {
+    if (selectedDate) {
+      const offset = selectedDate.getTimezoneOffset() * 60000;
+      const localDate = new Date(selectedDate.getTime() - offset);
+      setDate(localDate);
+    }
+    setShowDatePicker(Platform.OS === 'ios');
+  };
+
+  const showDatepicker = () => {
+    setShowDatePicker(true);
+  };
+
+  const handleAttendanceChange = (userId, status) => {
+    setUserAttendance(prevState => ({ ...prevState, [userId]: status }));
+  };
+
+  const formatDate = (date) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} onLayout={onLayoutRootView}>
+      <View style={styles.container}>
+        {/* Custom Header */}
+        <View style={styles.topHalf}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="ios-arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.pageTitle}>Take Attendance</Text>
+        </View>
+  
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* Date Picker */}
+          <View style={styles.datePickerContainer}>
+            <TouchableOpacity onPress={showDatepicker} style={styles.button}>
+              <Ionicons name="ios-calendar" size={20} color="white" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>Select Date</Text>
+            </TouchableOpacity>
+            <Text style={styles.dateText}>Selected Date: {formatDate(date)}</Text>
+            {showDatePicker && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={date}
+                mode="date"
+                is24Hour={true}
+                display="default"
+                onChange={onChangeDate}
+              />
+            )}
+          </View>
+  
+          {/* Grade Picker */}
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={value => setSelectedGrade(value)}
+              items={grades.map(grade => ({ label: grade, value: grade }))}
+              placeholder={{ label: "Select a grade", value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Ionicons name="ios-arrow-down" size={24} color="white" />}
+            />
+          </View>
+  
+          {/* Subject Picker */}
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={value => setSelectedSubject(value)}
+              items={subjects}
+              placeholder={{ label: "Select a subject", value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Ionicons name="ios-arrow-down" size={24} color="white" />}
+            />
+          </View>
+  
+          {/* Users Attendance */}
+          {users.map((user) => (
+            <View key={user._id} style={styles.userContainer}>
+              <Text style={styles.userName}>{user.name}</Text>
+              <RNPickerSelect
+                onValueChange={(value) => handleAttendanceChange(user._id, value)}
+                items={[
+                  { label: "Present", value: "Present" },
+                  { label: "Absent", value: "Absent" },
+                  { label: "Late", value: "Late" },
+                ]}
+                placeholder={{ label: "Select Status", value: null }}
+                style={pickerSelectStyles}
+                useNativeAndroidPickerStyle={false}
+                Icon={() => <Ionicons name="ios-arrow-down" size={24} color="white" />}
+              />
+            </View>
+          ))}
+  
+          {/* Submit Button */}
+          <TouchableOpacity onPress={submitAttendance} style={styles.submitButton}>
+            <Ionicons name="ios-checkmark-circle" size={20} color="white" style={styles.submitButtonIcon} />
+            <Text style={styles.submitButtonText}>Submit Attendance</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#F9F9F9',
+  },
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
+  scrollContainer: {
+    paddingBottom: 20,
+  },
+  datePickerContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  button: {
+    flexDirection: 'row',
+    backgroundColor: '#FF0000',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+  },
+  buttonIcon: {
+    marginRight: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Bold',
+  },
+  dateText: {
+    color: 'black',
+    fontFamily: 'Ubuntu-Bold',
+    marginTop: 10,
+    fontSize: 16,
+  },
+  pickerWrapper: {
+    width: '90%',
+
+    marginBottom: 40,
+  },
+  userContainer: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    flexDirection: 'column',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  userName: {
+    fontSize: 18,
+    fontFamily: 'Ubuntu-Bold',
+    color: 'black',
+    marginBottom: 10,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    backgroundColor: '#006446',
+    borderRadius: 8,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    width: '90%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+    marginTop: 10,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Bold',
+    marginLeft: 10,
+  },
+  submitButtonIcon: {
+    marginRight: 5,
+  },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'white',
+    borderRadius: 8,
+    color: 'white',
+    backgroundColor: '#333333',
+    paddingRight: 30,
+    fontFamily: 'Ubuntu-Bold',
+    marginBottom: -20,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 8,
+    color: 'black',
+    backgroundColor: 'white',
+    paddingRight: 30,
+    fontFamily: 'Ubuntu-Bold',
+    marginBottom: -20,
+  },
+  placeholder: {
+    color: 'black',
+    fontFamily: 'Ubuntu-Bold',
+  },
+});
+
+export default TakeAttendance;
 
 
 ```

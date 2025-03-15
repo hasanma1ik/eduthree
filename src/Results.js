@@ -3,14 +3,16 @@ import {
   View, 
   Text, 
   StyleSheet, 
+  ScrollView, 
+  TextInput, 
   TouchableOpacity, 
   ActivityIndicator, 
   Alert, 
-  ScrollView, 
-  TextInput 
+  Image 
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { AuthContext } from './screen/context/authContext';
 import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
@@ -51,7 +53,7 @@ const Results = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.data) {
-          // Sort grades numerically (e.g. "Grade 1", "Grade 2", etc.)
+          // Sort grades numerically based on digits in the string.
           const sortedGrades = (response.data.grades || []).sort((a, b) => {
             const numA = parseInt(a.replace(/[^0-9]/g, ''), 10);
             const numB = parseInt(b.replace(/[^0-9]/g, ''), 10);
@@ -72,14 +74,14 @@ const Results = () => {
   // Determine current term based on today’s date
   useEffect(() => {
     const today = moment();
-    const currentTerm = terms.find(term =>
-      today.isBetween(
+    const currentTerm = terms.find(term => {
+      return today.isBetween(
         moment(term.start, 'YYYY-MM-DD'),
         moment(term.end, 'YYYY-MM-DD'),
         'day',
         '[]'
-      )
-    );
+      );
+    });
     if (currentTerm) {
       setSelectedTerm(currentTerm.name);
     } else {
@@ -91,12 +93,7 @@ const Results = () => {
   const handleTermChange = (newTerm) => {
     const today = moment();
     const currentTerm = terms.find(term =>
-      today.isBetween(
-        moment(term.start, 'YYYY-MM-DD'),
-        moment(term.end, 'YYYY-MM-DD'),
-        'day',
-        '[]'
-      )
+      today.isBetween(moment(term.start, 'YYYY-MM-DD'), moment(term.end, 'YYYY-MM-DD'), 'day', '[]')
     );
     if (currentTerm && currentTerm.name !== newTerm) {
       Alert.alert(
@@ -145,7 +142,7 @@ const Results = () => {
       setSelectedStudent('');
     }
   }, [selectedGrade, token]);
-  
+
   // Filter students by search term
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(studentSearch.toLowerCase())
@@ -161,13 +158,25 @@ const Results = () => {
       teacherName: user.name,
     });
   };
-  
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.headerText}>Progress Reports</Text>
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Progress Reports</Text>
+        <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
+          <Image
+            source={{ uri: user?.profilePicture || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+      </View>
 
       {/* Term Dropdown */}
-      <View style={styles.pickerContainer}>
+      <View style={styles.pickerContainer1}>
         <Text style={styles.label}>Select Term:</Text>
         <Picker
           selectedValue={selectedTerm}
@@ -252,19 +261,57 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
   },
-  headerText: {
-    fontSize: 26,
-    fontFamily: 'Kanit-Medium',
-    color: '#018749',
-    textAlign: 'center',
-    marginBottom: 20,
+  // Custom Header Styles (same as in Assignments)
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  profileContainer: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
   },
   pickerContainer: {
     marginBottom: 15,
   },
+  pickerContainer1: {
+    marginTop: 40,
+  },
   label: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
     marginBottom: 5,
   },
@@ -280,7 +327,7 @@ const styles = StyleSheet.create({
   },
   searchText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
   },
   dropdownContainer: {
@@ -304,11 +351,11 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
   },
   nextButton: {
-    backgroundColor: '#018749',
+    backgroundColor: '#006446',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
@@ -317,7 +364,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: 'white',
     fontSize: 18,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 

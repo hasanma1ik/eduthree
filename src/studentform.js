@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, StyleSheet, Alert, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import axios from 'axios';
 import RNPickerSelect from 'react-native-picker-select';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from './screen/context/authContext';
 
 const StudentForm = () => {
+  const [state] = useContext(AuthContext);
+  const navigation = useNavigation();
+  const currentUser = state.user;
   const [grades, setGrades] = useState([
     'Grade 1',
     'Grade 2',
@@ -22,7 +28,7 @@ const StudentForm = () => {
   const [users, setUsers] = useState([]);
 
   const [fontsLoaded] = useFonts({
-    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
 
   const onLayoutRootView = React.useCallback(async () => {
@@ -90,6 +96,20 @@ const StudentForm = () => {
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
+    {/* Custom Header */}
+    <View style={styles.topHalf}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+      <Text style={styles.pageTitle}>Student Form</Text>
+      {/* <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
+        <Image
+          source={{ uri: currentUser?.profilePicture || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+          style={styles.profileImage}
+        />
+      </TouchableOpacity> */}
+    </View>
+
       <ScrollView contentContainerStyle={styles.scrollView}>
         {/* Grade Picker */}
         <View style={styles.pickerWrapper}>
@@ -105,7 +125,7 @@ const StudentForm = () => {
         </View>
 
         {/* Subject Picker */}
-        <View style={styles.pickerWrapper}>
+        <View style={styles.pickerWrapper2}>
           <Text style={styles.label}>Select Subject:</Text>
           <RNPickerSelect
             onValueChange={(value) => setSelectedSubject(value)}
@@ -159,13 +179,59 @@ const styles = StyleSheet.create({
   scrollView: {
     paddingBottom: 20,
   },
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  // profileContainer: {
+  //   position: 'absolute',
+  //   top: 57,
+  //   right: 10,
+  //   padding: 5,
+  //   zIndex: 1,
+  // },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
   pickerWrapper: {
-    marginBottom: 20,
+    marginBottom: 10,
+    marginTop: 30,
+  },
+  pickerWrapper2: {
+    marginBottom: 10,
+    marginTop: 10,
   },
   label: {
     fontSize: 16,
     color: '#333',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     marginBottom: 5,
   },
   icon: {
@@ -188,7 +254,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
   },
   button: {
@@ -197,14 +263,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   enrollButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#006446',
   },
   unenrollButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: 'red',
   },
   buttonText: {
     fontSize: 14,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#FFFFFF',
   },
 });
@@ -220,7 +286,7 @@ const pickerSelectStyles = StyleSheet.create({
     color: '#333',
     backgroundColor: '#FFFFFF',
     paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   inputAndroid: {
     fontSize: 16,
@@ -232,7 +298,7 @@ const pickerSelectStyles = StyleSheet.create({
     color: '#333',
     backgroundColor: '#FFFFFF',
     paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 

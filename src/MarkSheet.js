@@ -9,6 +9,7 @@ import {
   Alert
 } from 'react-native';
 import axios from 'axios';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { AuthContext } from './screen/context/authContext';
 
 const MarkSheet = ({ route, navigation }) => {
@@ -135,7 +136,16 @@ const MarkSheet = ({ route, navigation }) => {
   };
 
   return (
+    
     <ScrollView contentContainerStyle={styles.container}>
+       <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>MarkSheet</Text>
+      
+      </View>
+
       <View style={styles.headerSection}>
         <Text style={styles.studentName}>{studentName}</Text>
         <Text style={styles.infoText}>Grade: {grade}</Text>
@@ -199,18 +209,47 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
   },
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
   headerSection: {
     marginBottom: 20,
     alignItems: 'center',
   },
   studentName: {
     fontSize: 26,
-    fontWeight: 'bold',
-    color: '#006A4E',
+    fontFamily: 'Ubuntu-Bold',
+    color: 'black',
+    marginTop: 50,
   },
   infoText: {
     fontSize: 16,
     color: '#333',
+    fontFamily: 'Ubuntu-Regular',
     marginTop: 5,
   },
   marksSection: {
@@ -225,6 +264,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     width: 150,
+    fontFamily: 'Ubuntu-Regular'
   },
   marksInput: {
     flex: 1,
@@ -240,7 +280,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEE',
   },
   submitButton: {
-    backgroundColor: '#018749',
+    backgroundColor: '#006446',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
@@ -249,6 +289,8 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: 'white',
     fontSize: 18,
+    fontFamily: 'Ubuntu-Bold',
+
   },
 });
 

@@ -1,16 +1,17 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
+  Image,
   ActivityIndicator, 
   Alert, 
   ScrollView, 
-  TextInput, 
-  FlatList 
+  TextInput 
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import axios from 'axios';
 import { AuthContext } from './screen/context/authContext';
 import { useNavigation } from '@react-navigation/native';
@@ -164,27 +165,37 @@ const Grades = () => {
   );
 
   // Navigate to Student Progress Report page on Next button
-  // When teacher clicks 'Next':
-const handleNext = () => {
-  const selectedSubjectObj = subjects.find(s => s._id === selectedSubject);
-  navigation.navigate('MarkSheet', {
-    term: selectedTerm,
-    grade: selectedGrade,
-    subject: selectedSubject, // subject _id
-    subjectName: selectedSubjectObj ? selectedSubjectObj.name : '',
-    studentId: selectedStudent, // student _id
-    studentName: students.find(u => u._id === selectedStudent)?.name || '',
-    teacherName: user.name,
-  });
-};
-
+  const handleNext = () => {
+    const selectedSubjectObj = subjects.find(s => s._id === selectedSubject);
+    navigation.navigate('MarkSheet', {
+      term: selectedTerm,
+      grade: selectedGrade,
+      subject: selectedSubject, // subject _id
+      subjectName: selectedSubjectObj ? selectedSubjectObj.name : '',
+      studentId: selectedStudent, // student _id
+      studentName: students.find(u => u._id === selectedStudent)?.name || '',
+      teacherName: user.name,
+    });
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.headerText}>Enter Grades</Text>
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Enter Grades</Text>
+        <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
+          <Image
+            source={{ uri: user?.profilePicture || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+      </View>
 
       {/* Term Dropdown */}
-      <View style={styles.pickerContainer}>
+      <View style={styles.pickerContainer1}>
         <Text style={styles.label}>Select Term:</Text>
         <Picker
           selectedValue={selectedTerm}
@@ -220,7 +231,7 @@ const handleNext = () => {
           onValueChange={(itemValue) => setSelectedSubject(itemValue)}
         >
           {subjects.map((subject, index) => (
-             <Picker.Item key={index} label={subject.name} value={subject._id} />
+            <Picker.Item key={index} label={subject.name} value={subject._id} />
           ))}
         </Picker>
       </View>
@@ -244,22 +255,21 @@ const handleNext = () => {
               onChangeText={setStudentSearch}
               value={studentSearch}
             />
-                   <ScrollView style={styles.dropdownList}>
-           {filteredStudents.map(item => (
-             <TouchableOpacity
-               key={item._id}
-               style={styles.dropdownItem}
-               onPress={() => {
-                 setSelectedStudent(item._id);
-                 setStudentSearch('');
-                 setShowStudentDropdown(false);
-               }}
-             >
-               <Text style={styles.dropdownText}>{item.name}</Text>
-             </TouchableOpacity>
-           ))}
-         </ScrollView>
-
+            <ScrollView style={styles.dropdownList}>
+              {filteredStudents.map(item => (
+                <TouchableOpacity
+                  key={item._id}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setSelectedStudent(item._id);
+                    setStudentSearch('');
+                    setShowStudentDropdown(false);
+                  }}
+                >
+                  <Text style={styles.dropdownText}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
       </View>
@@ -283,20 +293,66 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: '#fff',
+  
+  
   },
-  headerText: {
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  backText: {
     fontSize: 24,
-    fontFamily: 'Kanit-Medium',
-    color: '#018749',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
+  profileContainer: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
   },
   pickerContainer: {
-    marginBottom: 15,
+    marginBottom: 20,
+    
+  },
+  pickerContainer1: {
+    marginTop: 20,
+    
   },
   label: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
     marginBottom: 5,
   },
@@ -312,7 +368,7 @@ const styles = StyleSheet.create({
   },
   searchText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
   },
   dropdownContainer: {
@@ -336,11 +392,11 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
   },
   nextButton: {
-    backgroundColor: '#018749',
+    backgroundColor: '#006446',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
@@ -349,7 +405,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: 'white',
     fontSize: 18,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 

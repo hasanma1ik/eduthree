@@ -2,97 +2,118 @@ import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
 
-
-const AttendanceScreen = ({ navigation }) => {
-
+const AttendanceScreen = () => {
   const [fontsLoaded] = useFonts({
     'kanitregular': require('../assets/fonts/Kanit-Medium.ttf'),
     'kanitmedium1': require('../assets/fonts/Kanit-Regular.ttf'),
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
-  
+
+  const navigation = useNavigation();
+
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
       await SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
-  
+
   if (!fontsLoaded) {
     return null;
   }
 
-  
   return (
-    
     <View style={styles.container} onLayout={onLayoutRootView}>
-      <Text style={styles.header}>Attendance</Text>
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Attendance</Text>
+      </View>
+      
+      {/* Rest of the content */}
       <TouchableOpacity
         style={[styles.button, styles.takeAttendanceButton]}
-        onPress={() => navigation.navigate('TakeAttendance')}>
+        onPress={() => navigation.navigate('TakeAttendance')}
+      >
         <Text style={styles.buttonText}>Take Attendance</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button, styles.seeAttendanceButton]}
-        onPress={() => navigation.navigate('SeeAttendance')}>
+        onPress={() => navigation.navigate('SeeAttendance')}
+      >
         <Text style={styles.buttonText}>See Attendance</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#F9F9F9',
   },
-  header: {
-    fontSize: 24,
-    fontFamily: 'kanitmedium1', // Use Kanit Regular font for the heading
-    color: 'black',
-    marginLeft: 20,
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
   },
   button: {
-    paddingVertical: 15, // Increased vertical padding
-    paddingHorizontal: 25, // Increased horizontal padding to make the button wider
+    paddingVertical: 15,
+    paddingHorizontal: 25,
     borderRadius: 2,
-    width: 250, // Increased width
-    marginHorizontal: 50, // Adjusted horizontal margin if needed
+    width: 250,
     marginVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   takeAttendanceButton: {
-    backgroundColor: 'red', // Red background
-    
+    backgroundColor: '#006446',
+    marginTop: 200,
+    marginLeft: 60,
   },
   seeAttendanceButton: {
-    backgroundColor: 'red', // Blue background
+    backgroundColor: '#006446',
+    marginLeft: 60,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily: 'kanitmedium1'
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 
 export default AttendanceScreen;
-
-
 
 
 

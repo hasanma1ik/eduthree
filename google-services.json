@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "432140319259",
+    "firebase_url": "https://eduthree-ac213-default-rtdb.firebaseio.com",
+    "project_id": "eduthree-ac213",
+    "storage_bucket": "eduthree-ac213.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432140319259:android:75d6ad0498d88b1f6456be",
+        "android_client_info": {
+          "package_name": "com.learnacademy.eduthree"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnf2GskqhUqCyiw-m30y97YbUb66gyHqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

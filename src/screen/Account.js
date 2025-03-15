@@ -238,12 +238,12 @@ const Account = () => {
             <Text style={styles.updateBtnText}>Update Profile</Text>
           )}
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogOut}>
-          <Icon name="sign-out-alt" size={20} color="white" />
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
       </ScrollView>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogOut}>
+        <Icon name="sign-out-alt" size={20} color="white" />
+        <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -254,12 +254,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4F6F8',
   },
   scrollContainer: {
-    alignItems: 'center',
     padding: 20,
   },
-  /* Custom Header (same as StudentAssignments topHalf) */
+  /* Custom Header */
   topHalf: {
-    width: 393,
+    width: '100%',
     height: 128,
     backgroundColor: '#006446',
     alignSelf: 'center',
@@ -295,11 +294,11 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   pageTitle: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#FFFFFF',
     fontFamily: 'Ubuntu-Bold',
   },
-  /* Larger Profile Image for the body */
+  /* Profile Image in Body */
   imageContainer: {
     alignItems: 'center',
     marginBottom: 20,
@@ -309,15 +308,16 @@ const styles = StyleSheet.create({
     width: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: '#018749',
+    borderColor: '#006446',
+    marginBottom: 10,
   },
   editText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#018749',
-    fontFamily: 'Kanit-Medium',
+    color: '#006446',
+    fontFamily: 'Ubuntu-Bold',
   },
-  /* Input styles */
+  /* Input Styles */
   inputContainer: {
     width: '100%',
     marginBottom: 15,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     color: '#333',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     marginBottom: 5,
   },
   inputBox: {
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
   },
   disabledInput: {
@@ -349,12 +349,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#333',
   },
   updateBtn: {
     width: '100%',
-    backgroundColor: '#018749',
+    backgroundColor: '#006446',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -366,20 +366,21 @@ const styles = StyleSheet.create({
   updateBtnText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
+  /* Logout Button */
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#D7263D',
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    marginTop: 30,
+    borderRadius: 8,
+    margin: 20,
   },
   logoutText: {
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     fontSize: 16,
     color: 'white',
     marginLeft: 10,
@@ -387,3 +388,4 @@ const styles = StyleSheet.create({
 });
 
 export default Account;
+

@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { View, TextInput, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
+import { 
+  View, 
+  TextInput, 
+  StyleSheet, 
+  Alert, 
+  Text, 
+  TouchableOpacity 
+} from 'react-native';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import RNPickerSelect from 'react-native-picker-select';
@@ -8,11 +15,15 @@ import { AuthContext } from './screen/context/authContext';
 import { useNotifications } from '../NotificationContext';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { Picker } from '@react-native-picker/picker';
+import { Image } from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
 
 const CreateAssignment = () => {
-  const [state] = useContext(AuthContext);
+  const [state, setState] = useContext(AuthContext);
   const currentUser = state.user;
-
+  const navigation = useNavigation();
 
   const initialState = {
     title: '',
@@ -32,11 +43,23 @@ const CreateAssignment = () => {
   const [gradeSubjectMap, setGradeSubjectMap] = useState({});
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const { updateNotificationCount, notificationCount } = useNotifications();
+
+  const [fontsLoaded] = useFonts({
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   useEffect(() => {
     const fetchTeacherData = async () => {
       try {
         const response = await axios.get(`/auth/teacher/${currentUser._id}/data`);
-        console.log("Teacher Data Response:", response.data); // Debugging Line
+        console.log("Teacher Data Response:", response.data);
         setGrades(response.data.grades);
         setGradeSubjectMap(response.data.gradeSubjectMap);
       } catch (error) {
@@ -50,15 +73,13 @@ const CreateAssignment = () => {
   useEffect(() => {
     if (grade && gradeSubjectMap[grade]) {
       setSubjects(gradeSubjectMap[grade]);
-      console.log(`Subjects for Grade ${grade}:`, gradeSubjectMap[grade]); // Debugging Line
+      console.log(`Subjects for Grade ${grade}:`, gradeSubjectMap[grade]);
     } else {
       setSubjects([]);
-      console.log(`No subjects found for Grade ${grade}`); // Debugging Line
+      console.log(`No subjects found for Grade ${grade}`);
     }
     setSubject(''); // Reset subject when grade changes
   }, [grade, gradeSubjectMap]);
-
-  const { updateNotificationCount, notificationCount } = useNotifications();
 
   const handleCreate = async () => {
     if (
@@ -79,7 +100,7 @@ const CreateAssignment = () => {
         dueDate: formattedDueDate,
         grade,
         subject,
-      }); // Debugging Line
+      });
 
       await axios.post('/auth/create-assignments', {
         title,
@@ -108,120 +129,120 @@ const CreateAssignment = () => {
     setDueDate(currentDate);
   };
 
-  const [fontsLoaded] = useFonts({
-    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
-  });
-
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) {
     return null;
   }
 
   return (
-    <KeyboardAwareScrollView
-      style={{ backgroundColor: 'black' }}
-      resetScrollToCoords={{ x: 0, y: 0 }}
-      contentContainerStyle={styles.container}
-      onLayout={onLayoutRootView}
-    >
-      <View style={styles.headerContainer}>
-        
-      </View>
-
-      {/* Grade Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Grade:</Text>
-        <View style={styles.pickerWrapper}>
-        <RNPickerSelect
-  onValueChange={(value) => setGrade(value)}
-  items={grades.map((grade) => {
-    if (typeof grade === 'object') {
-      return { label: grade.name || grade.toString(), value: grade.value || grade._id };
-    }
-    return { label: grade.toString(), value: grade };
-  })}
-  placeholder={{ label: 'Select Grade', value: null }}
-  style={pickerSelectStyles}
-  useNativeAndroidPickerStyle={false}
-  Icon={() => <Text style={styles.icon}>▼</Text>}
-  value={grade}
-/>
-
-        </View>
-      </View>
-
-      {/* Subject Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Subject:</Text>
-        <View style={styles.pickerWrapper}>
-        <RNPickerSelect
-  onValueChange={(value) => setSubject(value)}
-  items={subjects.map((subject) => {
-    if (typeof subject === 'object') {
-      return { label: subject.name || subject.toString(), value: subject._id || subject.value };
-    }
-    return { label: subject.toString(), value: subject };
-  })}
-  placeholder={{ label: 'Select Subject', value: null }}
-  style={pickerSelectStyles}
-  useNativeAndroidPickerStyle={false}
-  Icon={() => <Text style={styles.icon}>▼</Text>}
-  value={subject}
-/>
-
-        </View>
-      </View>
-
-      {/* Title Input */}
-      <TextInput
-        placeholder="Title"
-        placeholderTextColor="#888"
-        value={title}
-        onChangeText={setTitle}
-        style={styles.input}
-      />
-
-      {/* Description Input */}
-      <TextInput
-        placeholder="Description"
-        placeholderTextColor="#888"
-        value={description}
-        onChangeText={setDescription}
-        style={[styles.input, styles.textArea]}
-        multiline={true}
-      />
-
-      {/* Date Picker Button */}
-      <TouchableOpacity
-        style={styles.datePickerButton}
-        onPress={() => setShowDatePicker(true)}
-      >
-        <Text style={styles.datePickerButtonText}>Select Due Date</Text>
-      </TouchableOpacity>
-      {showDatePicker && (
-        <DateTimePicker
-          value={dueDate}
-          mode="date"
-          display="default"
-          onChange={onChangeDate}
-        />
-      )}
-
-      {/* Display Due Date */}
-      <Text style={styles.dueDateText}>Due Date: {dueDate.toISOString().split('T')[0]}</Text>
-
-      {/* Create Assignment Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
-          <Text style={styles.createButtonText}>Create Assignment</Text>
+    <View style={{ flex: 1 }}>
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Create Assignment</Text>
+        <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
+          <Image
+            source={{ uri: currentUser?.profilePicture || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
+            style={styles.profileImage}
+          />
         </TouchableOpacity>
       </View>
-    </KeyboardAwareScrollView>
+
+      <KeyboardAwareScrollView
+        style={{ backgroundColor: 'black' }}
+        resetScrollToCoords={{ x: 0, y: 0 }}
+        contentContainerStyle={styles.container}
+        onLayout={onLayoutRootView}
+      >
+        {/* Grade Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Grade:</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setGrade(value)}
+              items={grades.map((grade) => {
+                if (typeof grade === 'object') {
+                  return { label: grade.name || grade.toString(), value: grade.value || grade._id };
+                }
+                return { label: grade.toString(), value: grade };
+              })}
+              placeholder={{ label: 'Select Grade', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={grade}
+            />
+          </View>
+        </View>
+
+        {/* Subject Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Subject:</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setSubject(value)}
+              items={subjects.map((subject) => {
+                if (typeof subject === 'object') {
+                  return { label: subject.name || subject.toString(), value: subject._id || subject.value };
+                }
+                return { label: subject.toString(), value: subject };
+              })}
+              placeholder={{ label: 'Select Subject', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={subject}
+            />
+          </View>
+        </View>
+
+        {/* Title Input */}
+        <TextInput
+          placeholder="Title"
+          placeholderTextColor="#888"
+          value={title}
+          onChangeText={setTitle}
+          style={styles.input}
+        />
+
+        {/* Description Input */}
+        <TextInput
+          placeholder="Description"
+          placeholderTextColor="#888"
+          value={description}
+          onChangeText={setDescription}
+          style={[styles.input, styles.textArea]}
+          multiline={true}
+        />
+
+        {/* Date Picker Button */}
+        <TouchableOpacity
+          style={styles.datePickerButton}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text style={styles.datePickerButtonText}>Select Due Date</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dueDate}
+            mode="date"
+            display="default"
+            onChange={onChangeDate}
+          />
+        )}
+
+        {/* Display Due Date */}
+        <Text style={styles.dueDateText}>Due Date: {dueDate.toISOString().split('T')[0]}</Text>
+
+        {/* Create Assignment Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
+            <Text style={styles.createButtonText}>Create Assignment</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAwareScrollView>
+    </View>
   );
 };
 
@@ -232,22 +253,55 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#F9F9F9',
   },
-  headerContainer: {
-    alignItems: 'flex-start',
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  header: {
-    fontSize: 24,
-    fontFamily: 'Kanit-Medium',
-    color: 'white',
-    marginBottom: 20,
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  profileContainer: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 5,
+    zIndex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
   },
   inputContainer: {
+    width: '100%',
     marginBottom: 15,
   },
   label: {
     fontSize: 16,
     color: 'black',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     marginBottom: 5,
   },
   pickerWrapper: {
@@ -271,7 +325,7 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
     color: 'black',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     marginBottom: 10,
   },
   textArea: {
@@ -279,7 +333,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   datePickerButton: {
-    backgroundColor: '#00E678',
+    backgroundColor: '#006446',
     paddingVertical: 15,
     borderRadius: 8,
     justifyContent: 'center',
@@ -289,20 +343,20 @@ const styles = StyleSheet.create({
   datePickerButtonText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   dueDateText: {
     fontSize: 16,
     color: 'black',
     textAlign: 'center',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     marginBottom: 20,
   },
   buttonContainer: {
     marginTop: 10,
   },
   createButton: {
-    backgroundColor: '#00E678',
+    backgroundColor: '#006446',
     borderRadius: 8,
     paddingVertical: 15,
     justifyContent: 'center',
@@ -311,7 +365,7 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 
@@ -326,7 +380,7 @@ const pickerSelectStyles = StyleSheet.create({
     color: 'white',
     backgroundColor: '#333333',
     paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   inputAndroid: {
     fontSize: 16,
@@ -338,11 +392,11 @@ const pickerSelectStyles = StyleSheet.create({
     color: 'black',
     backgroundColor: 'white',
     paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   placeholder: {
     color: 'black',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 

@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     marginBottom: 20,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   contactInfoContainer: {
     width: '100%',
@@ -154,20 +154,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginBottom: 8,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   linkText: {
     fontSize: 18,
     color: '#1E90FF',
     marginBottom: 20,
     textDecorationLine: 'underline',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   infoText: {
     fontSize: 16,
     color: '#333',
     marginBottom: 10,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 

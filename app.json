@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "eduthree",
+    "package": "com.learnacademy.eduthree",
     "slug": "eduthree",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,7 +10,9 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "plugins": ["expo-image-picker"],
+      "plugins": [
+        "expo-image-picker"
+      ],
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -19,19 +22,21 @@
       "supportsTablet": true
     },
     "android": {
+         "package": "com.learnacademy.eduthree",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
+   
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5d7578ee-e85f-4864-b85e-780941b6e953"
+      }
     }
   }
 }
-
-
-
-
-
-

@@ -108,13 +108,13 @@ const GrowthReport = ({ route, navigation }) => {
       <View style={styles.headerSection}>
         <Text style={styles.studentName}>{studentName}</Text>
         <Text style={styles.infoText}>Grade: {grade}</Text>
-        <Text style={styles.infoText}>Subject: {subject}</Text>
+        {/* <Text style={styles.infoText}>Subject: {subject}</Text> */}
         <Text style={styles.infoText}>Teacher: {teacherName}</Text>
         <Text style={styles.infoText}>Term: {term}</Text>
       </View>
 
       <View style={styles.objectivesSection}>
-        <Text style={styles.sectionHeader}>Growth Report</Text>
+        {/* <Text style={styles.sectionHeader}>Growth Report</Text> */}
         <View style={styles.tableHeader}>
           <Text style={[styles.tableCell, styles.objectiveColumn]}>Objective</Text>
           <Text style={[styles.tableCell, styles.marksColumn]}>Mid Term</Text>
@@ -201,26 +201,27 @@ const styles = StyleSheet.create({
   },
   studentName: {
     fontSize: 26,
-    fontWeight: 'bold',
-    color: '#006A4E',
-    fontFamily: 'Kanit-Medium'
+    marginTop: 20,
+    // fontWeight: 'bold',
+    color: '#006446',
+    fontFamily: 'Ubuntu-Bold'
   },
   infoText: {
     fontSize: 16,
     color: '#333',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
     marginTop: 5
   },
   objectivesSection: {
     marginBottom: 20
   },
-  sectionHeader: {
-    fontSize: 20,
-    fontFamily: 'Kanit-Medium',
-    color: '#018749',
-    marginBottom: 10,
-    textAlign: 'center'
-  },
+  // sectionHeader: {
+  //   fontSize: 18,
+  //   fontFamily: 'Ubuntu-Bold',
+  //   color: '#006446',
+  //   marginBottom: 10,
+  //   textAlign: 'center'
+  // },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#E0E0E0',
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     fontSize: 14,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Regular',
     color: '#333'
   },
   objectiveColumn: {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1
   },
   submitButton: {
-    backgroundColor: '#018749',
+    backgroundColor: '#006446',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: 'white',
     fontSize: 18,
-    fontFamily: 'Kanit-Medium'
+    fontFamily: 'Ubuntu-Bold'
   }
 });
 

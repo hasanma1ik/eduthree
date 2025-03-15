@@ -111,10 +111,11 @@ const StudentAttendance = () => {
   }
 
   // Compute stats
-  const totalClasses = attendanceStats.present + attendanceStats.absent + attendanceStats.late;
+ const totalClasses = attendanceStats.present + attendanceStats.absent + attendanceStats.late;
+  // Late counts as present for overall percentage, and we format with 2 decimals.
   const attendancePercentage = totalClasses > 0
-    ? Math.round((attendanceStats.present / totalClasses) * 100)
-    : 0;
+    ? (((attendanceStats.present + attendanceStats.late) / totalClasses) * 100).toFixed(2)
+    : "0.00";
 
   /* ===================== DATE PICKER LOGIC ===================== */
   const onPressView = () => {
@@ -122,12 +123,68 @@ const StudentAttendance = () => {
   };
 
   const onChangeDate = (event, newDate) => {
-    // On Android, user can press "Cancel" => newDate = undefined
     setShowDatePicker(false);
     if (newDate) {
       setSelectedDate(newDate);
     }
   };
+
+  // Helper function to get day suffix (st, nd, rd, th)
+  const getDaySuffix = (day) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  // Compute date values from selectedDate
+  const day = selectedDate.getDate();
+  const daySuffix = getDaySuffix(day);
+  const monthYear = selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+   // Compute the Monday of the current school week (Monday-Friday)
+   const getMonday = (date) => {
+    const day = date.getDay(); // 0 (Sun) to 6 (Sat)
+    const diff = date.getDay() === 0 ? -6 : 1 - day; // if Sunday, go back 6 days; otherwise, subtract (day - 1)
+    const monday = new Date(date);
+    monday.setDate(date.getDate() + diff);
+    return monday;
+  };
+
+  const monday = getMonday(selectedDate);
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  // Compute an array of Date objects for Monday to Friday
+  const weekDates = weekDays.map((_, i) => new Date(monday.getTime() + i * 24 * 60 * 60 * 1000));
+
+  // Render the status for each day of the week
+  const renderWeekStatus = weekDates.map((d, i) => {
+    // Find an attendance record that matches this day (compare using toDateString())
+    const record = attendanceRecords.find(rec => {
+      const recDate = new Date(rec.date);
+      return recDate.toDateString() === d.toDateString();
+    });
+    let statusSymbol = '-';
+    if (record) {
+      const status = record.status.toLowerCase();
+      if (status === 'present' || status === 'late') {
+        statusSymbol = '✓';
+      } else if (status === 'absent') {
+        statusSymbol = 'A';
+      }
+    }
+    return (
+            <View key={i} style={styles.dayCircle}>
+              <Text style={styles.dayLabel}>{weekDays[i]}</Text>
+              <Text style={record && record.status.toLowerCase() === 'absent' ? [styles.checkIcon, { color: 'red' }] : styles.checkIcon}>
+                {statusSymbol}
+              </Text>
+            </View>
+         );
+  });
 
   return (
     <View style={styles.screen}>
@@ -155,7 +212,7 @@ const StudentAttendance = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Render the native date picker if showDatePicker is true */}
+        {/* Render native date picker if needed */}
         {showDatePicker && (
           <DateTimePicker
             value={selectedDate}
@@ -177,107 +234,115 @@ const StudentAttendance = () => {
             style={pickerSelectStyles}
             useNativeAndroidPickerStyle={false}
             Icon={() => (
-              <MaterialIcons
-                name="arrow-drop-down"
-                size={24}
-                color="#34495e"
-              />
+              <MaterialIcons name="arrow-drop-down" size={24} color="#34495e" />
             )}
           />
         </View>
 
         {/* === Big Date Card === */}
         <View style={styles.dateCard}>
-          <Text style={styles.bigDateText}>12<Text style={styles.thText}>th</Text></Text>
-          <Text style={styles.dayText}>Wednesday</Text>
-          <Text style={styles.monthYearText}>February 2025</Text>
-          <Text style={styles.thisWeekStatus}>This week status</Text>
+          <Text style={styles.bigDateText}>
+            {day}<Text style={styles.thText}>{daySuffix}</Text>
+          </Text>
+          <Text style={styles.dayText}>{dayName}</Text>
+          <Text style={styles.monthYearText}>{monthYear}</Text>
 
           {/* Example M T W T F row */}
+          <Text style={styles.thisWeekStatus}>This week status</Text>
           <View style={styles.weekRow}>
-            <View style={styles.dayCircle}>
-              <Text style={styles.dayLabel}>Mon</Text>
-              <Text style={styles.checkIcon}>✓</Text>
-            </View>
-            <View style={styles.dayCircle}>
-              <Text style={styles.dayLabel}>Tue</Text>
-              <Text style={styles.checkIcon}>✓</Text>
-            </View>
-            <View style={styles.dayCircle}>
-              <Text style={styles.dayLabel}>Wed</Text>
-              <Text style={[styles.checkIcon, { color: 'red' }]}>A</Text>
-            </View>
-            <View style={styles.dayCircle}>
-              <Text style={styles.dayLabel}>Thu</Text>
-              <Text style={styles.checkIcon}>✓</Text>
-            </View>
-            <View style={styles.dayCircle}>
-              <Text style={styles.dayLabel}>Fri</Text>
-              <Text style={styles.checkIcon}>✓</Text>
-            </View>
+            {renderWeekStatus}
           </View>
         </View>
 
-        {/* === Stats Row (Attendance %, Leaves, Ongoing Days) === */}
-        <View style={styles.statsRow}>
+        {/* === Stats Section === */}
+        {/* Top Attendance Percentage Box */}
+        <View style={styles.topStatsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{attendancePercentage}%</Text>
             <Text style={styles.statLabel}>Attendance</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>
-              {attendanceStats.absent < 10
-                ? `0${attendanceStats.absent}`
-                : attendanceStats.absent}
-            </Text>
-            <Text style={styles.statLabel}>Leaves Taken</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>
-              {totalClasses < 10 ? `0${totalClasses}` : totalClasses}
-            </Text>
+            <Text style={styles.statValue}>{totalClasses}</Text>
             <Text style={styles.statLabel}>Ongoing Days</Text>
           </View>
         </View>
 
+        
+
+        {/* Row of three boxes: Present, Absent, Late */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{attendanceStats.present}</Text>
+            <Text style={styles.statLabel}>Present</Text>
+          </View>
+          <View style={[styles.statBox, styles.absentBox]}>
+            <Text style={styles.statValue}>{attendanceStats.absent}</Text>
+            <Text style={styles.statLabel}>Absent</Text>
+          </View>
+          <View style={[styles.statBox, styles.lateBox]}>
+            <Text style={styles.statValue}>{attendanceStats.late}</Text>
+            <Text style={styles.statLabel}>Late</Text>
+          </View>
+        </View>
+
         {/* === ASK LEAVE Button === */}
-        <TouchableOpacity style={styles.askLeaveButton}>
-          <Text style={styles.askLeaveButtonText}>ASK LEAVE</Text>
-        </TouchableOpacity>
+      
 
         {/* === Loading Indicator === */}
         {loading && (
           <ActivityIndicator size="large" color="#FF6347" style={{ marginTop: 20 }} />
         )}
 
-        {/* === Attendance Records (if any) === */}
-        {attendanceRecords.length > 0 && (
+       {/* === Attendance Records (if any) === */}
+       {attendanceRecords.length > 0 && (
           <View style={{ marginTop: 20 }}>
-            {attendanceRecords.map((record, index) => (
-              <View key={index} style={styles.recordCard}>
-                <Text style={styles.recordText}>Date: {record.date}</Text>
-                <Text style={styles.recordText}>
-                  Status: {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                </Text>
-              </View>
-            ))}
+            {attendanceRecords.map((record, index) => {
+              // Determine the background style based on status
+              const status = record.status.toLowerCase();
+              let recordStyle = {};
+              if (status === 'present') {
+                recordStyle = styles.presentRecordCard;
+              } else if (status === 'absent') {
+                recordStyle = styles.absentRecordCard;
+              } else if (status === 'late') {
+                recordStyle = styles.lateRecordCard;
+              }
+              return (
+                <View key={index} style={[styles.recordCard, recordStyle]}>
+                  <Text style={styles.recordText}>Date: {record.date}</Text>
+                  <Text style={styles.recordText}>
+                    Status: {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         )}
         {(!loading && attendanceRecords.length === 0 && selectedSubject) && (
-          <Text style={styles.noRecordsText}>
-            No attendance records available.
-          </Text>
+          <Text style={styles.noRecordsText}>No attendance records available.</Text>
         )}
       </ScrollView>
     </View>
   );
 };
-
 /* -------------------- STYLES -------------------- */
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#f0f4f7',
+  },
+  topStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#fff',
+    marginHorizontal: 5,
+    borderRadius: 15,
+    padding: 15,
+    alignItems: 'center',
   },
   /* Top Bar */
   topBar: {
@@ -381,6 +446,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Ubuntu-Bold',
     color: '#006446',
     lineHeight: 48,
+    marginLeft: -105,
   },
   thText: {
     fontSize: 24,
@@ -388,15 +454,17 @@ const styles = StyleSheet.create({
     color: '#006446',
   },
   dayText: {
-    fontSize: 24,
+    fontSize: 16,
     fontFamily: 'Ubuntu-Regular',
     color: '#333',
   },
   monthYearText: {
     fontSize: 16,
-    fontFamily: 'Ubuntu-Regular',
-    color: '#666',
+    fontFamily: 'Ubuntu-Bold',
+    color: '#006446',
     marginBottom: 10,
+    top: -50,
+    left: 40, 
   },
   thisWeekStatus: {
     fontSize: 14,
@@ -423,7 +491,26 @@ const styles = StyleSheet.create({
     fontFamily: 'Ubuntu-Bold',
   },
 
-  /* Stats Row */
+  /* Stats Section */
+  attendanceBox: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  attendancePercentage: {
+    fontSize: 24,
+    fontFamily: 'Ubuntu-Bold',
+    color: '#006446',
+    marginBottom: 5,
+  },
+  attendanceLabel: {
+    fontSize: 14,
+    fontFamily: 'Ubuntu-Regular',
+    color: '#333',
+  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -448,27 +535,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Ubuntu-Regular',
     color: '#333',
   },
+  absentBox: {
+    backgroundColor: '#ffcccc', // light red
+  },
+  lateBox: {
+    backgroundColor: '#ffffcc', // light yellow
+  },
 
   /* ASK LEAVE Button */
-  askLeaveButton: {
-    backgroundColor: '#006446',
-    borderRadius: 15,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  askLeaveButtonText: {
-    fontSize: 18,
-    fontFamily: 'Ubuntu-Bold',
-    color: '#fff',
-  },
+  // askLeaveButton: {
+  //   backgroundColor: '#006446',
+  //   borderRadius: 15,
+  //   paddingVertical: 15,
+  //   alignItems: 'center',
+  //   marginBottom: 20,
+  // },
+  // askLeaveButtonText: {
+  //   fontSize: 18,
+  //   fontFamily: 'Ubuntu-Bold',
+  //   color: '#fff',
+  // },
 
-  /* Detailed Attendance Records (Optional) */
+  /* Detailed Attendance Records */
   recordCard: {
-    backgroundColor: '#018749',
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+  },
+  presentRecordCard: {
+    backgroundColor: '#006446', // green for present
+  },
+  absentRecordCard: {
+    backgroundColor: 'maroon', // red for absent
+  },
+  lateRecordCard: {
+    backgroundColor: '#f1c40f', // yellow for late
   },
   recordText: {
     fontSize: 16,
@@ -490,6 +591,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
 
 /* RNPickerSelect Styles */
 const pickerSelectStyles = StyleSheet.create({

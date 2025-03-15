@@ -1,23 +1,34 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  Alert, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity 
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { useNavigation } from '@react-navigation/native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { TextInput } from 'react-native';
 
 function AddTermScreen() {
-  const [term, setTerm] = useState('Spring');
+  const [term, setTerm] = useState(''); // Initially blank for manual entry
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
   const [fontsLoaded] = useFonts({
-    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
 
-  const onLayoutRootView = React.useCallback(async () => {
+  const navigation = useNavigation();
+
+  const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
       await SplashScreen.hideAsync();
     }
@@ -25,7 +36,7 @@ function AddTermScreen() {
 
   const handleSubmit = async () => {
     const year = new Date().getFullYear();
-    const termWithYear = `${term} ${year}`;
+     const termWithYear = /\d{4}/.test(term) ? term : `${term} ${year}`;
 
     try {
       await axios.post('/auth/terms', {
@@ -33,7 +44,14 @@ function AddTermScreen() {
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
       });
-      Alert.alert("Success", "Term created successfully");
+      Alert.alert("Success", "Term created successfully", [
+           {
+             text: "OK",
+             onPress: () => {
+               navigation.replace('AddTermScreen');
+             },
+            },
+          ]);
     } catch (error) {
       console.error('Error adding term:', error);
       Alert.alert("Error", "Failed to add term");
@@ -48,62 +66,64 @@ function AddTermScreen() {
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
-      <Text style={styles.heading}></Text>
-
-      {/* Term Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Select Term:</Text>
-        <RNPickerSelect
-          onValueChange={(value) => setTerm(value)}
-          items={[
-            { label: "Spring", value: "Spring" },
-            { label: "Fall", value: "Fall" },
-            { label: "Summer", value: "Summer" },
-          ]}
-          placeholder={{ label: 'Select a term', value: null }}
-          style={pickerSelectStyles}
-          useNativeAndroidPickerStyle={false}
-          Icon={() => <Text style={styles.icon}>▼</Text>}
-          value={term}
-        />
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Add Term</Text>
       </View>
 
-      {/* Start Date Picker */}
-      <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.datePickerButton}>
-        <Text style={styles.datePickerText}>Start Date: {formatDate(startDate)}</Text>
-      </TouchableOpacity>
-      {showStartDatePicker && (
-        <DateTimePicker
-          value={startDate}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowStartDatePicker(Platform.OS === 'ios');
-            setStartDate(selectedDate || startDate);
-          }}
-        />
-      )}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Term Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Term Name:</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Enter term name"
+            placeholderTextColor="#999"
+            value={term}
+            onChangeText={setTerm}
+          />
+        </View>
 
-      {/* End Date Picker */}
-      <TouchableOpacity onPress={() => setShowEndDatePicker(true)} style={styles.datePickerButton}>
-        <Text style={styles.datePickerText}>End Date: {formatDate(endDate)}</Text>
-      </TouchableOpacity>
-      {showEndDatePicker && (
-        <DateTimePicker
-          value={endDate}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowEndDatePicker(Platform.OS === 'ios');
-            setEndDate(selectedDate || endDate);
-          }}
-        />
-      )}
+        {/* Start Date Picker */}
+        <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.datePickerButton}>
+          <Text style={styles.datePickerText}>Start Date: {formatDate(startDate)}</Text>
+        </TouchableOpacity>
+        {showStartDatePicker && (
+          <DateTimePicker
+            value={startDate}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowStartDatePicker(Platform.OS === 'ios');
+              setStartDate(selectedDate || startDate);
+            }}
+          />
+        )}
 
-      {/* Submit Button */}
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitButtonText}>Add Term</Text>
-      </TouchableOpacity>
+        {/* End Date Picker */}
+        <TouchableOpacity onPress={() => setShowEndDatePicker(true)} style={styles.datePickerButton}>
+          <Text style={styles.datePickerText}>End Date: {formatDate(endDate)}</Text>
+        </TouchableOpacity>
+        {showEndDatePicker && (
+          <DateTimePicker
+            value={endDate}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowEndDatePicker(Platform.OS === 'ios');
+              setEndDate(selectedDate || endDate);
+            }}
+          />
+        )}
+
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitButtonText}>Add Term</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
@@ -111,24 +131,58 @@ function AddTermScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#F4F6F8',
   },
-  heading: {
-    fontSize: 26,
-    fontFamily: 'Kanit-Medium',
-    color: '#2C3E50',
-    textAlign: 'center',
-    marginBottom: 20,
+  scrollContainer: {
+    padding: 20,
+  },
+  // Custom Header Styles (same as in Assignments)
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#34495E',
     marginBottom: 8,
+  },
+  textInput: {
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Bold',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#DADADA',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    color: '#34495E',
   },
   datePickerButton: {
     backgroundColor: '#FFF',
@@ -146,10 +200,10 @@ const styles = StyleSheet.create({
   datePickerText: {
     fontSize: 16,
     color: '#34495E',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   submitButton: {
-    backgroundColor: '#018749',
+    backgroundColor: '#006446',
     borderRadius: 8,
     paddingVertical: 15,
     justifyContent: 'center',
@@ -163,43 +217,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFF',
     fontSize: 18,
-    fontFamily: 'Kanit-Medium',
-  },
-  icon: {
-    color: '#2C3E50',
-    fontSize: 18,
-    paddingRight: 10,
-  },
-});
-
-const pickerSelectStyles = StyleSheet.create({
-  inputIOS: {
-    fontSize: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#DADADA',
-    borderRadius: 8,
-    color: '#34495E',
-    backgroundColor: '#FFF',
-    paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
-  },
-  inputAndroid: {
-    fontSize: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'black',
-    borderRadius: 8,
-    color: '#34495E',
-    backgroundColor: '#FFF',
-    paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
-  },
-  placeholder: {
-    color: '#999',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 

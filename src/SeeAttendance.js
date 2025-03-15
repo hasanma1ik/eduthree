@@ -3,14 +3,17 @@ import {
   View, 
   Text, 
   StyleSheet, 
+  TouchableOpacity,
   ScrollView, 
   Alert, 
   SafeAreaView 
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons'; // For custom icons
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { useNavigation } from '@react-navigation/native';
 
 const SeeAttendance = () => {
   const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
@@ -20,9 +23,11 @@ const SeeAttendance = () => {
   const [attendanceDates, setAttendanceDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [attendanceData, setAttendanceData] = useState([]);
+ const navigation = useNavigation();
+
 
   const [fontsLoaded] = useFonts({
-    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -83,7 +88,14 @@ const SeeAttendance = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container} onLayout={onLayoutRootView}>
+    <View style={styles.container}>
+        {/* Custom Header */}
+        <View style={styles.topHalf}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="ios-arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.pageTitle}>See Attendance</Text>
+        </View>
        
         <ScrollView style={styles.formContainer}>
           
@@ -171,16 +183,43 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#E0E0E0', // Black background
   },
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
   header: {
     fontSize: 24,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: 'white',
     marginBottom: 20,
     marginTop: 20, // Adjusted to bring the header down
     textAlign: 'center',
   },
   formContainer: {
-    marginTop: 10,
+    marginTop: 20,
   },
   pickerWrapper: {
     marginBottom: 20,
@@ -193,7 +232,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white', // Darker shade for attendance items
     borderRadius: 12,
     padding: 15,
-    marginBottom: 10,
+    marginBottom: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -201,7 +240,7 @@ const styles = StyleSheet.create({
   userNameText: {
     // fontWeight: 'bold',
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: 'black',
   },
   statusPresent: {
@@ -232,7 +271,7 @@ const styles = StyleSheet.create({
   statusOther: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   icon: {
     color: 'white',
@@ -241,7 +280,7 @@ const styles = StyleSheet.create({
   },
   statusText:{
     color: 'white',
-    fontFamily: 'Kanit-Medium'
+    fontFamily: 'Ubuntu-Bold'
   }
 });
 
@@ -256,7 +295,7 @@ const pickerSelectStyles = StyleSheet.create({
     color: 'white', // White text
     backgroundColor: '#333333', // Dark background
     paddingRight: 30, // To ensure the text is never behind the icon
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   inputAndroid: {
     fontSize: 16,
@@ -268,11 +307,11 @@ const pickerSelectStyles = StyleSheet.create({
     color: 'black', // White text
     backgroundColor: 'white', // Dark background
     paddingRight: 30, // To ensure the text is never behind the icon
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   placeholder: {
     color: 'black', // White placeholder text
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   
 });

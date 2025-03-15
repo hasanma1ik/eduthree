@@ -13,9 +13,10 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Picker } from '@react-native-picker/picker';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import { AuthContext } from './screen/context/authContext';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+import { AuthContext } from './screen/context/authContext';
 
 const StudentAssignments = () => {
   const [state] = useContext(AuthContext);
@@ -38,7 +39,7 @@ const StudentAssignments = () => {
     'Ubuntu-Regular': require('../assets/fonts/Ubuntu-Regular.ttf'),
     'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf')
   });
-  
+
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
       await SplashScreen.hideAsync();
@@ -79,10 +80,10 @@ const StudentAssignments = () => {
         const submissions = submissionResponse.data.submissions || [];
         
         const dataWithSubmissionFlag = (assignmentResponse.data || []).map(a => {
-          // Use populated assignmentId to compare (ensure both are strings)
           const submission = submissions.find(
             s => s.assignmentId && s.assignmentId._id.toString() === a._id.toString()
           );
+  
           if (submission) {
             return {
               ...a,
@@ -100,6 +101,7 @@ const StudentAssignments = () => {
               filePath: '',
               fileName: '',
               fileType: '',
+              scannedImages: [] // initialize scannedImages array
             };
           }
         });
@@ -112,7 +114,6 @@ const StudentAssignments = () => {
     };
     fetchAssignments();
   }, [selectedSubject]);
-  
 
   if (!fontsLoaded) {
     return null;
@@ -123,11 +124,11 @@ const StudentAssignments = () => {
     setSelectedAssignmentId(prev => (prev === assignmentId ? null : assignmentId));
   };
 
-  // Normal file picking for first-time submission
+  // Normal file picking for non-scan options
   const pickFileAndUpdate = async (assignmentId) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",  
+        type: "*/*",
         copyToCacheDirectory: true,
       });
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -154,16 +155,82 @@ const StudentAssignments = () => {
     }
   };
 
-  // New function to pick a file and immediately resubmit (replace the old submission)
+  // NEW: Function to take multiple pictures using the camera (for Scan option)
+  // This function allows up to 5 pictures. After each picture, the user is prompted to take another.
+  const takePictureAndUpload = async (assignmentId) => {
+    try {
+      // Request camera permissions
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Denied', 'Camera access is required to take pictures');
+        return;
+      }
+      
+      // Launch the camera without editing (no crop)
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.7,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        // Update assignment state with image info in a scannedImages array
+        setAssignments(prev =>
+          prev.map(a => {
+            if (a._id === assignmentId) {
+              const existing = a.scannedImages ? a.scannedImages : [];
+              if (existing.length >= 5) {
+                Alert.alert("Limit reached", "You can only upload up to 5 pictures.");
+                return a;
+              }
+              const updated = [...existing, {
+                uri: asset.uri,
+                name: asset.uri.split('/').pop(),
+                type: 'image/jpeg',
+              }];
+              // Prompt for additional picture if limit not reached
+              if (updated.length < 5) {
+                setTimeout(() => {
+                  Alert.alert("Picture Taken", "Do you want to take another picture?", [
+                    { text: "No", style: "cancel" },
+                    { text: "Yes", onPress: () => takePictureAndUpload(assignmentId) }
+                  ]);
+                }, 500);
+              } else {
+                setTimeout(() => {
+                  Alert.alert("Limit reached", "You have reached the maximum number of pictures.");
+                }, 500);
+              }
+              return {
+                ...a,
+                scannedImages: updated,
+                fileUploaded: updated.length > 0,
+                isSubmitted: false,
+              };
+            }
+            return a;
+          })
+        );
+        Alert.alert('Success', 'Picture taken and uploaded! You can now submit.');
+      } else {
+        Alert.alert('No picture taken', 'You did not take a picture.');
+      }
+    } catch (error) {
+      console.error('Error taking picture:', error);
+      Alert.alert('Error', 'Something went wrong taking the picture.');
+    }
+  };
+
+  // Function for non-scan file picking with resubmission logic remains unchanged
   const pickFileAndResubmit = async (assignmentId) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",  
+        type: "*/*",
         copyToCacheDirectory: true,
       });
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        // Update file details in state and mark as not submitted yet.
         setAssignments(prev => prev.map(a => {
           if (a._id === assignmentId) {
             return {
@@ -172,7 +239,7 @@ const StudentAssignments = () => {
               filePath: asset.uri,
               fileName: asset.name,
               fileType: asset.mimeType || 'application/octet-stream',
-              isSubmitted: false, // clear the submitted flag so that the Submit button shows
+              isSubmitted: false,
             };
           }
           return a;
@@ -186,10 +253,9 @@ const StudentAssignments = () => {
       Alert.alert('Error', 'Something went wrong picking the document.');
     }
   };
-  
 
-  // Updated file upload handler to check for submission status and prompt for resubmission if needed
-  const handleFileUpload = async (assignmentId) => {
+  // Updated file upload handler: if option is 'scan', call takePictureAndUpload; otherwise use normal file picker.
+  const handleFileUpload = async (assignmentId, option) => {
     if (!assignmentId) {
       Alert.alert('No Assignment Selected', 'Please tap an assignment to select it first.');
       return;
@@ -201,14 +267,15 @@ const StudentAssignments = () => {
         'Would you like to resubmit assignment?',
         [
           { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Replace',
-            onPress: () => pickFileAndResubmit(assignmentId)
-          }
+          { text: 'Replace', onPress: () => pickFileAndResubmit(assignmentId) }
         ]
       );
     } else {
-      pickFileAndUpdate(assignmentId);
+      if (option === 'scan') {
+        takePictureAndUpload(assignmentId);
+      } else {
+        pickFileAndUpdate(assignmentId);
+      }
     }
   };
 
@@ -218,32 +285,37 @@ const StudentAssignments = () => {
       Alert.alert('Error', 'Assignment not found in state.');
       return;
     }
-    // For first-time submission only (resubmission is handled in file upload)
     submitOrReplace(assignmentId);
   };
 
   const submitOrReplace = async (assignmentId) => {
     const assignment = assignments.find(a => a._id === assignmentId);
-    if (!assignment || !assignment.fileUploaded || !assignment.filePath) {
+    if (
+      !assignment ||
+      !assignment.fileUploaded ||
+      (!assignment.filePath && (!assignment.scannedImages || assignment.scannedImages.length === 0))
+    ) {
       Alert.alert('Error', 'No file is uploaded for this assignment.');
       return;
     }
+    // If scannedImages exist, include them in the payload; otherwise use filePath, etc.
     const payload = {
       assignmentId,
       userId: currentUser._id,
-      filePath: assignment.filePath,
-      fileName: assignment.fileName,
-      fileType: assignment.fileType,
+      ...(assignment.scannedImages && assignment.scannedImages.length > 0
+        ? { scannedImages: assignment.scannedImages }
+        : {
+            filePath: assignment.filePath,
+            fileName: assignment.fileName,
+            fileType: assignment.fileType,
+          }),
     };
     try {
       await axios.post('/auth/submit-assignment', payload);
       setAssignments(prev =>
         prev.map(a => {
           if (a._id === assignmentId) {
-            return {
-              ...a,
-              isSubmitted: true,
-            };
+            return { ...a, isSubmitted: true };
           }
           return a;
         })
@@ -255,7 +327,6 @@ const StudentAssignments = () => {
     }
   };
 
-  /* ===================== RENDER ===================== */
   return (
     <ScrollView style={styles.screen} onLayout={onLayoutRootView}>
       <View style={styles.topHalf}>
@@ -266,28 +337,25 @@ const StudentAssignments = () => {
           <Image source={{ uri: profilePicture }} style={styles.profileImage} />
         </TouchableOpacity>
         <Text style={styles.pageTitle}>My Assignments</Text>
-        <Image
-          source={require('../assets/logo7.png')}
-          style={styles.bigIcon}
-        />
+        <Image source={require('../assets/logo7.png')} style={styles.bigIcon} />
         <Text style={styles.addAssignmentTitle}>Add Your Assignment</Text>
         <Text style={styles.addAssignmentSub}>
           Lorem ipsum dolor sit amet, adip iscing ipsum dolor sit amet, psum dolor sit amet.
         </Text>
         <View style={styles.iconsRow}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId)}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId, 'scan')}>
             <FontAwesome5 name="camera" size={24} color="#006446" />
             <Text style={styles.iconLabel}>Scan</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId)}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId, 'pdf')}>
             <FontAwesome5 name="file-pdf" size={24} color="#006446" />
             <Text style={styles.iconLabel}>PDF</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId)}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId, 'word')}>
             <FontAwesome5 name="file-word" size={24} color="#006446" />
             <Text style={styles.iconLabel}>Word</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId)}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => handleFileUpload(selectedAssignmentId, 'image')}>
             <FontAwesome5 name="image" size={24} color="#006446" />
             <Text style={styles.iconLabel}>Image</Text>
           </TouchableOpacity>
@@ -305,11 +373,7 @@ const StudentAssignments = () => {
         >
           <Picker.Item label="Select a Subject" value="" />
           {subjects.map((subject) => (
-            <Picker.Item
-              key={subject._id}
-              label={subject.name}
-              value={subject._id}
-            />
+            <Picker.Item key={subject._id} label={subject.name} value={subject._id} />
           ))}
         </Picker>
       </View>
@@ -333,16 +397,13 @@ const StudentAssignments = () => {
               </View>
               <Text style={styles.assignmentDescription}>{assignment.description}</Text>
               <Text style={styles.assignmentMetaText}>Due Date: {assignment.dueDate}</Text>
-              {isSelected && assignment.fileUploaded && (
+              {isSelected && assignment.fileUploaded && assignment.scannedImages && assignment.scannedImages.length > 0 && (
                 <Text style={styles.uploadedFileName}>
-                  Uploaded File: {assignment.fileName}
+                  {`Uploaded Pictures: ${assignment.scannedImages.length}`}
                 </Text>
               )}
               {isSelected && assignment.fileUploaded && !assignment.isSubmitted && (
-                <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={() => handleSubmitAssignment(assignment._id)}
-                >
+                <TouchableOpacity style={styles.submitButton} onPress={() => handleSubmitAssignment(assignment._id)}>
                   <Text style={styles.submitButtonText}>Submit</Text>
                 </TouchableOpacity>
               )}

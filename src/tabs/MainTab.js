@@ -193,116 +193,28 @@ function AdminHomeScreen(){
       fontSize: 22, 
       color: 'black' 
     } }} /> 
-    <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: '',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    
-  }}
+    <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} options={{ headerShown: false }} 
 />
 <Stack.Screen
   name="ContactUs"
   component={ContactUs}
   options={{ headerShown: false }} 
 /> 
-    <Stack.Screen name="TakeAttendance" component={TakeAttendance}  options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Take Attendance',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+    <Stack.Screen name="TakeAttendance" component={TakeAttendance}  options={{ headerShown: false }} 
 /> 
-    <Stack.Screen name="SeeAttendance" component={SeeAttendanceScreen} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'See Attendance', headerTintColor: 'black', headerBackTitle: 'Back', headerRight:()=> <TopTab />,   headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    } }} />  
+    <Stack.Screen name="SeeAttendance" component={SeeAttendanceScreen} options={{ headerShown: false }}  />  
     <Stack.Screen name="ClassSchedule" component={ClassSchedule}  options={{ headerShown: false }} 
 /> 
-<Stack.Screen name="Grades" component={Grades}options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Enter Grades',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+<Stack.Screen name="Grades" component={Grades}  options={{ headerShown: false }} 
 /> 
-<Stack.Screen name="MarkSheet" component={MarkSheet}options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'MarkSheet',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+<Stack.Screen name="MarkSheet" component={MarkSheet}options={{ headerShown: false }} 
 /> 
-<Stack.Screen name="PND" component={PND}options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Growth Report',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+<Stack.Screen name="PND" component={PND} options={{ headerShown: false }} 
 /> 
-<Stack.Screen name="GrowthReport" component={GrowthReport}options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Growth Report',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+<Stack.Screen name="GrowthReport" component={GrowthReport} options={{ headerShown: false }} 
 /> 
 
-<Stack.Screen name="Results" component={Results}options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Results',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+<Stack.Screen name="Results" component={Results} options={{ headerShown: false }} 
 /> 
 <Stack.Screen name="Transcripts" component={Transcript}options={{
     headerStyle: { backgroundColor: 'white' },
@@ -325,34 +237,9 @@ function AdminHomeScreen(){
     <Stack.Screen name="TimetableScreen" component={TimetableScreen} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
     {/* <Stack.Screen name="CalendarScreen" component={CalendarScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
       <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
-      <Stack.Screen name="Assignments" component={Assignments} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Your Assignments',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+      <Stack.Screen name="Assignments" component={Assignments} options={{ headerShown: false }} 
 /> 
-      <Stack.Screen name="CreateAssignment" component={CreateAssignment} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Create Assignment',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-  }}
+      <Stack.Screen name="CreateAssignment" component={CreateAssignment} options={{ headerShown: false }} 
 /> 
       <Stack.Screen name="CreateClasses" component={CreateClasses} options={{headerBackTitle: 'Back', title: '', headerRight:()=> <TopTab />}} />
       {/* <Stack.Screen name="ClassesScreen" component={ClassesScreen} options={{headerBackTitle: 'Back', headerRight:()=> <TopTab />}} /> */}
@@ -560,46 +447,13 @@ function AdminHomeScreen(){
  <Stack.Screen 
   name="CreateClasses" 
   component={CreateClasses} 
-  options={{ 
-    headerStyle: { backgroundColor: 'white' }, 
-    headerTintColor: 'black',  
-    title: 'Course Creation', 
-    headerBackTitle: 'Back', 
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: '#018749' 
-    }
-  }} 
+  options={{ headerShown: false }}
 />
 
 
-    <Stack.Screen name="StudentForm" component={StudentForm} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Student Form',
-    headerTintColor: 'black',
-    headerBackTitle: 'Back',
-    headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    }
-    
-  }}
+    <Stack.Screen name="StudentForm" component={StudentForm}  options={{ headerShown: false }} 
 />
-      <Stack.Screen name="GradeSetter" component={GradeSetter} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Assign Grade', headerTintColor: 'black', headerBackTitle: 'Back', headerRight:()=> <TopTab />,   headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    } }} /> 
+      <Stack.Screen name="GradeSetter" component={GradeSetter} options={{ headerShown: false }}  />
       <Stack.Screen name="AttendanceScreen" component={AttendanceScreen}  options={{
     headerStyle: { backgroundColor: 'black' },
     title: '',
@@ -635,15 +489,7 @@ function AdminHomeScreen(){
       fontSize: 22, 
       color: 'white' 
     } }} /> 
-    <Stack.Screen name="AddTermScreen" component={AddTermScreen} options={{
-    headerStyle: { backgroundColor: 'white' },
-    title: 'Create Term', headerTintColor: 'black', headerBackTitle: 'Back', headerRight:()=> <TopTab />,   headerRight: () => <TopTab />,
-    headerTitleAlign: 'center', // Center-aligns the title
-    headerTitleStyle: { 
-      fontFamily: 'Kanit-Medium', 
-      fontSize: 22, 
-      color: 'black' 
-    } }} /> 
+    <Stack.Screen name="AddTermScreen" component={AddTermScreen} options={{ headerShown: false }}  /> 
    
 
         {/* Repeat for common screens like About, Account, etc. */}

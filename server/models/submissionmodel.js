@@ -7,22 +7,37 @@ const submissionSchema = new mongoose.Schema({
     required: true,
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId, // Assuming you store users in a 'User' collection
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
+  // These fields are conditionally required if scannedImages is not provided
   filePath: {
-    type: String, // Physical path or URL to the uploaded file
-    required: true,
+    type: String,
+    required: function() {
+      return !(this.scannedImages && this.scannedImages.length > 0);
+    },
   },
   fileName: {
-    type: String, // Original name of the uploaded file
-    required: true,
+    type: String,
+    required: function() {
+      return !(this.scannedImages && this.scannedImages.length > 0);
+    },
   },
   fileType: {
-    type: String, // MIME type of the uploaded file
-    required: true,
+    type: String,
+    required: function() {
+      return !(this.scannedImages && this.scannedImages.length > 0);
+    },
   },
+  // Optional array for scanned images (each with its own uri, name, and type)
+  scannedImages: [
+    {
+      uri: { type: String },
+      name: { type: String },
+      type: { type: String },
+    }
+  ],
   submittedAt: {
     type: Date,
     default: Date.now,

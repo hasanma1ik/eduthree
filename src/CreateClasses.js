@@ -4,13 +4,16 @@ import {
   StyleSheet,
   Alert,
   Text,
-  TouchableOpacity,
+  ScrollView,
+  TouchableOpacity
 } from 'react-native';
 import axios from 'axios';
 import moment from 'moment-timezone';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import RNPickerSelect from 'react-native-picker-select';
+import { useNavigation } from '@react-navigation/native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 const CreateClasses = () => {
   const [selectedGrade, setSelectedGrade] = useState('');
@@ -47,6 +50,8 @@ const CreateClasses = () => {
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+  const navigation = useNavigation();
+
   useEffect(() => {
     fetchTeachers();
     fetchTerms();
@@ -68,7 +73,7 @@ const CreateClasses = () => {
     try {
       const response = await axios.get('/auth/terms');
       setTerms(response.data.terms);
-      console.log("Fetched Terms:", response.data.teerms); // Debugging Line
+      console.log("Fetched Terms:", response.data.terms); // Debugging Line
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Failed to fetch terms');
@@ -125,7 +130,7 @@ const CreateClasses = () => {
 
       console.log("Creating Class with Data:", postData); // Debugging Line
 
-      const response = await axios.post('/auth/grades', postData);
+      await axios.post('/auth/grades', postData);
       Alert.alert('Success', 'Class created successfully');
       // Optionally reset the form
       setSelectedGrade('');
@@ -142,7 +147,7 @@ const CreateClasses = () => {
   };
 
   const [fontsLoaded] = useFonts({
-    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -156,205 +161,125 @@ const CreateClasses = () => {
   }
 
   return (
-    <View style={styles.container} onLayout={onLayoutRootView}>
-      <Text style={styles.mainTitle}></Text>
-
-      {/* Grade Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Grade</Text>
-        <View style={styles.pickerWrapper}>
-          <RNPickerSelect
-            onValueChange={(value) => setSelectedGrade(value)}
-            items={grades.map((grade) => ({ label: grade, value: grade }))}
-            placeholder={{ label: 'Select Grade', value: null }}
-            style={pickerSelectStyles}
-            useNativeAndroidPickerStyle={false}
-            Icon={() => {
-              return <Text style={styles.icon}>▼</Text>;
-            }}
-            value={selectedGrade}
-          />
-        </View>
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      {/* Custom Header */}
+      <View style={styles.topHalf}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Create Classes</Text>
       </View>
 
-      {/* Subject Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Subject</Text>
-        <View style={styles.pickerWrapper}>
-          <RNPickerSelect
-            onValueChange={(value) => setSelectedSubject(value)}
-            items={subjects.map((subject) => ({ label: subject.name, value: subject._id }))}
-            placeholder={{ label: 'Select Subject', value: null }}
-            style={pickerSelectStyles}
-            useNativeAndroidPickerStyle={false}
-            Icon={() => {
-              return <Text style={styles.icon}>▼</Text>;
-            }}
-            value={selectedSubject}
-          />
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Grade Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Grade</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedGrade(value)}
+              items={grades.map((grade) => ({ label: grade, value: grade }))}
+              placeholder={{ label: 'Select Grade', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={selectedGrade}
+            />
+          </View>
         </View>
-      </View>
 
-      {/* Time Slot Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Time Slot</Text>
-        <View style={styles.pickerWrapper}>
-          <RNPickerSelect
-            onValueChange={(value) => setSelectedTimeSlot(value)}
-            items={timeSlots.map((slot) => ({ label: slot, value: slot }))}
-            placeholder={{ label: 'Select Time Slot', value: null }}
-            style={pickerSelectStyles}
-            useNativeAndroidPickerStyle={false}
-            Icon={() => {
-              return <Text style={styles.icon}>▼</Text>;
-            }}
-            value={selectedTimeSlot}
-          />
+        {/* Subject Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Subject</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedSubject(value)}
+              items={subjects.map((subject) => ({ label: subject.name, value: subject._id }))}
+              placeholder={{ label: 'Select Subject', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={selectedSubject}
+            />
+          </View>
         </View>
-      </View>
-      
 
-      {/* Day Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Day</Text>
-        <View style={styles.pickerWrapper}>
-          <RNPickerSelect
-            onValueChange={(value) => setSelectedDay(value)}
-            items={days.map((day) => ({ label: day, value: day }))}
-            placeholder={{ label: 'Select Day', value: null }}
-            style={pickerSelectStyles}
-            useNativeAndroidPickerStyle={false}
-            Icon={() => {
-              return <Text style={styles.icon}>▼</Text>;
-            }}
-            value={selectedDay}
-          />
+        {/* Time Slot Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Time Slot</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedTimeSlot(value)}
+              items={timeSlots.map((slot) => ({ label: slot, value: slot }))}
+              placeholder={{ label: 'Select Time Slot', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={selectedTimeSlot}
+            />
+          </View>
         </View>
-      </View>
 
-      {/* Teacher Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Teacher</Text>
-        <View style={styles.pickerWrapper}>
-          <RNPickerSelect
-            onValueChange={(value) => setSelectedTeacher(value)}
-            items={teachers.map((teacher) => ({ label: teacher.name, value: teacher._id }))}
-            placeholder={{ label: 'Select Teacher', value: null }}
-            style={pickerSelectStyles}
-            useNativeAndroidPickerStyle={false}
-            Icon={() => {
-              return <Text style={styles.icon}>▼</Text>;
-            }}
-            value={selectedTeacher}
-          />
+        {/* Day Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Day</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedDay(value)}
+              items={days.map((day) => ({ label: day, value: day }))}
+              placeholder={{ label: 'Select Day', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={selectedDay}
+            />
+          </View>
         </View>
-      </View>
 
-      {/* Term Picker */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Term</Text>
-        <View style={styles.pickerWrapper}>
-          <RNPickerSelect
-            onValueChange={(value) => setSelectedTerm(value)}
-            items={terms.map((term) => ({ label: term.name, value: term._id }))}
-            placeholder={{ label: 'Select Term', value: null }}
-            style={pickerSelectStyles}
-            useNativeAndroidPickerStyle={false}
-            Icon={() => {
-              return <Text style={styles.icon}>▼</Text>;
-            }}
-            value={selectedTerm}
-          />
+        {/* Teacher Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Teacher</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedTeacher(value)}
+              items={teachers.map((teacher) => ({ label: teacher.name, value: teacher._id }))}
+              placeholder={{ label: 'Select Teacher', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={selectedTeacher}
+            />
+          </View>
         </View>
-      </View>
 
-      {/* Create Class Button */}
-      <TouchableOpacity style={styles.button} onPress={createGrade}>
-        <Text style={styles.buttonText}>Create Class</Text>
-      </TouchableOpacity>
+        {/* Term Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Term</Text>
+          <View style={styles.pickerWrapper}>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedTerm(value)}
+              items={terms.map((term) => ({ label: term.name, value: term._id }))}
+              placeholder={{ label: 'Select Term', value: null }}
+              style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
+              Icon={() => <Text style={styles.icon}>▼</Text>}
+              value={selectedTerm}
+            />
+          </View>
+        </View>
 
-      {/* Display Selected Time Slot */}
-      {selectedTimeSlot && (
-        <Text style={styles.localTimeSlot}>{selectedTimeSlot}</Text> // Directly display the selected time slot
-      )}
+        {/* Create Class Button */}
+        <TouchableOpacity style={styles.button} onPress={createGrade}>
+          <Text style={styles.buttonText}>Create Class</Text>
+        </TouchableOpacity>
+
+        {/* Display Selected Time Slot */}
+        {selectedTimeSlot && (
+          <Text style={styles.localTimeSlot}>{selectedTimeSlot}</Text>
+        )}
+      </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-    paddingBottom: 120,
-    backgroundColor: '#F4F6F8', 
-  },
-  mainTitle: {
-    fontSize: 26,
-    fontFamily: 'Kanit-Medium',
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 20,
-    marginTop: -30, // Adjust this value as needed to bring the title down
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: 'Kanit-Medium',
-    color: 'white',
-    marginTop: -100,
-    marginLeft: 10,
-    position: 'absolute',
-    top: 10,
-    left: 10,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontFamily: 'Kanit-Medium',
-    color: 'black',
-    marginBottom: 5,
-  },
-  pickerWrapper: {
-    marginBottom: 20,
-  },
-  icon: {
-    color: 'black',
-    fontSize: 18,
-    paddingRight: 10,
-  },
-  button: {
-    backgroundColor: '#018749', // Green button
-    borderRadius: 8,
-    paddingVertical: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Kanit-Medium',
-  },
-  localTimeSlot: {
-    marginTop: 10,
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#04AA6D',
-    fontFamily: 'Kanit-Medium',
-  },
-});
 
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
@@ -362,12 +287,12 @@ const pickerSelectStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: 'white', // White border
+    borderColor: 'white',
     borderRadius: 8,
-    color: 'white', // White text
-    backgroundColor: '#333333', // Dark background
-    paddingRight: 30, // To ensure the text is never behind the icon
-    fontFamily: 'Kanit-Medium',
+    color: 'white',
+    backgroundColor: '#333333',
+    paddingRight: 30,
+    fontFamily: 'Ubuntu-Bold',
     marginBottom: -20,
   },
   inputAndroid: {
@@ -375,19 +300,94 @@ const pickerSelectStyles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: 'black', // Black border
+    borderColor: 'black',
     borderRadius: 8,
-    color: 'black', // Black text
-    backgroundColor: 'white', // White background
-    paddingRight: 30, // To ensure the text is never behind the icon
-    fontFamily: 'Kanit-Medium',
+    color: 'black',
+    backgroundColor: 'white',
+    paddingRight: 30,
+    fontFamily: 'Ubuntu-Bold',
     marginBottom: -20,
   },
   placeholder: {
-    color: 'black', // Black placeholder text
-    fontFamily: 'Kanit-Medium',
+    color: 'black',
+    fontFamily: 'Ubuntu-Bold',
+  },
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+    paddingBottom: 120,
+    backgroundColor: '#F4F6F8',
+  },
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
+  },
+  pickerWrapper: {
+    marginBottom: 35,
+  },
+  label: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Ubuntu-Bold',
+    marginBottom: 5,
+  },
+  icon: {
+    fontSize: 18,
+    color: 'black',
+    paddingRight: 10,
+  },
+  button: {
+    backgroundColor: '#006446',
+    borderRadius: 8,
+    paddingVertical: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    marginTop: 40,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Bold',
+  },
+  localTimeSlot: {
+    marginTop: 10,
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#04AA6D',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 
 export default CreateClasses;
-

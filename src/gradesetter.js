@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import axios from 'axios';
 import SearchableDropdown from 'react-native-searchable-dropdown';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import RNPickerSelect from 'react-native-picker-select';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
 
 const GradeSetter = () => {
   const [users, setUsers] = useState([]);
+  const navigation = useNavigation();
   const [selectedUser, setSelectedUser] = useState({});
   const [grade, setGrade] = useState('');
   const grades = [
@@ -53,7 +56,7 @@ const GradeSetter = () => {
   
 
   const [fontsLoaded] = useFonts({
-    'Kanit-Medium': require('../assets/fonts/Kanit-Medium.ttf'),
+    'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -68,10 +71,18 @@ const GradeSetter = () => {
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
-      <Text style={styles.title}></Text>
+    {/* Custom Header */}
+    <View style={styles.topHalf}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+      <Text style={styles.pageTitle}>Grade Setter</Text>
+   
+    </View>
 
-      {/* Searchable Dropdown */}
-      <SearchableDropdown
+    {/* Rest of the content */}
+    <View style={styles.contentContainer}>
+    <SearchableDropdown
         onItemSelect={(item) => setSelectedUser(item)}
         containerStyle={styles.searchableContainer}
         itemStyle={styles.dropdownItemStyle}
@@ -109,6 +120,7 @@ const GradeSetter = () => {
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Assign</Text>
       </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -121,7 +133,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#2C3E50',
     textAlign: 'center',
     marginBottom: 20,
@@ -129,6 +141,7 @@ const styles = StyleSheet.create({
   searchableContainer: {
     marginBottom: 20,
     padding: 10,
+    marginTop: 100,
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
@@ -147,7 +160,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     color: '#34495E',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   itemsContainerStyle: {
     maxHeight: 150,
@@ -160,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFF',
     color: '#34495E',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     fontSize: 16,
   },
   inputContainer: {
@@ -168,13 +181,49 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     color: '#2C3E50',
     marginBottom: 5,
+  },
+  topHalf: {
+    width: 393,
+    height: 128,
+    backgroundColor: '#006446',
+    alignSelf: 'center',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 10,
+    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 59,
+    left: 10,
+    padding: 10,
+    zIndex: 1,
+  },
+
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  pageTitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Ubuntu-Bold',
   },
   pickerWrapper: {
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    marginTop: 0,
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
@@ -185,7 +234,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   button: {
-    backgroundColor: '#018749',
+    backgroundColor: '#006446',
     borderRadius: 8,
     paddingVertical: 15,
     justifyContent: 'center',
@@ -198,7 +247,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
     fontSize: 18,
   },
 });
@@ -214,7 +263,7 @@ const pickerSelectStyles = StyleSheet.create({
     color: '#34495E',
     backgroundColor: '#FFFFFF',
     paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   inputAndroid: {
     fontSize: 16,
@@ -226,11 +275,11 @@ const pickerSelectStyles = StyleSheet.create({
     color: '#34495E',
     backgroundColor: '#FFFFFF',
     paddingRight: 30,
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
   placeholder: {
     color: '#999',
-    fontFamily: 'Kanit-Medium',
+    fontFamily: 'Ubuntu-Bold',
   },
 });
 
