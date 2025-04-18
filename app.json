@@ -23,7 +23,6 @@
     },
     "android": {
          "package": "com.learnacademy.eduthree",
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

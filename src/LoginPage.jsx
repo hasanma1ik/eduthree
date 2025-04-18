@@ -60,7 +60,7 @@ export default function LoginPage() {
     <View style={styles.container}>
       {/* Top half with background image */}
       <ImageBackground 
-        source={require('./../assets/edupic3.png')}
+        source={require('./../assets/edupic3.jpg')}
         style={styles.topHalf}
         resizeMode="cover"
       >

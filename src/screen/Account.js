@@ -18,6 +18,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useNavigation } from '@react-navigation/native';
 
+const FormData = global.FormData;
+
 const Account = () => {
   const [state, setState] = useContext(AuthContext);
   const { user, token } = state;
@@ -388,4 +390,3 @@ const styles = StyleSheet.create({
 });
 
 export default Account;
-

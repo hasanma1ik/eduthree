@@ -55,7 +55,7 @@ export default function RegisterScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.imageContainer}>
-        <Image source={require('../../assets/edupic2.png')} style={styles.image} />
+        <Image source={require('../../assets/edupic2.jpg')} style={styles.image} />
 
         <View style={styles.logoContainer}>
                   <Image 
