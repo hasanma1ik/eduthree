@@ -2,8 +2,6 @@
 
 
 
-
-
  
  
  <img src="https://github.com/user-attachments/assets/03209a24-e075-45ba-8c3c-02ddd589980f" alt="Screenshot_20240704-194148~2" width="300"/>
@@ -21,6 +19,12 @@
  <img src="https://github.com/user-attachments/assets/681b5af8-b16b-4dae-a56b-4f861fa77869" alt="Screenshot_20240704-025755~2" width="300"/>
  <img src="https://github.com/user-attachments/assets/9e8bca22-7719-4f84-9352-a388b64716f1" alt="Screenshot_20240704-025755~2" width="300"/>
   <img src="https://github.com/user-attachments/assets/140ab6ee-3310-4ba4-9ab4-f649fc35fb33" alt="Screenshot_20240704-025755~2" width="300"/>
+
+   <img src="https://github.com/user-attachments/assets/0ff25fae-f851-4679-966e-e8c091b5636d" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/19e020ce-af04-4f78-b1d6-adb0e4a0c071" alt="Screenshot_20240704-025755~2" width="300"/>
+  <img src="https://github.com/user-attachments/assets/8bfe3373-370e-45f5-ba58-0208e653f2b5" alt="Screenshot_20240704-025755~2" width="300"/>
+
+  
   
  <strong>Educational Application for Learn Academy</strong>
  
