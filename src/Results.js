@@ -22,30 +22,24 @@ const Results = () => {
   const { user, token } = state;
   const navigation = useNavigation();
 
-  // Teacher data from backend (grades and gradeSubjectMap)
   const [teacherGrades, setTeacherGrades] = useState([]);
   const [gradeSubjectMap, setGradeSubjectMap] = useState({});
-
-  // Sample terms array – in a real app, these might come from your backend
   const [terms, setTerms] = useState([
     { name: 'Spring 2025', start: '2025-01-15', end: '2025-05-29' },
     { name: 'Fall 2024', start: '2024-09-01', end: '2024-12-15' },
     { name: 'Summer 2024', start: '2024-06-01', end: '2024-08-31' },
   ]);
   const [selectedTerm, setSelectedTerm] = useState('');
-
-  // Local selections
   const [selectedGrade, setSelectedGrade] = useState('');
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState('');
-
-  // For searchable student dropdown
   const [studentSearch, setStudentSearch] = useState('');
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
-
   const [loading, setLoading] = useState(false);
 
-  // Fetch teacher data (grades and gradeSubjectMap)
+  // Go Live status
+  const [liveTerms, setLiveTerms] = useState({}); // { 'Spring 2025': true, 'Fall 2024': false }
+
   useEffect(() => {
     const fetchTeacherData = async () => {
       try {
@@ -53,7 +47,6 @@ const Results = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.data) {
-          // Sort grades numerically based on digits in the string.
           const sortedGrades = (response.data.grades || []).sort((a, b) => {
             const numA = parseInt(a.replace(/[^0-9]/g, ''), 10);
             const numB = parseInt(b.replace(/[^0-9]/g, ''), 10);
@@ -71,17 +64,11 @@ const Results = () => {
     fetchTeacherData();
   }, [user, token]);
 
-  // Determine current term based on today’s date
   useEffect(() => {
     const today = moment();
-    const currentTerm = terms.find(term => {
-      return today.isBetween(
-        moment(term.start, 'YYYY-MM-DD'),
-        moment(term.end, 'YYYY-MM-DD'),
-        'day',
-        '[]'
-      );
-    });
+    const currentTerm = terms.find(term => 
+      today.isBetween(moment(term.start, 'YYYY-MM-DD'), moment(term.end, 'YYYY-MM-DD'), 'day', '[]')
+    );
     if (currentTerm) {
       setSelectedTerm(currentTerm.name);
     } else {
@@ -89,10 +76,9 @@ const Results = () => {
     }
   }, [terms]);
 
-  // Warn if a non-current term is selected
   const handleTermChange = (newTerm) => {
     const today = moment();
-    const currentTerm = terms.find(term =>
+    const currentTerm = terms.find(term => 
       today.isBetween(moment(term.start, 'YYYY-MM-DD'), moment(term.end, 'YYYY-MM-DD'), 'day', '[]')
     );
     if (currentTerm && currentTerm.name !== newTerm) {
@@ -109,13 +95,11 @@ const Results = () => {
     }
   };
 
-  // Fetch students by grade
   useEffect(() => {
     if (selectedGrade) {
       const fetchStudents = async () => {
         try {
           setLoading(true);
-          // Call backend route: GET /auth/class/grade/:grade/users
           const response = await axios.get(`/auth/class/grade/${selectedGrade}/users`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -143,13 +127,16 @@ const Results = () => {
     }
   }, [selectedGrade, token]);
 
-  // Filter students by search term
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(studentSearch.toLowerCase())
   );
 
-  // Navigate to Student Progress Report page on button click
   const handleShowReport = () => {
+    if (!liveTerms[selectedTerm]) {
+      Alert.alert('Transcript not available', 'The transcript for this term is not yet live.');
+      return;
+    }
+
     navigation.navigate('Transcripts', {
       term: selectedTerm,
       grade: selectedGrade,
@@ -157,6 +144,25 @@ const Results = () => {
       studentName: students.find(u => u._id === selectedStudent)?.name || '',
       teacherName: user.name,
     });
+  };
+
+  const handleGoLive = () => {
+    Alert.alert(
+      'Go Live',
+      `Are you sure you want to make ${selectedTerm} live? Students will be able to see their transcripts.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Go Live',
+          onPress: () => {
+            setLiveTerms(prev => ({
+              ...prev,
+              [selectedTerm]: true,
+            }));
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -188,6 +194,17 @@ const Results = () => {
           ))}
         </Picker>
       </View>
+
+      {/* Go Live Button */}
+      <TouchableOpacity
+        style={[styles.goLiveButton, liveTerms[selectedTerm] && styles.goLiveButtonDisabled]}
+        onPress={handleGoLive}
+        disabled={liveTerms[selectedTerm]}
+      >
+        <Text style={styles.goLiveButtonText}>
+          {liveTerms[selectedTerm] ? 'Live' : 'Go Live'}
+        </Text>
+      </TouchableOpacity>
 
       {/* Grade Dropdown */}
       <View style={styles.pickerContainer}>
@@ -241,6 +258,7 @@ const Results = () => {
         )}
       </View>
 
+      {/* Show Transcript Button */}
       <TouchableOpacity
         style={styles.nextButton}
         onPress={handleShowReport}
@@ -261,9 +279,8 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
   },
-  // Custom Header Styles (same as in Assignments)
   topHalf: {
-    width: 393,
+    width: '100%',
     height: 128,
     backgroundColor: '#006446',
     alignSelf: 'center',
@@ -319,6 +336,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     borderRadius: 8,
     paddingHorizontal: 10,
+  },
+  goLiveButton: {
+    backgroundColor: '#28a745',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  goLiveButtonDisabled: {
+    backgroundColor: 'gray',
+  },
+  goLiveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Ubuntu-Bold',
   },
   searchBox: {
     backgroundColor: '#F5F5F5',

@@ -40,12 +40,13 @@ import StudentAttendance from '../screen/studentattendance';
 import StudentAssignments from '../studentassignments';
 import BottomTab from './bottomTab';
 import Grades from '../Grades';
-import StudentProgressReport from '../MarkSheet'
+
 import Results from '../Results';
 import PND from '../P&D';
 import GrowthReport from '../GrowthReport';
 import MarkSheet from '../MarkSheet';
 import Transcript from '../Transcripts';
+import StudentProgress from '../StudentProgress';
 
 
 
@@ -303,6 +304,21 @@ function AdminHomeScreen(){
     }
   }}
 /> 
+<Stack.Screen name="Transcripts" component={Transcript}options={{
+    headerStyle: { backgroundColor: 'white' },
+    title: 'Progress Report',
+    headerTintColor: 'black',
+    headerBackTitle: 'Back',
+    headerRight: () => <TopTab />,
+    headerTitleAlign: 'center', // Center-aligns the title
+    headerTitleStyle: { 
+      fontFamily: 'Kanit-Medium', 
+      fontSize: 22, 
+      color: 'black' 
+    }
+  }}
+/> 
+
 
     <Stack.Screen name="Account" component={Account} options={{
     headerStyle: { backgroundColor: 'white' },
@@ -325,6 +341,8 @@ function AdminHomeScreen(){
 <Stack.Screen name="StudentAttendance" component={StudentAttendance}   options={{ headerShown: false }} 
 /> 
     <Stack.Screen name="ClassSchedule" component={ClassSchedule}  options={{ headerShown: false }} 
+/> 
+<Stack.Screen name="StudentProgress" component={StudentProgress}  options={{ headerShown: false }} 
 /> 
 <Stack.Screen
   name="ContactUs"

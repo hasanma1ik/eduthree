@@ -18,10 +18,11 @@ const features = [
   { id: '1', name: 'Attendance', icon: 'clipboard-list', route: 'StudentAttendance', color: 'maroon' }, 
   { id: '2', name: 'Announcements', icon: 'bullhorn', route: 'Announcements', color: '#1B5E20' }, 
   { id: '3', name: 'Assignments', icon: 'tasks', route: 'StudentAssignments', color: '#0D47A1' }, 
-  { id: '4', name: 'Account', icon: 'user', route: 'Account', color: '#FF6600' }, 
-  { id: '5', name: 'Class Schedule', icon: 'calendar-alt', route: 'ClassSchedule', color: '#002147' }, 
-  { id: '6', name: 'Tuition Payment', icon: 'money-check-alt', route: 'PaymentScreen', color: '#006064' }, 
-  { id: '7', name: 'Contact Us', icon: 'envelope', route: 'ContactUs', color: '#F9A825' },
+  { id: '4', name: 'Progress Report', icon: 'clipboard-list', route: 'StudentProgress', color: 'maroon' }, 
+  { id: '5', name: 'Account', icon: 'user', route: 'Account', color: '#FF6600' }, 
+  { id: '6', name: 'Class Schedule', icon: 'calendar-alt', route: 'ClassSchedule', color: '#002147' }, 
+  { id: '7', name: 'Tuition Payment', icon: 'money-check-alt', route: 'PaymentScreen', color: '#006064' }, 
+  { id: '8', name: 'Contact Us', icon: 'envelope', route: 'ContactUs', color: '#F9A825' },
 ];
 
 const Home = () => {

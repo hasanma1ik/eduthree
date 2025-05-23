@@ -58,6 +58,7 @@ const {
      logUser,
      fetchUsersByGradeAndSubject,
      submitGrades,
+     checkLiveStatus,
      submitMarks,
      updateMarks,
      fetchMarks,
@@ -224,6 +225,8 @@ router.put('/marks', requireSignIn, updateMarks);
 
 // Fetch marks
 router.get('/marks', requireSignIn, fetchMarks);
+
+router.get('/check-live-status', checkLiveStatus);
 
 // Route for fetching users by grade and subject
 // Example URL: /class/grade/10/subject/60f1234567890abc12345678/users

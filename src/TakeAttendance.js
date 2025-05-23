@@ -12,6 +12,8 @@ import {
   Platform
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
 import { useFonts } from 'expo-font';
@@ -243,7 +245,8 @@ const TakeAttendance = () => {
         {/* Custom Header */}
         <View style={styles.topHalf}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="ios-arrow-back" size={24} color="#FFFFFF" />
+                      <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
+            
           </TouchableOpacity>
           <Text style={styles.pageTitle}>Take Attendance</Text>
           <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
@@ -258,7 +261,7 @@ const TakeAttendance = () => {
           {/* Date Picker */}
           <View style={styles.datePickerContainer}>
             <TouchableOpacity onPress={showDatepicker} style={styles.button}>
-              <Ionicons name="ios-calendar" size={20} color="white" style={styles.buttonIcon} />
+              <FontAwesome5 name="calendar" size={20} color="white" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>Select Date</Text>
             </TouchableOpacity>
             <Text style={styles.dateText}>Selected Date: {formatDate(date)}</Text>
@@ -282,7 +285,7 @@ const TakeAttendance = () => {
               placeholder={{ label: "Select a grade", value: null }}
               style={pickerSelectStyles}
               useNativeAndroidPickerStyle={false}
-              Icon={() => <Ionicons name="ios-arrow-down" size={24} color="white" />}
+              Icon={() => <FontAwesome5 name="arrow-down" size={24} color="white" />}
             />
           </View>
   
@@ -295,7 +298,7 @@ const TakeAttendance = () => {
               placeholder={{ label: "Select a subject", value: null }}
               style={pickerSelectStyles}
               useNativeAndroidPickerStyle={false}
-              Icon={() => <Ionicons name="ios-arrow-down" size={24} color="white" />}
+              Icon={() => <FontAwesome5 name="arrow-down" size={24} color="white" />}
             />
           </View>
   
@@ -313,7 +316,7 @@ const TakeAttendance = () => {
                 placeholder={{ label: "Select Status", value: null }}
                 style={pickerSelectStyles}
                 useNativeAndroidPickerStyle={false}
-                Icon={() => <Ionicons name="ios-arrow-down" size={24} color="white" />}
+                Icon={() => <FontAwesome5 name="arrow-down" size={24} color="white" />}
               />
             </View>
           ))}
@@ -322,7 +325,7 @@ const TakeAttendance = () => {
   
         {/* Submit Button */}
         <TouchableOpacity onPress={submitAttendance} style={styles.submitButton}>
-          <Ionicons name="ios-checkmark-circle" size={20} color="white" style={styles.submitButtonIcon} />
+          {/* <Ionicons name="ios-checkmark-circle" size={20} color="white" style={styles.submitButtonIcon} /> */}
           <Text style={styles.submitButtonText}>Submit Attendance</Text>
         </TouchableOpacity>
       </View>

@@ -9,8 +9,8 @@ import {
   SafeAreaView 
 } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import axios from 'axios';
-import { Ionicons } from '@expo/vector-icons'; // For custom icons
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useNavigation } from '@react-navigation/native';
@@ -92,7 +92,7 @@ const SeeAttendance = () => {
         {/* Custom Header */}
         <View style={styles.topHalf}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="ios-arrow-back" size={24} color="#FFFFFF" />
+                      <FontAwesome5 name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.pageTitle}>See Attendance</Text>
         </View>
