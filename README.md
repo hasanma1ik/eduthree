@@ -1,19 +1,28 @@
 
 
- <img src="https://github.com/user-attachments/assets/8c248187-6b98-4bde-b49b-2a79b129793a" alt="Screenshot_20240704-194148~2" width="300"/>
-<img src="https://github.com/user-attachments/assets/6d9f431a-c8be-4ec4-adbc-44a65a2ed865" alt="Screenshot_20240704-192255~2" width="300"/>
- <img src="https://github.com/user-attachments/assets/43cabe3b-ebca-45f2-a28c-d98212f489e4" alt="Screenshot_20240704-200841~2" width="300"/>
  
-<img src="https://github.com/user-attachments/assets/1aa2a473-af54-4b20-b561-67ffe59f0034" alt="Screenshot_20240704-200630~2" width="300"/>
-<img src="https://github.com/user-attachments/assets/78beb4bc-6be2-440c-ac00-f74ae271de86" alt="Screenshot_20240704-200436~2" width="300"/>
-<img src="https://github.com/user-attachments/assets/c1880039-9652-4955-bf0d-92a9c3bdb97e" alt="Screenshot_20240704-025755~2" width="300"/>
+ 
+ <img src="https://github.com/user-attachments/assets/03209a24-e075-45ba-8c3c-02ddd589980f" alt="Screenshot_20240704-194148~2" width="300"/>
+<img src="https://github.com/user-attachments/assets/7a7fa6f4-f81b-4e23-b225-6801c78c84a0" alt="Screenshot_20240704-192255~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/fb639398-652c-4625-9027-c3606a37f8cb" alt="Screenshot_20240704-200841~2" width="300"/>
+ 
+<img src="https://github.com/user-attachments/assets/8d07b68c-0fc9-4606-8867-301ab6ab4766" alt="Screenshot_20240704-200630~2" width="300"/>
+<img src="https://github.com/user-attachments/assets/dc319fee-c1ab-4b23-99d3-3eb678012e4f" alt="Screenshot_20240704-200436~2" width="300"/>
+<img src="https://github.com/user-attachments/assets/9cdadb5f-cbcd-473e-b913-fbff2873a0ab" alt="Screenshot_20240704-025755~2" width="300"/>
 
- <img src="https://github.com/user-attachments/assets/d0ce4992-d3ee-4897-9c8b-b92118ddd974" alt="Screenshot_20240704-025755~2" width="300"/>
- <img src="https://github.com/user-attachments/assets/c594f17b-d224-41bf-a69b-9f77863a8e9c" alt="Screenshot_20240704-025755~2" width="300"/>
- <img src="https://github.com/user-attachments/assets/8d2089ce-01d6-4fc1-8cc7-fc9022cc7f19" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/45a3e335-a2b3-418f-a53b-7061d6f2e56e" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/c99ed6de-abae-489a-8cc1-e89eed283fec" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/e802c5ff-f6fb-4901-be68-59d5f4106024" alt="Screenshot_20240704-025755~2" width="300"/>
 
- <img src="https://github.com/user-attachments/assets/4133ec99-757c-4c53-89b6-4dde45b8cc5a" alt="Screenshot_20240704-025755~2" width="300"/>
- <img src="https://github.com/user-attachments/assets/24ae07fc-0311-477b-b702-b8fe8ebf6480" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/681b5af8-b16b-4dae-a56b-4f861fa77869" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/65b95ff8-0422-4003-b487-09f3dab38785" alt="Screenshot_20240704-025755~2" width="300"/>
+  <img src="https://github.com/user-attachments/assets/ff21bf3f-0214-4b71-a5c6-d746724aa746" alt="Screenshot_20240704-025755~2" width="300"/>
+
+   <img src="https://github.com/user-attachments/assets/0ff25fae-f851-4679-966e-e8c091b5636d" alt="Screenshot_20240704-025755~2" width="300"/>
+ <img src="https://github.com/user-attachments/assets/19e020ce-af04-4f78-b1d6-adb0e4a0c071" alt="Screenshot_20240704-025755~2" width="300"/>
+  <img src="https://github.com/user-attachments/assets/8bfe3373-370e-45f5-ba58-0208e653f2b5" alt="Screenshot_20240704-025755~2" width="300"/>
+
+  
   
  <strong>Educational Application for Learn Academy</strong>
  
