@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -14,31 +14,48 @@ import axios from 'axios';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from './screen/context/authContext';
 
 const SeeAttendance = () => {
-  const [grades, setGrades] = useState(['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8']);
+  const [grades, setGrades] = useState([]);
+  const [gradeSubjectMap, setGradeSubjectMap] = useState({});
   const [selectedGrade, setSelectedGrade] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [attendanceDates, setAttendanceDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [attendanceData, setAttendanceData] = useState([]);
- const navigation = useNavigation();
-
+  const [state] = useContext(AuthContext);
+  const navigation = useNavigation();
+  const { user, token } = state;
 
   const [fontsLoaded] = useFonts({
     'Ubuntu-Bold': require('../assets/fonts/Ubuntu-Bold.ttf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
+    if (fontsLoaded) await SplashScreen.hideAsync();
   }, [fontsLoaded]);
 
   useEffect(() => {
-    fetchSubjects();
+    fetchTeacherData();
   }, []);
+
+  useEffect(() => {
+    if (selectedGrade && gradeSubjectMap[selectedGrade]) {
+      const subjectsForGrade = gradeSubjectMap[selectedGrade] || [];
+      const uniqueSubjects = Array.from(
+        new Map(subjectsForGrade.map(s => [s.name, s])).values()
+      );
+      setSubjects(uniqueSubjects.map(s => ({ label: s.name, value: s._id })));
+    } else {
+      setSubjects([]);
+    }
+    setSelectedSubject('');
+    setSelectedDate('');
+    setAttendanceDates([]);
+    setAttendanceData([]);
+  }, [selectedGrade]);
 
   useEffect(() => {
     if (selectedGrade && selectedSubject) {
@@ -52,20 +69,30 @@ const SeeAttendance = () => {
     }
   }, [selectedDate]);
 
-  const fetchSubjects = async () => {
+  const fetchTeacherData = async () => {
     try {
-      const response = await axios.get('/auth/subjects');
-      setSubjects(response.data.subjects.map(subject => ({ label: subject.name, value: subject._id })));
+      const res = await axios.get(`/auth/teacher/${user._id}/data`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const sortedGrades = (res.data.grades || []).sort((a, b) => {
+        const numA = parseInt(a.replace(/[^0-9]/g, ''));
+        const numB = parseInt(b.replace(/[^0-9]/g, ''));
+        return numA - numB;
+      });
+
+      setGrades(sortedGrades);
+      setGradeSubjectMap(res.data.gradeSubjectMap || {});
     } catch (error) {
-      console.error('Failed to fetch subjects:', error);
-      Alert.alert("Error", "Failed to fetch subjects");
+      console.error('Failed to fetch teacher data:', error);
+      Alert.alert('Error', 'Could not load teacher grades and subjects');
     }
   };
 
   const fetchAttendanceDates = async () => {
     try {
-      const response = await axios.get(`/auth/attendance/${selectedGrade}/${selectedSubject}/dates`);
-      setAttendanceDates(response.data.dates.map(date => ({ label: date, value: date })));
+      const res = await axios.get(`/auth/attendance/${selectedGrade}/${selectedSubject}/dates`);
+      setAttendanceDates(res.data.dates.map(date => ({ label: date, value: date })));
     } catch (error) {
       console.error('Failed to fetch attendance dates:', error);
       Alert.alert("Error", "Failed to fetch attendance dates");
@@ -74,17 +101,16 @@ const SeeAttendance = () => {
 
   const fetchAttendanceData = async () => {
     try {
-      const response = await axios.get(`/auth/attendance/${selectedGrade}/${selectedSubject}/${selectedDate}`);
-      setAttendanceData(response.data.attendance || []);
+      const res = await axios.get(`/auth/attendance/${selectedGrade}/${selectedSubject}/${selectedDate}`);
+      setAttendanceData(res.data.attendance || []);
     } catch (error) {
       console.error('Failed to fetch attendance data:', error);
       Alert.alert("Error", "Failed to fetch attendance data");
     }
   };
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  if (!fontsLoaded) return null;
+
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -8,7 +8,6 @@ import {
   TouchableOpacity
 } from 'react-native';
 import axios from 'axios';
-import moment from 'moment-timezone';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import RNPickerSelect from 'react-native-picker-select';

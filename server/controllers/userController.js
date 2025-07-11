@@ -1582,32 +1582,49 @@ const getTranscriptReports = async (req, res) => {
   }
 };
 
-const checkLiveStatus = async (req, res) => {
+const createUserByAdmin = async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
   try {
-    const userId = req.user._id; // req.user is from your auth middleware
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: 'User with this email already exists' });
     }
 
-    // Only teachers can go live
-    if (user.role !== 'teacher') {
-      return res.status(403).json({ message: 'Only teachers have live status' });
-    }
+    const hashedPassword = await hashPassword(password); // ✅ use helper
 
-    const isLive = user.isLive || false;
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      role: role.toLowerCase()
+    });
 
-    res.json({ isLive });
+    await user.save();
+
+    user.password = undefined; // Hide password in response
+
+    res.status(201).json({
+      message: 'User created successfully',
+      user,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to check live status' });
+    console.error('Admin user creation failed:', error);
+    res.status(500).json({
+      message: 'Failed to create user',
+      error: error.message,
+    });
   }
 };
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile, submitMarks, getSubmissions, fetchUsersByGradeAndSubject, submitGrowthReport, showSubmissions, getTranscriptReports, fetchMarks, updateMarks, checkLiveStatus }
+
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile, submitMarks, getSubmissions, fetchUsersByGradeAndSubject, submitGrowthReport, showSubmissions, getTranscriptReports, fetchMarks, updateMarks, createUserByAdmin }
 
 
 

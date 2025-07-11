@@ -19,6 +19,7 @@ const features = [
   { id: '2', name: 'Grade Setter', icon: 'graduation-cap', route: 'GradeSetter', color: '#0D47A1' },
   { id: '3', name: 'Create Term', icon: 'calendar-plus', route: 'AddTermScreen', color: '#FF6600' },
   { id: '4', name: 'Enroll Students', icon: 'user-plus', route: 'StudentForm', color: '#002147' },
+  { id: '5', name: 'Add Users', icon: 'user-cog', route: 'AddUsers', color: '#4B0082' },
 ];
 
 const AdminHome = () => {

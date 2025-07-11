@@ -47,6 +47,7 @@ import GrowthReport from '../GrowthReport';
 import MarkSheet from '../MarkSheet';
 import Transcript from '../Transcripts';
 import StudentProgress from '../StudentProgress';
+import AddUsers from '../AddUsers';
 
 
 
@@ -470,6 +471,8 @@ function AdminHomeScreen(){
 
 
     <Stack.Screen name="StudentForm" component={StudentForm}  options={{ headerShown: false }} 
+/>
+<Stack.Screen name="AddUsers" component={AddUsers}  options={{ headerShown: false }} 
 />
       <Stack.Screen name="GradeSetter" component={GradeSetter} options={{ headerShown: false }}  />
       <Stack.Screen name="AttendanceScreen" component={AttendanceScreen}  options={{

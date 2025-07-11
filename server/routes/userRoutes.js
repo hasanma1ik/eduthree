@@ -58,14 +58,15 @@ const {
      logUser,
      fetchUsersByGradeAndSubject,
      submitGrades,
-     checkLiveStatus,
      submitMarks,
      updateMarks,
      fetchMarks,
      getProgressReports,
      submitGrowthReport,
      getTranscriptReports,
-     showSubmissions
+     showSubmissions,
+     createUserByAdmin,
+    
    
     
     
@@ -226,7 +227,7 @@ router.put('/marks', requireSignIn, updateMarks);
 // Fetch marks
 router.get('/marks', requireSignIn, fetchMarks);
 
-router.get('/check-live-status', checkLiveStatus);
+
 
 // Route for fetching users by grade and subject
 // Example URL: /class/grade/10/subject/60f1234567890abc12345678/users
@@ -234,6 +235,9 @@ router.get('/class/grade/:grade/subject/:subjectId/users', requireSignIn, fetchU
 router.post('/growthreports', requireSignIn, submitGrowthReport);
 
 router.get('/transcripts', requireSignIn, getTranscriptReports);
+
+router.post('/admin/create-user', requireSignIn, logUser, createUserByAdmin);
+
 
 //export p
 module.exports = router;

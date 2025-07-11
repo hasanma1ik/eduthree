@@ -147,17 +147,18 @@ const Account = () => {
     <View style={styles.container}>
       {/* Custom Header */}
       <View style={styles.topHalf}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.pageTitle}>Account</Text>
-        <TouchableOpacity style={styles.profileContainer} onPress={() => navigation.navigate('Account')}>
-          <Image
-            source={{ uri: imageUri || 'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png' }}
-            style={styles.profileImage}
-          />
-        </TouchableOpacity>
-      </View>
+  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+    <Icon name="arrow-left" size={24} color="#FFFFFF" />
+  </TouchableOpacity>
+
+  <Text style={styles.pageTitle}>Account</Text>
+
+  {/* Logout icon in top right */}
+  <TouchableOpacity style={styles.logoutIcon} onPress={handleLogOut}>
+    <Icon name="sign-out-alt" size={24} color="#FFFFFF" />
+  </TouchableOpacity>
+</View>
+
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.imageContainer}>
@@ -237,15 +238,12 @@ const Account = () => {
           {loading ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Text style={styles.updateBtnText}>Update Profile</Text>
+            <Text style={styles.updateBtnText}>UPDATE PROFILE</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogOut}>
-        <Icon name="sign-out-alt" size={20} color="white" />
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
+    
     </View>
   );
 };
@@ -355,20 +353,29 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   updateBtn: {
-    width: '100%',
-    backgroundColor: '#006446',
-    paddingVertical: 12,
-    borderRadius: 8,
+    width: '85%',
+    backgroundColor: '#00E678',
+    paddingVertical: 22,
+    borderRadius: 16,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
+    marginLeft: 14,
+  },
+  logoutIcon: {
+    position: 'absolute',
+    top: 57,
+    right: 10,
+    padding: 10,
+    zIndex: 1,
   },
   disabledBtn: {
     backgroundColor: '#A9A9A9',
   },
   updateBtnText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#000',
+    fontSize: 24,
     fontFamily: 'Ubuntu-Bold',
+    textTransform: 'uppercase',
   },
   /* Logout Button */
   logoutButton: {

@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
   profilePicture: { type: String, default: '' },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
-  isLive: { type: Boolean, default: false }, // <-- ADD THIS LINE
+ 
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

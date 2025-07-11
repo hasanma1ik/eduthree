@@ -51,7 +51,7 @@ export default function LoginPage() {
     } finally {
       setLoading(false); // Stop loading
     }
-  };
+  }
 
   // Dynamic button color based on input validation
   const buttonColor = email.length > 0 && password.length > 0 ? '#ff0000' : 'black'; // Active: Red, Inactive: Maroon
@@ -173,13 +173,16 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#00E678', // Green button color #00C853
-    width: '100%',
+    width: '80%',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
+    marginLeft: -60, // 
+
+
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'black',
   },
