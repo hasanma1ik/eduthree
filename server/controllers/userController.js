@@ -18,11 +18,80 @@ const Subject = require('../models/subjectmodel')
 const ClassSchedule = require('../models/ClassScheduleModel')
 const Term = require('../models/termmodel')
 const moment = require('moment-timezone');
-
+const { isValidObjectId } = require('mongoose');
 const Marks = require('../models/marksmodel')
 const GrowthReport = require('../models/growthreportmodel')
+const SectionAssignment = require('../models/SectionAssignmentmodel')
 
 const mongoose = require('mongoose');
+
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+// Helpers — put these near the top of the file, after your requires
+// Uses: moment (moment-timezone), mongoose, Subject
+
+function validateUtcTimeSlot(timeSlot) {
+  if (typeof timeSlot !== 'string' || !timeSlot.includes(' - ')) return false;
+  const [start, end] = timeSlot.split(' - ').map(s => s.trim());
+  const s = moment.tz(start, 'HH:mm', true, 'UTC');
+  const e = moment.tz(end,   'HH:mm', true, 'UTC');
+  return s.isValid() && e.isValid() && s.isBefore(e);
+}
+
+function isHHmm(t) {
+  return moment.tz(t, 'HH:mm', true, 'UTC').isValid();
+}
+
+/** sessions = [{ day, startUtc, endUtc }] */
+function validateSessionsArray(sessions) {
+  if (!Array.isArray(sessions) || sessions.length === 0) return false;
+  for (const s of sessions) {
+    if (!s || typeof s !== 'object') return false;
+    const { day, startUtc, endUtc } = s;
+    if (!DAYS.includes(String(day))) return false;
+    if (!isHHmm(String(startUtc)) || !isHHmm(String(endUtc))) return false;
+    if (!moment.utc(startUtc, 'HH:mm', true).isBefore(moment.utc(endUtc, 'HH:mm', true))) return false;
+  }
+  return true;
+}
+
+/** Accepts ObjectId or subject name; creates subject if needed; returns _id */
+async function resolveSubjectId(input) {
+  // object input: { _id, name }
+  if (input && typeof input === 'object') {
+    const { _id, name } = input || {};
+    if (_id && mongoose.isValidObjectId(_id)) {
+      const found = await Subject.findById(_id);
+      return found ? found._id : null;
+    }
+    if (typeof name === 'string' && name.trim()) {
+      const normalized = name.trim();
+      const existing = await Subject.findOne({ name: normalized });
+      if (existing) return existing._id;
+      const created = await Subject.create({ name: normalized });
+      return created._id;
+    }
+    return null;
+  }
+
+  // string input: could be id or name
+  if (typeof input === 'string') {
+    const str = input.trim();
+    if (mongoose.isValidObjectId(str)) {
+      const found = await Subject.findById(str);
+      return found ? found._id : null;
+    }
+    if (str) {
+      const existing = await Subject.findOne({ name: str });
+      if (existing) return existing._id;
+      const created = await Subject.create({ name: str });
+      return created._id;
+    }
+  }
+  return null;
+}
+
 //middleware
 
 const requireSignIn = jwt({
@@ -482,82 +551,121 @@ const createSubject = async (req, res) => {
 
 
 const createGrade = async (req, res) => {
-  const { grade, subject, timeSlot, day, teacher, term } = req.body;
-
-  if (!grade || !subject || !timeSlot || !day || !teacher || !term) {
-      return res.status(400).json({ message: 'Please fill all fields including term.' });
-  }
-
   try {
-      const termExists = await Term.findById(term);
-      if (!termExists) {
-          return res.status(404).json({ message: "Selected term does not exist." });
+    let {
+      grade, gradeLevel, section,
+      subject,           // id or name
+      timeSlot,          // "HH:mm - HH:mm" (legacy single)
+      day,               // "Monday"        (legacy single)
+      teacher,           // ObjectId
+      term,              // ObjectId
+      sessions,          // NEW: [{ day, startUtc, endUtc }]
+    } = req.body;
+
+    if (!grade && gradeLevel && section) {
+      grade = `${String(gradeLevel).trim()} - ${String(section).trim()}`;
+    }
+
+    if (!grade || !subject || !teacher || !term) {
+      return res.status(400).json({ message: 'Please fill all fields including grade, subject, teacher, term.' });
+    }
+
+    const termExists = await Term.findById(term);
+    if (!termExists) return res.status(404).json({ message: 'Selected term does not exist.' });
+
+    const subjectId = await resolveSubjectId(subject);
+    if (!subjectId) return res.status(404).json({ message: 'Selected subject does not exist or could not be created.' });
+
+    // Decide input mode: sessions[] or legacy single day/timeSlot
+    let normalizedSessions = [];
+    if (validateSessionsArray(sessions)) {
+      normalizedSessions = sessions.map(s => ({ day: s.day, startUtc: s.startUtc, endUtc: s.endUtc }));
+    } else {
+      // fallback to single
+      if (!day || !timeSlot || !validateUtcTimeSlot(timeSlot)) {
+        return res.status(400).json({
+          message: 'Provide either sessions[] (preferred) or valid legacy day + timeSlot (UTC "HH:mm - HH:mm").',
+        });
       }
+      const [startUtc, endUtc] = timeSlot.split(' - ').map(x => x.trim());
+      normalizedSessions = [{ day, startUtc, endUtc }];
+    }
 
-      // Use the subject ID directly
-      const subjectObj = await Subject.findById(subject);
-      if (!subjectObj) {
-          return res.status(404).json({ message: "Selected subject does not exist." });
-      }
+    // Create the Class shell (one document per grade/subject/teacher/term)
+    const newClass = await Class.create({
+      grade,
+      gradeLevel: gradeLevel || undefined,
+      section: section || undefined,
+      subject: subjectId,
+      // keep the first slot in class doc for backward compatibility
+      timeSlot: `${normalizedSessions[0].startUtc} - ${normalizedSessions[0].endUtc}`,
+      day: normalizedSessions[0].day,
+      teacher,
+      term,
+    });
 
-      const [startTime, endTime] = timeSlot.split(' - ');
-      const startTimeUTC = moment.tz(startTime, 'HH:mm', 'UTC');
-      const endTimeUTC = moment.tz(endTime, 'HH:mm', 'UTC');
-      let utcDayOfWeek = day;
-      if (startTimeUTC.day() !== moment(startTime, 'HH:mm').day()) {
-          utcDayOfWeek = moment().day(startTimeUTC.day()).format('dddd');
-      }
+    await User.findByIdAndUpdate(teacher, { $addToSet: { subjects: subjectId } });
 
-      const newClass = new Class({
-          grade,
-          subject: subjectObj._id,
-          timeSlot: `${startTimeUTC.format('HH:mm')} - ${endTimeUTC.format('HH:mm')}`,
-          day: utcDayOfWeek,
-          teacher,
-          term
-      });
+    // Enroll current students in the grade
+    const studentsInGrade = await User.find({ grade }).select('_id');
 
-      await newClass.save();
+    // Create ClassSchedule rows — one per session
+    const scheduleDocs = normalizedSessions.map(s => ({
+      classId: newClass._id,
+      dayOfWeek: s.day,
+      startTime: s.startUtc, // "HH:mm" UTC
+      endTime: s.endUtc,     // "HH:mm" UTC
+      subject: subjectId,
+      teacher,
+      users: studentsInGrade,
+      term,
+    }));
 
-      // Update the teacher's subjects array
-      await User.findByIdAndUpdate(teacher, { $addToSet: { subjects: subjectObj._id } });
+    await ClassSchedule.insertMany(scheduleDocs);
 
-      const studentsInGrade = await User.find({ grade }).select('_id');
-
-      await new ClassSchedule({
-          classId: newClass._id,
-          dayOfWeek: utcDayOfWeek,
-          startTime: startTimeUTC.format('HH:mm'),
-          endTime: endTimeUTC.format('HH:mm'),
-          subject: subjectObj._id,
-          teacher,
-          users: studentsInGrade,
-          term
-      }).save();
-
-      // Delay notification creation to 15 minutes before class
-      const delay = moment(startTimeUTC).subtract(15, 'minutes').diff(moment.utc(), 'milliseconds');
-      setTimeout(async () => {
-          studentsInGrade.forEach(async (user) => {
+    // Optional: light notification setup for first session of *today* (kept simple)
+    try {
+      const nowUtc = moment.utc();
+      for (const s of normalizedSessions) {
+        const todayWeekday = nowUtc.format('dddd');
+        if (todayWeekday !== s.day) continue;
+        const notifyAt = moment.utc(`${nowUtc.format('YYYY-MM-DD')}T${s.startUtc}:00Z`).subtract(15, 'minutes');
+        const delay = notifyAt.diff(nowUtc, 'milliseconds');
+        if (delay > 0 && delay < 2 * 60 * 60 * 1000) {
+          setTimeout(async () => {
+            for (const user of studentsInGrade) {
               await Notification.create({
-                  user: user._id,
-                  message: `Reminder: Your ${subject} class starts in 15 minutes!`,
-                  type: 'classReminder'
+                user: user._id,
+                message: `Reminder: Your ${grade} ${s.day} class starts in 15 minutes.`,
+                type: 'classReminder',
               });
-          });
-          console.log("Notifications scheduled for class starting soon.");
-      }, delay);
+            }
+          }, delay);
+        }
+      }
+    } catch (e) {
+      console.warn('Notification scheduling skipped:', e?.message || e);
+    }
 
-      res.status(201).json({
-          message: 'Grade, class, and class schedule created successfully',
-          class: newClass
-      });
+    return res.status(201).json({
+      message: 'Class created with multiple sessions successfully.',
+      class: newClass,
+      sessions: normalizedSessions,
+    });
   } catch (error) {
-      console.error("Failed to create grade/class due to error:", error);
-      res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
+    if (error?.code === 11000) {
+      const keys = Object.keys(error.keyPattern || {});
+      const duplicateTeacher = keys.includes('teacher');
+      return res.status(409).json({
+        message: duplicateTeacher
+          ? 'This teacher is already booked for this term/day/time slot.'
+          : 'A class for this grade/day/time/term already exists.',
+      });
+    }
+    console.error('Failed to create grade/class due to error:', error);
+    return res.status(500).json({ message: 'Failed to create grade/class', error: error.toString() });
   }
 };
-
 
 
 const getAllClasses = async (req, res) => {
@@ -896,51 +1004,73 @@ const getAssignmentById = async (req, res) => {
 
 
 
+// controllers/userController.js (or wherever it lives)
 const setGradeForUser = async (req, res) => {
-  const { userId, grade } = req.body;
-
   try {
-    // Look for an existing class for this grade
-    let classForGrade = await Class.findOne({ grade });
+    const { userId, grade, gradeLevel, section, term } = req.body;
 
-    // If no class exists for this grade, create one with default values
-    if (!classForGrade) {
-      const defaultSubject = await Subject.findOne(); // Or provide a specific subject ID
-      const defaultTeacher = await User.findOne({ role: 'teacher' }); // Or provide a specific teacher ID
-      const defaultTerm = await Term.findOne(); // Or provide a specific term ID
+    const combinedGrade =
+      grade ||
+      (gradeLevel && section ? `${String(gradeLevel).trim()} - ${String(section).trim()}` : null);
 
-      if (!defaultSubject || !defaultTeacher || !defaultTerm) {
-        return res.status(400).json({
-          message: 'Cannot create class. Default subject, teacher, or term missing.',
-        });
-      }
-
-      classForGrade = new Class({
-        grade,
-        subject: defaultSubject._id,
-        timeSlot: '8:00 AM - 9:00 AM', // Default value
-        day: 'Monday', // Default value
-        teacher: defaultTeacher._id,
-        term: defaultTerm._id,
+    if (!userId || !combinedGrade || !term) {
+      return res.status(400).json({
+        message: 'userId and (grade OR gradeLevel+section) and term are required.',
       });
-      await classForGrade.save();
     }
 
-    // Update the user with the grade and classId
+    // Validate term
+    const termDoc = await Term.findById(term);
+    if (!termDoc) {
+      return res.status(404).json({ message: 'Selected term (batch) not found.' });
+    }
+
+    // IMPORTANT: Do NOT auto-create classes here.
+    // Only attach to an existing class that matches the Grade/Section + Term.
+    const classForGrade = await Class.findOne({ grade: combinedGrade, term: termDoc._id });
+
+    if (!classForGrade) {
+      return res.status(400).json({
+        message:
+          'No course exists for this Grade/Section in the selected term. ' +
+          'Please create it first in Course Creation (pick teacher, day(s), and time).',
+      });
+    }
+
+    // Update the student
+    const updateObj = {
+      grade: combinedGrade,
+      classId: classForGrade._id,
+      term: termDoc._id,
+    };
+    if (gradeLevel) updateObj.gradeLevel = gradeLevel;
+    if (section) updateObj.section = section;
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $set: { grade: grade, classId: classForGrade._id } },
+      { $set: updateObj },
       { new: true }
-    ).populate('classId'); // Optionally populate the classId to return the class details
+    )
+      .populate('classId')
+      .populate('term', 'name startDate endDate');
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ message: 'Grade and classId updated successfully', user: updatedUser });
+    // Ensure class.users contains this student
+    await Class.findByIdAndUpdate(classForGrade._id, { $addToSet: { users: updatedUser._id } });
+
+    return res.json({
+      message: 'Grade, section, and term updated successfully',
+      user: updatedUser,
+    });
   } catch (error) {
-    console.error('Error setting grade for user:', error);
-    res.status(500).json({ message: 'Failed to set grade and classId for user', error: error.message });
+    console.error('Error setting grade/section/term for user:', error);
+    return res.status(500).json({
+      message: 'Failed to set grade/section/term for user',
+      error: error.message,
+    });
   }
 };
 
@@ -1093,45 +1223,63 @@ const getUnreadNotificationsCount = async (req, res) => {
   }
 };
 
+// controllers/userController.js (excerpt)
 const getClassSchedulesForLoggedInUser = async (req, res) => {
-  const userId = req.auth._id; // Adjust based on how you access the logged-in user's ID
-  const { date } = req.query; // Expected format: 'YYYY-MM-DD'
+  const userId = req.auth._id;
+  const { date } = req.query; // 'YYYY-MM-DD'
 
   try {
-    const term = await Term.findOne({ 
-      startDate: { $lte: date }, 
-      endDate: { $gte: date }
+    // Find the term that covers the selected date
+    const term = await Term.findOne({
+      startDate: { $lte: date },
+      endDate: { $gte: date },
     });
 
     if (!term) {
       return res.status(404).json({ message: 'No term found for the selected date.' });
     }
 
-    const parsedDate = new Date(date);
-    const dayOfWeek = parsedDate.toLocaleDateString('en-US', { weekday: 'long' });
+    // Day name like "Monday"
+    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
 
-    let classSchedules = await ClassSchedule.find({
-      term: term._id,
-      users: userId,
-      dayOfWeek
-    })
-    .populate('classId')
-    .populate('teacher', 'name')
-    .populate('subject', 'name'); // Populate subject name
+    // Load the requesting user to check their role
+    const currentUser = await User.findById(userId).select('role');
+    const role = currentUser?.role;
 
-    // Convert startTime and endTime to 24-hour format
-    classSchedules = classSchedules.map(schedule => ({
-      ...schedule.toObject(), // Convert Mongoose document to plain JavaScript object
-      startTime: moment(schedule.startTime, 'h:mm A').format('HH:mm'),
-      endTime: moment(schedule.endTime, 'h:mm A').format('HH:mm'),
+    // Base filter
+    const filter = { term: term._id, dayOfWeek };
+
+    // Add role-specific criteria
+    if (role === 'teacher') {
+      filter.teacher = userId;
+    } else if (role === 'student') {
+      filter.users = userId;
+    } else {
+      // optionally: return empty for admins, or show all for the day/term
+      // filter remains as-is for "all on that day"
+      // For safety, return empty here:
+      return res.json({ success: true, classSchedules: [] });
+    }
+
+    let classSchedules = await ClassSchedule.find(filter)
+      .populate('classId')                 // to access `grade` like "Grade 1 - B"
+      .populate('teacher', 'name')
+      .populate('subject', 'name');
+
+    // Normalize to HH:mm (UTC) → your client converts to local
+    classSchedules = classSchedules.map((s) => ({
+      ...s.toObject(),
+      startTime: moment(s.startTime, ['h:mm A', 'HH:mm']).format('HH:mm'),
+      endTime: moment(s.endTime, ['h:mm A', 'HH:mm']).format('HH:mm'),
     }));
 
-    res.json({ success: true, classSchedules });
+    return res.json({ success: true, classSchedules });
   } catch (error) {
-    console.error("Failed to fetch class schedules:", error);
-    res.status(500).json({ message: "Failed to fetch class schedules", error });
+    console.error('Failed to fetch class schedules:', error);
+    return res.status(500).json({ message: 'Failed to fetch class schedules', error });
   }
 };
+
 
 const getAllTeachers = async (req, res) => {
   try {
@@ -1192,7 +1340,70 @@ const getTeacherData = async (req, res) => {
   }
 };
 
+const getTermById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: 'Invalid term id' });
+    const term = await Term.findById(id);
+    if (!term) return res.status(404).json({ message: 'Term not found' });
+    res.json({ success: true, term });
+  } catch (err) {
+    console.error('getTermById error:', err);
+    res.status(500).json({ message: 'Failed to fetch term' });
+  }
+};
 
+// PATCH /auth/terms/:id
+const updateTerm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, startDate, endDate } = req.body;
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: 'Invalid term id' });
+    if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
+      return res.status(400).json({ message: 'End date cannot be earlier than start date.' });
+    }
+    const term = await Term.findByIdAndUpdate(
+      id,
+      {
+        ...(name != null ? { name: String(name).trim() } : {}),
+        ...(startDate ? { startDate } : {}),
+        ...(endDate ? { endDate } : {}),
+      },
+      { new: true }
+    );
+    if (!term) return res.status(404).json({ message: 'Term not found' });
+    res.json({ success: true, message: 'Term updated successfully', term });
+  } catch (err) {
+    console.error('updateTerm error:', err);
+    res.status(500).json({ message: 'Failed to update term' });
+  }
+};
+
+// DELETE /auth/terms/:id
+const deleteTerm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ message: 'Invalid term id' });
+
+    // Block delete if linked
+    const [classCount, scheduleCount] = await Promise.all([
+      Class.countDocuments({ term: id }),
+      ClassSchedule.countDocuments({ term: id }),
+    ]);
+    if (classCount > 0 || scheduleCount > 0) {
+      return res.status(409).json({
+        message: `Cannot delete term: ${classCount} class(es) and ${scheduleCount} schedule(s) linked.`,
+      });
+    }
+
+    const deleted = await Term.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: 'Term not found' });
+    res.json({ success: true, message: 'Term deleted successfully' });
+  } catch (err) {
+    console.error('deleteTerm error:', err);
+    res.status(500).json({ message: 'Failed to delete term' });
+  }
+};
 
 
 
@@ -1297,11 +1508,14 @@ const unenrollUserFromSubject = async (req, res) => {
 
 const getUserProfile = async (req, res) => {
   try {
-    const user = await userModel.findById(req.auth._id);
+    const user = await User.findById(req.auth._id)
+      .populate('term', 'name startDate endDate'); // <— populate batch info
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    user.password = undefined; // Exclude password
+
+    user.password = undefined; // strip password
     res.json({ user });
   } catch (error) {
     console.error("Error fetching user profile:", error);
@@ -1622,9 +1836,400 @@ const createUserByAdmin = async (req, res) => {
   }
 };
 
+const getAllUsersAdmin = async (req, res) => {
+  try {
+    const {
+      q,                // search by name or email
+      role,             // 'student' | 'teacher' | 'admin'
+      gradeLevel,       // e.g. 'Grade 1'
+      section,          // e.g. 'B'
+      term,             // term _id
+      page = 1,
+      limit = 25,
+    } = req.query;
+
+    const filter = {};
+
+    if (q) {
+      filter.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+      ];
+    }
+
+    if (role && ['student', 'teacher', 'admin'].includes(role)) {
+      filter.role = role;
+    }
+
+    if (gradeLevel) filter.gradeLevel = gradeLevel;
+    if (section) filter.section = section;
+    if (term) filter.term = term;
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [users, total] = await Promise.all([
+      User.find(filter)
+        .select('name email role grade gradeLevel section term')
+        .populate('term', 'name startDate endDate')
+        .sort({ role: 1, name: 1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      User.countDocuments(filter),
+    ]);
+
+    return res.json({
+      users,
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit) || 1),
+    });
+  } catch (err) {
+    console.error('getAllUsersAdmin error:', err);
+    return res.status(500).json({ message: 'Failed to load users' });
+  }
+};
+
+const deleteUserById = async (req, res) => {
+  try {
+    const userId = req.params.id?.trim();
+    if (!userId) return res.status(400).json({ message: 'User id is required' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // 1) Pull this user from any Class.users
+    await Class.updateMany(
+      { users: user._id },
+      { $pull: { users: user._id } }
+    );
+
+    // 2) Pull this user from any ClassSchedule.users
+    await ClassSchedule.updateMany(
+      { users: user._id },
+      { $pull: { users: user._id } }
+    );
+
+    // 3) If user is a teacher, null out teacher fields in Class and ClassSchedule
+    if (user.role === 'teacher') {
+      await Class.updateMany(
+        { teacher: user._id },
+        { $set: { teacher: null } }
+      );
+      await ClassSchedule.updateMany(
+        { teacher: user._id },
+        { $set: { teacher: null } }
+      );
+    }
+
+    // 4) Clean up notifications for that user (optional but tidy)
+    await Notification.deleteMany({ user: user._id });
+
+    // 5) Finally, delete the user
+    await User.findByIdAndDelete(user._id);
+
+    return res.json({ success: true, message: 'User deleted successfully.' });
+  } catch (err) {
+    console.error('deleteUserById error:', err);
+    return res.status(500).json({ message: 'Failed to delete user' });
+  }
+};
+
+const createSectionAssignment = async (req, res) => {
+  try {
+    const { gradeLevel, section, term } = req.body;
+    if (!gradeLevel || !section || !term) {
+      return res.status(400).json({ message: 'gradeLevel, section, and term are required' });
+    }
+
+    const termExists = await Term.findById(term);
+    if (!termExists) return res.status(404).json({ message: 'Selected term not found' });
+
+    const doc = await SectionAssignment.create({ gradeLevel, section, term });
+    const populated = await doc.populate('term', 'name startDate endDate');
+    return res.status(201).json({ message: 'Section assigned to term', assignment: populated });
+  } catch (err) {
+    if (err?.code === 11000) {
+      return res.status(409).json({ message: 'This grade/section is already assigned to a term' });
+    }
+    console.error('createSectionAssignment error:', err);
+    return res.status(500).json({ message: 'Failed to create section assignment' });
+  }
+};
+
+// List assignments (optional filters: gradeLevel, term)
+const getSectionAssignments = async (req, res) => {
+  try {
+    const { gradeLevel, term } = req.query;
+    const q = {};
+    if (gradeLevel) q.gradeLevel = gradeLevel;
+    if (term) q.term = term;
+
+    const assignments = await SectionAssignment
+      .find(q)
+      .sort({ gradeLevel: 1, section: 1 })
+      .populate('term', 'name startDate endDate');
+
+    res.json({ assignments });
+  } catch (err) {
+    console.error('getSectionAssignments error:', err);
+    res.status(500).json({ message: 'Failed to fetch section assignments' });
+  }
+};
+
+// Update assignment (usually change term)
+const updateSectionAssignment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { term } = req.body;
+    if (!term) return res.status(400).json({ message: 'term is required' });
+
+    const termExists = await Term.findById(term);
+    if (!termExists) return res.status(404).json({ message: 'Selected term not found' });
+
+    const updated = await SectionAssignment
+      .findByIdAndUpdate(id, { $set: { term } }, { new: true })
+      .populate('term', 'name startDate endDate');
+
+    if (!updated) return res.status(404).json({ message: 'Section assignment not found' });
+
+    res.json({ message: 'Assignment updated', assignment: updated });
+  } catch (err) {
+    console.error('updateSectionAssignment error:', err);
+    res.status(500).json({ message: 'Failed to update assignment' });
+  }
+};
+
+// Delete assignment (block if linked classes exist)
+const deleteSectionAssignment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await SectionAssignment.findById(id);
+    if (!doc) return res.status(404).json({ message: 'Section assignment not found' });
+
+    // If classes exist for this grade/section+term, block deletion
+    const combinedGrade = `${doc.gradeLevel} - ${doc.section}`;
+    const classExists = await Class.exists({ grade: combinedGrade, term: doc.term });
+    if (classExists) {
+      return res.status(400).json({
+        message:
+          'Cannot delete: classes exist for this section in this term. Remove classes first.',
+      });
+    }
+
+    await SectionAssignment.findByIdAndDelete(id);
+    res.json({ message: 'Assignment deleted' });
+  } catch (err) {
+    console.error('deleteSectionAssignment error:', err);
+    res.status(500).json({ message: 'Failed to delete assignment' });
+  }
+};
+
+// Resolve the term for a given grade+section (helper API)
+const resolveTermForSection = async (req, res) => {
+  try {
+    const { gradeLevel, section } = req.query;
+    if (!gradeLevel || !section) {
+      return res.status(400).json({ message: 'gradeLevel and section are required' });
+    }
+    const doc = await SectionAssignment
+      .findOne({ gradeLevel, section })
+      .populate('term', 'name startDate endDate');
+    if (!doc) return res.status(404).json({ message: 'No term assigned for this section' });
+    res.json({ assignment: doc });
+  } catch (err) {
+    console.error('resolveTermForSection error:', err);
+    res.status(500).json({ message: 'Failed to resolve term for section' });
+  }
+};
+
+const DEFAULT_SECTIONS_BY_GRADE = {
+  'KG-1': ['A','B','C'],
+  'KG-2': ['A','B','C'],
+  'Grade 1': ['A','B','C','D','E'],
+  'Grade 2': ['A','B','C','D','E'],
+  'Grade 3': ['A','B','C','D','E'],
+  'Grade 4': ['A','B','C','D','E'],
+  'Grade 5': ['A','B','C','D','E'],
+  'Grade 6': ['A','B','C','D','E'],
+  'Grade 7': ['A','B','C'],
+  'Grade 8': ['A','B','C'],
+};
+
+// Helper: if a grade isn’t in the map, fall back to a sensible default set
+const getDefaultSectionsFor = (gradeLevel) =>
+  DEFAULT_SECTIONS_BY_GRADE[gradeLevel] || ['A','B','C'];
+
+const getSectionOptions = async (req, res) => {
+  try {
+    const { gradeLevel, term } = req.query;
+    if (!gradeLevel || !term) {
+      return res.status(400).json({ message: 'gradeLevel and term are required as query params' });
+    }
+
+    // Fetch all current assignments for this grade
+    const assignments = await SectionAssignment.find({ gradeLevel }).lean();
+
+    // Build a map: section -> termId that currently owns it
+    const takenBy = {};
+    for (const a of assignments) takenBy[a.section] = String(a.term);
+
+    // Gather all term names for nicer display
+    const uniqueTermIds = [...new Set(Object.values(takenBy))];
+    const termDocs = uniqueTermIds.length
+      ? await Term.find({ _id: { $in: uniqueTermIds } }, 'name').lean()
+      : [];
+    const termNameById = Object.fromEntries(termDocs.map(t => [String(t._id), t.name]));
+
+    // Base set: defaults for this grade
+    const baseSections = new Set(getDefaultSectionsFor(gradeLevel));
+
+    // Also include any already-assigned section letters (even if not in defaults),
+    // so the UI can show them as taken/owned.
+    Object.keys(takenBy).forEach(sec => baseSections.add(sec));
+
+    const sections = Array.from(baseSections).sort().map((name) => {
+      const assignedTo = takenBy[name];              // term id or undefined
+      if (!assignedTo) return { name, available: true };
+
+      const isSameTerm = assignedTo === String(term);
+      return {
+        name,
+        available: isSameTerm,                       // only available if already owned by THIS term
+        assignedTermName: termNameById[assignedTo],  // e.g., "Jan 2025 - Dec 2025"
+      };
+    });
+
+    return res.json({ sections });
+  } catch (err) {
+    console.error('getSectionOptions error:', err);
+    return res.status(500).json({ message: 'Failed to load section options' });
+  }
+};
+
+const listClasses = async (req, res) => {
+  try {
+    const {
+      q, term, gradeLevel, section, subject, teacher, day,
+      page = 1, limit = 25,
+    } = req.query;
+
+    const filter = { isArchived: { $ne: true } };
+
+    if (term)   filter.term = new mongoose.Types.ObjectId(term);
+    if (subject) filter.subject = new mongoose.Types.ObjectId(subject);
+    if (teacher) filter.teacher = new mongoose.Types.ObjectId(teacher);
+    if (gradeLevel && section) filter.grade = `${gradeLevel} - ${section}`;
+    else if (gradeLevel) filter.grade = new RegExp(`^${gradeLevel}\\s*-`, 'i');
+
+    if (day) filter.$or = [{ day }, { 'sessions.day': day }];
+
+    if (q) {
+      // search in grade or subject/teacher names
+      filter.$and = [
+        ...(filter.$and || []),
+        {
+          $or: [
+            { grade: new RegExp(q, 'i') },
+          ],
+        },
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [classes, total] = await Promise.all([
+      Class.find(filter)
+        .populate('term', 'name startDate endDate')
+        .populate('subject', 'name')
+        .populate('teacher', 'name')
+        .populate('users', '_id') // so we can count
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Class.countDocuments(filter),
+    ]);
+
+    // if q also needs to match subject/teacher name, filter post-populate
+    const filtered = q
+      ? classes.filter(c =>
+          (c.subject?.name || '').toLowerCase().includes(q.toLowerCase()) ||
+          (c.teacher?.name || '').toLowerCase().includes(q.toLowerCase()) ||
+          (c.grade || '').toLowerCase().includes(q.toLowerCase())
+        )
+      : classes;
+
+    res.json({
+      success: true,
+      classes: filtered,
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit)) || 1,
+    });
+  } catch (err) {
+    console.error('listClasses error:', err);
+    res.status(500).json({ message: 'Failed to list classes' });
+  }
+};
+
+const archiveClass = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isArchived = true } = req.body;
+
+    const cls = await Class.findByIdAndUpdate(
+      id,
+      { $set: { isArchived: !!isArchived } },
+      { new: true }
+    );
+
+    if (!cls) return res.status(404).json({ message: 'Class not found' });
+
+    res.json({ success: true, message: 'Class archived state updated', class: cls });
+  } catch (e) {
+    console.error('archiveClass error:', e);
+    res.status(500).json({ message: 'Failed to update class archive state' });
+  }
+};
+
+/**
+ * DELETE /auth/admin/classes/:id
+ * - Pull from users.classId if it matches
+ * - Remove from ClassSchedule.users
+ * - Delete the class
+ */
+const deleteClass = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cls = await Class.findById(id);
+    if (!cls) return res.status(404).json({ message: 'Class not found' });
+
+    // 1) Unset classId for users linked to this exact class
+    await User.updateMany(
+      { classId: cls._id },
+      { $unset: { classId: '' } }
+    );
+
+    // 2) Pull from ClassSchedule.users (if you track per-class schedule users)
+    if (ClassSchedule) {
+      await ClassSchedule.updateMany(
+        { classId: cls._id },
+        { $pull: { users: { $in: cls.users || [] } } }
+      );
+    }
+
+    // 3) Finally delete the class
+    await Class.findByIdAndDelete(cls._id);
+
+    res.json({ success: true, message: 'Class deleted successfully' });
+  } catch (e) {
+    console.error('deleteClass error:', e);
+    res.status(500).json({ message: 'Failed to delete class' });
+  }
+};
 
 
-module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile, submitMarks, getSubmissions, fetchUsersByGradeAndSubject, submitGrowthReport, showSubmissions, getTranscriptReports, fetchMarks, updateMarks, createUserByAdmin }
+module.exports = { requireSignIn, registerController, loginController, updateUserController, searchController, getAllUsersAdmin, allUsersController, getAllThreads, userPress, getMessagesInThread, postMessageToThread, deleteConversation, muteConversation, resetPassword, requestPasswordReset, getStudentsByClassAndSubject, getTimetableForUser, getEvents, addEvent, submitAssignment, getAssignmentById, createAssignment, getClassIdByGrade, registerUserForSubject, getSubjects, getAllClasses, getSubjectsByClass, addOrUpdateStudent, createGrade, createSubject, setGradeForUser, getClassUsersByGrade, getUsersByGradeAndSubject, submitAttendance, getAttendanceData, getAttendanceDates, getAssignmentsForLoggedInUser, getNotifications, markNotificationAsRead, getUnreadNotificationsCount, getClassSchedulesForLoggedInUser, getAllTeachers, createTerms, getTerms, getTeacherData, logUser, deleteAssignment, getStudentAttendance, unenrollUserFromSubject, getUserProfile, submitMarks, getSubmissions, fetchUsersByGradeAndSubject, submitGrowthReport, showSubmissions, getTranscriptReports, fetchMarks, updateMarks, createUserByAdmin, deleteUserById, getTermById, updateTerm, deleteTerm, createSectionAssignment, getSectionAssignments, updateSectionAssignment, deleteSectionAssignment, resolveTermForSection, getSectionOptions, listClasses, archiveClass, deleteClass }
 
 
 

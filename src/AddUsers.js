@@ -36,10 +36,19 @@ const AddUsers = () => {
 
   if (!fontsLoaded) return null;
 
+  // password strength rules: min 6, at least one letter, one number
   const getPasswordStrength = (pwd) => {
     if (pwd.length === 0) return { label: '', color: '' };
-    if (pwd.length < 6) return { label: 'Weak', color: 'red' };
-    if (pwd.length < 10) return { label: 'Medium', color: 'orange' };
+
+    const hasLetter = /[A-Za-z]/.test(pwd);
+    const hasNumber = /\d/.test(pwd);
+
+    if (pwd.length < 6 || !hasLetter || !hasNumber) {
+      return { label: 'Weak', color: 'red' };
+    }
+    if (pwd.length < 10) {
+      return { label: 'Medium', color: 'orange' };
+    }
     return { label: 'Strong', color: 'green' };
   };
 
@@ -48,6 +57,21 @@ const AddUsers = () => {
   const handleCreateUser = async () => {
     if (!email || !password || !name || !confirmPassword) {
       Alert.alert('Missing Fields', 'All fields are required.');
+      return;
+    }
+
+    const hasLetter = /[A-Za-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+
+    if (password.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
+      return;
+    }
+    if (!hasLetter || !hasNumber) {
+      Alert.alert(
+        'Weak Password',
+        'Password must include at least one letter and one number.'
+      );
       return;
     }
 
@@ -159,6 +183,7 @@ const AddUsers = () => {
             items={[
               { label: 'Student', value: 'Student' },
               { label: 'Teacher', value: 'Teacher' },
+              { label: 'Administrator', value: 'Admin' },
             ]}
             placeholder={{ label: 'Select role', value: null }}
             value={role}
@@ -175,8 +200,6 @@ const AddUsers = () => {
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -310,3 +333,5 @@ const pickerSelectStyles = StyleSheet.create({
   },
 });
 export default AddUsers;
+
+

@@ -1,4 +1,5 @@
-import React, { useContext, useState, useEffect } from 'react';
+// src/screen/Account.js
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -33,11 +34,42 @@ const Account = () => {
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState(user?.profilePicture || '');
 
+  // Enrollment display state
+  const [termInfo, setTermInfo] = useState(null); // { _id, name, startDate, endDate } or null
+
   useEffect(() => {
     if (token) {
       fetchUserProfile();
     }
   }, [token]);
+
+  useEffect(() => {
+    // When profile changes, decide if we need to fetch term details
+    const maybeLoadTerm = async () => {
+      const u = state?.user;
+      if (!u?.term) {
+        setTermInfo(null);
+        return;
+      }
+      // If backend already populated term as an object with name/dates, use it
+      if (typeof u.term === 'object' && (u.term.name || u.term.startDate || u.term.endDate)) {
+        setTermInfo(u.term);
+        return;
+      }
+      // Else if it's an ID, fetch term details
+      if (typeof u.term === 'string') {
+        try {
+          const res = await axios.get(`/auth/terms/${u.term}`);
+          if (res.data?.term) setTermInfo(res.data.term);
+          else setTermInfo(null);
+        } catch (e) {
+          // Non-blocking: just don't show term if fetch fails
+          setTermInfo(null);
+        }
+      }
+    };
+    maybeLoadTerm();
+  }, [state?.user]);
 
   const fetchUserProfile = async () => {
     try {
@@ -143,22 +175,60 @@ const Account = () => {
     alert("Logged Out Successfully");
   };
 
+  // ---- Enrollment display helpers ----
+  const deriveGradeText = () => {
+    // Prefer explicit gradeLevel + section
+    const gradeLevel = user?.gradeLevel;
+    const section = user?.section;
+    if (gradeLevel && section) return `${gradeLevel} - ${section}`;
+    if (gradeLevel) return gradeLevel;
+    // Fallback to legacy combined grade
+    return user?.grade || '—';
+  };
+
+  const deriveSectionText = () => {
+    if (user?.section) return user.section;
+    // Try to parse from legacy "Grade X - Y"
+    if (user?.grade && user.grade.includes('-')) {
+      const parts = user.grade.split('-').map(s => s.trim());
+      if (parts.length === 2) return parts[1]; // section letter
+    }
+    return '—';
+  };
+
+  // Format YYYY-MM-DD from a Date or ISO string
+  const fmt = (d) => {
+    try {
+      const dt = new Date(d);
+      if (isNaN(dt.getTime())) return null;
+      return dt.toISOString().slice(0, 10);
+    } catch {
+      return null;
+    }
+  };
+
+  const termName = termInfo?.name || null;
+  const startISO = termInfo?.startDate;
+  const endISO = termInfo?.endDate;
+  const startStr = startISO ? fmt(startISO) : null;
+  const endStr = endISO ? fmt(endISO) : null;
+  const dateRange = startStr && endStr ? `${startStr} - ${endStr}` : (startStr || endStr || null);
+
   return (
     <View style={styles.container}>
       {/* Custom Header */}
       <View style={styles.topHalf}>
-  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-    <Icon name="arrow-left" size={24} color="#FFFFFF" />
-  </TouchableOpacity>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
 
-  <Text style={styles.pageTitle}>Account</Text>
+        <Text style={styles.pageTitle}>Account</Text>
 
-  {/* Logout icon in top right */}
-  <TouchableOpacity style={styles.logoutIcon} onPress={handleLogOut}>
-    <Icon name="sign-out-alt" size={24} color="#FFFFFF" />
-  </TouchableOpacity>
-</View>
-
+        {/* Logout icon in top right */}
+        <TouchableOpacity style={styles.logoutIcon} onPress={handleLogOut}>
+          <Icon name="sign-out-alt" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.imageContainer}>
@@ -171,6 +241,32 @@ const Account = () => {
           <Text style={styles.editText}>Tap to change picture</Text>
         </View>
 
+        {/* Enrollment Card (visible for students or anyone who has these fields) */}
+        {(user?.grade || user?.gradeLevel || user?.section || user?.term) && (
+          <View style={styles.enrollmentCard}>
+            <Text style={styles.enrollmentTitle}>Enrollment</Text>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Grade</Text>
+              <Text style={styles.rowValue}>{deriveGradeText()}</Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Section</Text>
+              <Text style={styles.rowValue}>{deriveSectionText()}</Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Batch / Term</Text>
+              <View style={styles.termRightCol}>
+                <Text style={styles.batchName}>{termName || '—'}</Text>
+                {dateRange ? <Text style={styles.batchDates}>{dateRange}</Text> : null}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Editable profile fields */}
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Name</Text>
           <TextInput
@@ -242,8 +338,6 @@ const Account = () => {
           )}
         </TouchableOpacity>
       </ScrollView>
-
-    
     </View>
   );
 };
@@ -317,6 +411,51 @@ const styles = StyleSheet.create({
     color: '#006446',
     fontFamily: 'Ubuntu-Bold',
   },
+
+  /* Enrollment Card */
+  enrollmentCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E6E8EB',
+  },
+  enrollmentTitle: {
+    fontFamily: 'Ubuntu-Bold',
+    fontSize: 16,
+    color: '#006446',
+    marginBottom: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    justifyContent: 'space-between',
+  },
+  rowLabel: {
+    fontFamily: 'Ubuntu-Bold',
+    color: '#444',
+  },
+  rowValue: {
+    fontFamily: 'Ubuntu-Bold',
+    color: '#111',
+  },
+  termRightCol: {
+    alignItems: 'flex-end',
+    maxWidth: '65%',
+  },
+  batchName: {
+    fontSize: 14,
+    color: '#111',
+    fontFamily: 'Ubuntu-Bold',
+  },
+  batchDates: {
+    marginTop: 2,
+    fontSize: 12,
+    color: '#666',
+    fontFamily: 'Ubuntu-Bold',
+  },
+
   /* Input Styles */
   inputContainer: {
     width: '100%',
@@ -377,7 +516,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Ubuntu-Bold',
     textTransform: 'uppercase',
   },
-  /* Logout Button */
+  /* Logout Button (kept for reference/consistency) */
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',

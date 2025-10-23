@@ -48,6 +48,9 @@ import MarkSheet from '../MarkSheet';
 import Transcript from '../Transcripts';
 import StudentProgress from '../StudentProgress';
 import AddUsers from '../AddUsers';
+import AdminUsersList from '../AdminUsersList';
+import SectionAssignments from '../SectionAssignments';
+import AdminClasses from '../AdminClasses';
 
 
 
@@ -409,6 +412,12 @@ function AdminHomeScreen(){
     }
   }}
 /> 
+
+<Stack.Screen name="AdminUsersList" component={AdminUsersList} options={{ headerShown: false }} />
+<Stack.Screen name="SectionAssignments" component={SectionAssignments} options={{ headerShown: false }} />
+<Stack.Screen name="AdminClasses" component={AdminClasses} options={{ headerShown: false }} />
+
+
   <Stack.Screen
   name="Account"
   component={Account}

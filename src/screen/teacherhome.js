@@ -7,15 +7,15 @@ import moment from 'moment';
 import { AuthContext } from './context/authContext';
 
 const features = [
-  { id: '1', name: 'Attendance', icon: 'clipboard-list', route: 'AttendanceScreen', color: 'maroon' },
-  { id: '2', name: 'Assignments', icon: 'tasks', route: 'Assignments', color: '#0D47A1' },
-  { id: '3', name: 'Create Assign', icon: 'plus-circle', route: 'CreateAssignment', color: '#FF6600' },
-  { id: '4', name: 'Post', icon: 'edit', route: 'Post', color: '#002147' },
-  { id: '5', name: 'Class Schedule', icon: 'calendar-alt', route: 'ClassSchedule', color: '#006064' },
-  { id: '6', name: 'Grades', icon: 'plus-circle', route: 'Grades', color: '#FF6600' },
-  { id: '7', name: 'Progress Report', icon: 'calendar-alt', route: 'Results', color: '#006064' },
-  { id: '8', name: 'Growth Report', icon: 'calendar-alt', route: 'PND', color: '#006064' },
-  { id: '9', name: 'Contact Us', icon: 'envelope', route: 'ContactUs', color: '#F9A825' },
+  { id: '1', name: 'Attendance', icon: 'clipboard-list', route: 'AttendanceScreen', color: 'maroon', desc: 'Take and review attendance.' },
+  { id: '2', name: 'Assignments', icon: 'tasks', route: 'Assignments', color: '#0D47A1', desc: 'Manage tasks and submissions.' },
+  { id: '3', name: 'Create Assign', icon: 'plus-circle', route: 'CreateAssignment', color: '#FF6600', desc: 'Create assignments with deadlines.' },
+  { id: '4', name: 'Post', icon: 'edit', route: 'Post', color: '#002147', desc: 'Post announcements and updates.' },
+  { id: '5', name: 'Class Schedule', icon: 'calendar-alt', route: 'ClassSchedule', color: '#006064', desc: 'View weekly teaching timetable.' },
+  { id: '6', name: 'Grades', icon: 'plus-circle', route: 'Grades', color: '#FF6600', desc: 'Enter and manage grades.' },
+  { id: '7', name: 'Progress Report', icon: 'calendar-alt', route: 'Results', color: '#006064', desc: 'Review student progress reports.' },
+  { id: '8', name: 'Growth Report', icon: 'calendar-alt', route: 'PND', color: '#006064', desc: 'Fill student growth report.' },
+  { id: '9', name: 'Contact Us', icon: 'envelope', route: 'ContactUs', color: '#F9A825', desc: 'Contact school administration.' },
 ];
 
 const TeacherHome = () => {
@@ -30,7 +30,6 @@ const TeacherHome = () => {
     state?.user?.profilePicture ||
     'https://cdn.pixabay.com/photo/2016/08/31/11/54/icon-1633249_1280.png';
 
-  // Fetch today's latest teacher post
   const fetchLatestPost = async () => {
     try {
       const { data } = await axios.get('/post/get-all-post');
@@ -50,10 +49,7 @@ const TeacherHome = () => {
   }, []);
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate(item.route)}
-    >
+    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate(item.route)}>
       <View style={styles.iconContainer}>
         <Icon name={item.icon} size={20} color="#004d40" />
       </View>
@@ -65,7 +61,7 @@ const TeacherHome = () => {
       >
         {item.name}
       </Text>
-      <Text style={styles.cardDescription}>Lorem ipsum dolor sit amet...</Text>
+      <Text style={styles.cardDescription}>{item.desc}</Text>
     </TouchableOpacity>
   );
 
@@ -117,9 +113,7 @@ const TeacherHome = () => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
+  screen: { flex: 1 },
   headerWrapper: {
     width: 393,
     height: 162,
@@ -132,68 +126,21 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#f4f4f4',
-    paddingHorizontal: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 35,
-  },
-  greeting: {
-    fontSize: 22,
-    color: '#fff',
-    fontFamily: 'Ubuntu-Regular',
-  },
-  boldText: {
-    fontFamily: 'Ubuntu-Bold',
-  },
-  roleText: {
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Ubuntu-Regular',
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  alertContainer: {
-    backgroundColor: '#c8e6c9',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-  },
-  alertTitle: {
-    fontSize: 20,
-    fontFamily: 'Ubuntu-Bold',
-    color: '#004d40',
-  },
-  alertText: {
-    fontSize: 14,
-    color: '#333',
-    marginTop: 5,
-    fontFamily: 'Ubuntu-Light',
-  },
-  noAlertText: {
-    fontSize: 14,
-    color: '#777',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    fontFamily: 'Ubuntu-Light',
-  },
-  flatListContent: {
-    justifyContent: 'center',
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: '#f4f4f4', paddingHorizontal: 20 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 35 },
+  greeting: { fontSize: 22, color: '#fff', fontFamily: 'Ubuntu-Regular' },
+  boldText: { fontFamily: 'Ubuntu-Bold' },
+  roleText: { fontSize: 16, color: '#fff', fontFamily: 'Ubuntu-Regular' },
+  profileImage: { width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#fff' },
+
+  alertContainer: { backgroundColor: '#c8e6c9', borderRadius: 12, padding: 15, marginBottom: 20 },
+  alertTitle: { fontSize: 20, fontFamily: 'Ubuntu-Bold', color: '#004d40' },
+  alertText: { fontSize: 14, color: '#333', marginTop: 5, fontFamily: 'Ubuntu-Light' },
+  noAlertText: { fontSize: 14, color: '#777', fontStyle: 'italic', textAlign: 'center', fontFamily: 'Ubuntu-Light' },
+
+  flatListContent: { justifyContent: 'center' },
+  row: { justifyContent: 'space-between', marginBottom: 20 },
+
   card: {
     width: '47%',
     padding: 20,
@@ -206,24 +153,9 @@ const styles = StyleSheet.create({
     elevation: 3,
     alignItems: 'center',
   },
-  iconContainer: {
-    backgroundColor: '#e0f2f1',
-    borderRadius: 50,
-    padding: 10,
-    marginBottom: 10,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontFamily: 'Ubuntu-Bold',
-    color: '#004d40',
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 5,
-    fontFamily: 'Ubuntu-Light',
-  },
+  iconContainer: { backgroundColor: '#e0f2f1', borderRadius: 50, padding: 10, marginBottom: 10 },
+  cardTitle: { fontSize: 18, fontFamily: 'Ubuntu-Bold', color: '#004d40' },
+  cardDescription: { fontSize: 14, color: '#666', textAlign: 'center', marginTop: 5, fontFamily: 'Ubuntu-Light' },
 });
 
 export default TeacherHome;

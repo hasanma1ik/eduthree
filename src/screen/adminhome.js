@@ -15,11 +15,64 @@ import moment from 'moment';
 import { AuthContext } from './context/authContext';
 
 const features = [
-  { id: '1', name: 'Course Creation', icon: 'book-open', route: 'CreateClasses', color: 'maroon' },
-  { id: '2', name: 'Grade Setter', icon: 'graduation-cap', route: 'GradeSetter', color: '#0D47A1' },
-  { id: '3', name: 'Create Term', icon: 'calendar-plus', route: 'AddTermScreen', color: '#FF6600' },
-  { id: '4', name: 'Enroll Students', icon: 'user-plus', route: 'StudentForm', color: '#002147' },
-  { id: '5', name: 'Add Users', icon: 'user-cog', route: 'AddUsers', color: '#4B0082' },
+  {
+    id: '1',
+    name: 'Course Creation',
+    icon: 'book-open',
+    route: 'CreateClasses',
+    color: 'maroon',
+    description: 'Create classes with days & times.',
+  },
+  {
+    id: '2',
+    name: 'Grade Setter',
+    icon: 'graduation-cap',
+    route: 'GradeSetter',
+    color: '#0D47A1',
+    description: 'Assign students to grade & section.',
+  },
+  {
+    id: '3',
+    name: 'Create Term',
+    icon: 'calendar-plus',
+    route: 'AddTermScreen',
+    color: '#FF6600',
+    description: 'Add or manage academic terms.',
+  },
+  {
+    id: '4',
+    name: 'Enroll Students',
+    icon: 'user-plus',
+    route: 'StudentForm',
+    color: '#002147',
+    description: 'Enroll students in class subjects.',
+  },
+  {
+    id: '5',
+    name: 'Add Users',
+    icon: 'user-cog',
+    route: 'AddUsers',
+    color: '#4B0082',
+    description: 'Create teacher, student, admin accounts.',
+  },
+  {
+    id: '6',
+    name: 'Manage Users',
+    icon: 'users',
+    route: 'AdminUsersList',
+    color: '#006446',
+    description: 'Browse, filter, and manage users.',
+  },
+  {
+  id: '7',
+  name: 'Section Assignments',
+  icon: 'layer-group',         // FontAwesome5
+  route: 'SectionAssignments', // your new screen
+  color: '#2E7D32',
+  description: 'Map sections to terms/batches.',
+},
+{ id: '8', name: 'All Classes', icon: 'chalkboard-teacher', route: 'AdminClasses', color: '#0B6EFD', description: 'Browse, filter, and manage classes.' },
+
 ];
 
 const AdminHome = () => {
@@ -58,7 +111,7 @@ const AdminHome = () => {
       style={styles.card}
       onPress={() => navigation.navigate(item.route)}
     >
-      <View style={styles.iconContainer}>
+      <View style={[styles.iconContainer, { backgroundColor: '#e0f2f1' }]}>
         <Icon name={item.icon} size={20} color="#004d40" />
       </View>
       <Text
@@ -69,9 +122,7 @@ const AdminHome = () => {
       >
         {item.name}
       </Text>
-      <Text style={styles.cardDescription}>
-        Lorem ipsum dolor sit amet...
-      </Text>
+      <Text style={styles.cardDescription}>{item.description}</Text>
     </TouchableOpacity>
   );
 
@@ -123,9 +174,7 @@ const AdminHome = () => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
+  screen: { flex: 1 },
   headerWrapper: {
     width: 393,
     height: 162,
@@ -144,93 +193,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 35,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 35,
   },
-  greeting: {
-    fontSize: 22,
-    color: '#fff',
-    fontFamily: 'Ubuntu-Regular',
-  },
-  boldText: {
-    fontFamily: 'Ubuntu-Bold',
-  },
-  roleText: {
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Ubuntu-Regular',
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  alertContainer: {
-    backgroundColor: '#c8e6c9',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-  },
-  alertTitle: {
-    fontSize: 20,
-    fontFamily: 'Ubuntu-Bold',
-    color: '#004d40',
-  },
-  alertText: {
-    fontSize: 14,
-    color: '#333',
-    marginTop: 5,
-    fontFamily: 'Ubuntu-Light',
-  },
-  noAlertText: {
-    fontSize: 14,
-    color: '#777',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    fontFamily: 'Ubuntu-Light',
-  },
-  flatListContent: {
-    justifyContent: 'center',
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
+  greeting: { fontSize: 22, color: '#fff', fontFamily: 'Ubuntu-Regular' },
+  boldText: { fontFamily: 'Ubuntu-Bold' },
+  roleText: { fontSize: 16, color: '#fff', fontFamily: 'Ubuntu-Regular' },
+  profileImage: { width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#fff' },
+
+  alertContainer: { backgroundColor: '#c8e6c9', borderRadius: 12, padding: 15, marginBottom: 20 },
+  alertTitle: { fontSize: 20, fontFamily: 'Ubuntu-Bold', color: '#004d40' },
+  alertText: { fontSize: 14, color: '#333', marginTop: 5, fontFamily: 'Ubuntu-Light' },
+  noAlertText: { fontSize: 14, color: '#777', fontStyle: 'italic', textAlign: 'center', fontFamily: 'Ubuntu-Light' },
+
+  flatListContent: { justifyContent: 'center' },
+  row: { justifyContent: 'space-between', marginBottom: 20 },
+
   card: {
     width: '47%',
     padding: 20,
     backgroundColor: '#fff',
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 5,
     elevation: 3,
     alignItems: 'center',
   },
-  iconContainer: {
-    backgroundColor: '#e0f2f1',
-    borderRadius: 50,
-    padding: 10,
-    marginBottom: 10,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontFamily: 'Ubuntu-Bold',
-    color: '#004d40',
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 5,
-    fontFamily: 'Ubuntu-Light',
-  },
+  iconContainer: { borderRadius: 50, padding: 10, marginBottom: 10 },
+  cardTitle: { fontSize: 18, fontFamily: 'Ubuntu-Bold', color: '#004d40' },
+  cardDescription: { fontSize: 14, color: '#666', textAlign: 'center', marginTop: 5, fontFamily: 'Ubuntu-Light' },
 });
 
 export default AdminHome;
-

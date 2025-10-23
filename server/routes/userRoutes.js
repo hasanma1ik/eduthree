@@ -66,10 +66,23 @@ const {
      getTranscriptReports,
      showSubmissions,
      createUserByAdmin,
-    
+     getAllUsersAdmin,
+     deleteUserById,
+     getTermById,
+     updateTerm,
+     deleteTerm,
+     createSectionAssignment,
+     getSectionAssignments,
+     updateSectionAssignment,
+     deleteSectionAssignment,
+     getSectionOptions,
+     resolveTermForSection,
+     listClasses,
+     archiveClass,
+     deleteClass
    
     
-    
+
     
      } = require('../controllers/userController');
      
@@ -237,7 +250,30 @@ router.post('/growthreports', requireSignIn, submitGrowthReport);
 router.get('/transcripts', requireSignIn, getTranscriptReports);
 
 router.post('/admin/create-user', requireSignIn, logUser, createUserByAdmin);
+router.get('/admin/users', requireSignIn, logUser, getAllUsersAdmin);
+router.delete('/admin/users/:id', requireSignIn, logUser, deleteUserById);
 
+router.get('/terms/:id', getTermById);
+router.patch('/terms/:id', updateTerm);
+router.delete('/terms/:id', deleteTerm);
+
+router.post('/sections', requireSignIn, createSectionAssignment);
+router.get('/sections', requireSignIn, getSectionAssignments);
+router.patch('/sections/:id', requireSignIn, updateSectionAssignment);
+router.delete('/sections/:id', requireSignIn, deleteSectionAssignment);
+
+// Helper resolve API (used by course creation to auto-derive term from section)
+router.get('/sections/resolve', requireSignIn, resolveTermForSection);
+router.get('/section-offerings/options', requireSignIn, getSectionOptions);
+
+// Admin: list classes
+router.get('/admin/classes', requireSignIn, listClasses);
+
+// Admin: archive/unarchive a class
+router.patch('/admin/classes/:id/archive', requireSignIn, archiveClass);
+
+// Admin: delete class
+router.delete('/admin/classes/:id', requireSignIn, deleteClass);
 
 //export p
 module.exports = router;

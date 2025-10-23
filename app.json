@@ -1,7 +1,6 @@
 {
   "expo": {
     "name": "eduthree",
-    "package": "com.learnacademy.eduthree",
     "slug": "eduthree",
     "version": "1.0.0",
     "orientation": "portrait",
